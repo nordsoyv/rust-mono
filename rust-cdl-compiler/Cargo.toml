@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "cdl-core",
+    "cdl-cli",
+    "cdl-bench"
+]
