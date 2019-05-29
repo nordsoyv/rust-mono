@@ -17,10 +17,14 @@ use crate::common::{
     optional,
 };
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Entity {
-    entity_type: Vec<String>,
+    header: EntityHeader,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EntityBody {
+    children: Vec<Entity>
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -31,15 +35,15 @@ pub struct EntityHeader {
 }
 
 fn entity_type<'a>() -> impl Parser<'a, String> {
-    left(identifier, space0())
+    whitespace_wrap(identifier)
 }
 
 fn entity_types<'a>() -> impl Parser<'a, Vec<String>> {
-    one_or_more(left(identifier, space0()))
+    one_or_more(entity_type())
 }
 
 fn entity_ref<'a>() -> impl Parser<'a, String> {
-    right(match_literal("@"), left(identifier, space0()))
+    whitespace_wrap(right(match_literal("@"), identifier))
 }
 
 fn entity_refs<'a>() -> impl Parser<'a, Vec<String>> {
@@ -47,28 +51,49 @@ fn entity_refs<'a>() -> impl Parser<'a, Vec<String>> {
 }
 
 fn entity_id<'a>() -> impl Parser<'a, String> {
-    optional(right(match_literal("#"), left(identifier, space0())), "".to_string())
+    whitespace_wrap(right(match_literal("#"), identifier))
+}
+
+fn entity_identifier<'a>() -> impl Parser<'a, String> {
+    optional(entity_id(), "".to_string())
 }
 
 fn open_bracket<'a>() -> impl Parser<'a, ()> {
-    match_literal("{")
+    whitespace_wrap(match_literal("{"))
 }
 
 fn close_bracket<'a>() -> impl Parser<'a, ()> {
-    match_literal("}")
+    whitespace_wrap(match_literal("}"))
 }
 
 fn entity_header<'a>() -> impl Parser<'a, EntityHeader> {
-    four(
+    three(
         entity_types(),
         entity_refs(),
-        entity_id(),
-        open_bracket())
-        .map(move |(types, refs, id, ())| {
+        entity_identifier(),
+    )
+        .map(move |(types, refs, id)| {
             EntityHeader {
                 entity_id: id,
                 entity_refs: refs,
                 entity_type: types,
+            }
+        })
+}
+
+fn entity_body<'a>() -> impl Parser<'a, EntityBody> {
+    zero_or_more(entity()).map(move |children| {
+        EntityBody {
+            children
+        }
+    })
+}
+
+fn entity<'a>() -> impl Parser<'a, Entity> {
+    three(entity_header(), open_bracket(), close_bracket())
+        .map(move |(header, _, _)| {
+            Entity {
+                header
             }
         })
 }
@@ -152,7 +177,7 @@ fn match_entity_header() {
                 entity_refs: vec!["default".to_string()],
                 entity_id: "id".to_string(),
             })),
-        entity_header().parse("widget kpi @default #id {")
+        entity_header().parse("widget kpi @default #id")
     );
     assert_eq!(
         Ok(("",
@@ -161,7 +186,7 @@ fn match_entity_header() {
                 entity_refs: vec!["default".to_string(), "other".to_string()],
                 entity_id: "id".to_string(),
             })),
-        entity_header().parse("widget kpi @default @other #id {")
+        entity_header().parse("widget kpi @default @other #id")
     );
     assert_eq!(
         Ok(("",
@@ -170,7 +195,7 @@ fn match_entity_header() {
                 entity_refs: vec![],
                 entity_id: "id".to_string(),
             })),
-        entity_header().parse("widget kpi #id {")
+        entity_header().parse("widget kpi #id")
     );
     assert_eq!(
         Ok(("",
@@ -179,7 +204,7 @@ fn match_entity_header() {
                 entity_refs: vec![],
                 entity_id: "".to_string(),
             })),
-        entity_header().parse("widget kpi {")
+        entity_header().parse("widget kpi")
     );
     assert_eq!(
         Ok(("",
@@ -188,21 +213,79 @@ fn match_entity_header() {
                 entity_refs: vec![],
                 entity_id: "".to_string(),
             })),
-        entity_header().parse("widget  {")
+        entity_header().parse("widget ")
+    );
+}
+
+#[test]
+fn match_entity() {
+    assert_eq!(
+        Ok(("",
+            Entity {
+                header: EntityHeader {
+                    entity_type: vec!["widget".to_string(), "kpi".to_string()],
+                    entity_refs: vec!["default".to_string()],
+                    entity_id: "id".to_string(),
+                }
+            }
+        )),
+        entity().parse("widget kpi @default #id {}")
+    );
+    assert_eq!(
+        Ok(("",
+            Entity {
+                header: EntityHeader {
+                    entity_type: vec!["widget".to_string(), "kpi".to_string()],
+                    entity_refs: vec!["default".to_string()],
+                    entity_id: "id".to_string(),
+                }
+            }
+        )),
+        entity().parse("widget kpi @default #id { } ")
     );
 }
 
 
-//#[test]
-//fn attribute_parser() {
+#[test]
+fn match_entity_body() {
+    assert_eq!(
+        Ok(("",
+            EntityBody {
+                children: vec![
+                    Entity {
+                        header: EntityHeader {
+                            entity_type: vec!["widget".to_string(), "kpi".to_string()],
+                            entity_refs: vec![],
+                            entity_id: "".to_string(),
+                        }
+                    }
+                    ,
+                    Entity {
+                        header: EntityHeader {
+                            entity_type: vec!["widget".to_string(), "test".to_string()],
+                            entity_refs: vec![],
+                            entity_id: "".to_string(),
+                        }
+                    }
+                ]
+            }
+        )),
+        entity_body().parse("widget kpi {}\
+        widget test {}")
+    );
 //    assert_eq!(
-//        Ok((
-//            "",
-//            vec![
-//                ("one".to_string(), "1".to_string()),
-//                ("two".to_string(), "2".to_string())
-//            ]
+//        Ok(("",
+//            Entity {
+//                header: EntityHeader {
+//                    entity_type: vec!["widget".to_string(), "kpi".to_string()],
+//                    entity_refs: vec!["default".to_string()],
+//                    entity_id: "id".to_string(),
+//                }
+//            }
 //        )),
-//        attributes().parse(" one=\"1\" two=\"2\"")
+//        entity().parse("widget kpi @default #id { } ")
 //    );
-//}
+}
+
+
+
