@@ -6,6 +6,7 @@ use crate::common::{
     right,
     pair,
     three,
+    four,
     space0,
     space1,
     quoted_string,
@@ -46,7 +47,7 @@ fn entity_refs<'a>() -> impl Parser<'a, Vec<String>> {
 }
 
 fn entity_id<'a>() -> impl Parser<'a, String> {
-     optional( right(match_literal("#"), left(identifier, space0())),"".to_string() )
+    optional(right(match_literal("#"), left(identifier, space0())), "".to_string())
 }
 
 fn open_bracket<'a>() -> impl Parser<'a, ()> {
@@ -58,13 +59,18 @@ fn close_bracket<'a>() -> impl Parser<'a, ()> {
 }
 
 fn entity_header<'a>() -> impl Parser<'a, EntityHeader> {
-    three(entity_types(), entity_refs(), entity_id()).map(move |(types, refs, id)| {
-        EntityHeader {
-            entity_id: id,
-            entity_refs: refs,
-            entity_type: types,
-        }
-    })
+    four(
+        entity_types(),
+        entity_refs(),
+        entity_id(),
+        open_bracket())
+        .map(move |(types, refs, id, ())| {
+            EntityHeader {
+                entity_id: id,
+                entity_refs: refs,
+                entity_type: types,
+            }
+        })
 }
 
 
@@ -146,16 +152,16 @@ fn match_entity_header() {
                 entity_refs: vec!["default".to_string()],
                 entity_id: "id".to_string(),
             })),
-        entity_header().parse("widget kpi @default #id")
+        entity_header().parse("widget kpi @default #id {")
     );
     assert_eq!(
         Ok(("",
             EntityHeader {
                 entity_type: vec!["widget".to_string(), "kpi".to_string()],
-                entity_refs: vec!["default".to_string(),"other".to_string()],
+                entity_refs: vec!["default".to_string(), "other".to_string()],
                 entity_id: "id".to_string(),
             })),
-        entity_header().parse("widget kpi @default @other #id")
+        entity_header().parse("widget kpi @default @other #id {")
     );
     assert_eq!(
         Ok(("",
@@ -164,7 +170,7 @@ fn match_entity_header() {
                 entity_refs: vec![],
                 entity_id: "id".to_string(),
             })),
-        entity_header().parse("widget kpi #id")
+        entity_header().parse("widget kpi #id {")
     );
     assert_eq!(
         Ok(("",
@@ -173,7 +179,7 @@ fn match_entity_header() {
                 entity_refs: vec![],
                 entity_id: "".to_string(),
             })),
-        entity_header().parse("widget kpi")
+        entity_header().parse("widget kpi {")
     );
     assert_eq!(
         Ok(("",
@@ -182,10 +188,9 @@ fn match_entity_header() {
                 entity_refs: vec![],
                 entity_id: "".to_string(),
             })),
-        entity_header().parse("widget")
+        entity_header().parse("widget  {")
     );
 }
-
 
 
 //#[test]

@@ -355,7 +355,7 @@ fn three_combinator() {
 
 #[test]
 fn four_combinator() {
-    let tag_opener = four(match_literal("<"), identifier,match_literal("|"), match_literal(">"));
+    let tag_opener = four(match_literal("<"), identifier, match_literal("|"), match_literal(">"));
     assert_eq!(
         Ok(("", ((), "my-first-element".to_string(), (), ()))),
         tag_opener.parse("<my-first-element|>")
