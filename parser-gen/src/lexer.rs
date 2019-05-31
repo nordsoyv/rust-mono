@@ -32,25 +32,26 @@ impl Lexer {
         Ok(pos) => {
           result.push(LexToken::Identifier(current_pos, current_pos + pos));
           current_pos += pos;
-          continue
+          continue;
         }
-        Err(_) => {},
+        Err(_) => {}
       }
-
     }
 
     return Ok(result);
   }
 }
 
-fn open_brace(input: &str)->ParseResult {
+fn open_brace(input: &str) -> ParseResult {
   match input.get(0..1) {
-    Some(c) => if c == "{" {
-      return Ok(1)
-    }else {
-      return Err("")
-    },
-    _ => return Err("")
+    Some(c) => {
+      if c == "{" {
+        return Ok(1);
+      } else {
+        return Err("");
+      }
+    }
+    _ => return Err(""),
   }
 }
 
