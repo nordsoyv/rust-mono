@@ -4,12 +4,14 @@ use crate::common::{
   Parser,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Field {
   name: String,
   rhs: Rhs,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 enum Rhs {
   Number(f64),

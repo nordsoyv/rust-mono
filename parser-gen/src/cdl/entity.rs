@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 use crate::common::{
   either, four, identifier, left, match_literal, one_or_more, optional, pair,
   quoted_string, right, space0, space1, three, whitespace_wrap, zero_or_more,
@@ -23,6 +24,7 @@ pub struct EntityHeader {
   entity_id: String,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 enum Child {
   Entity(Entity),

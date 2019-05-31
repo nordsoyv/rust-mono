@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 use crate::common::{
   either, identifier, left, match_literal, pair, quoted_string, right, space1,
   whitespace_wrap, zero_or_more, Parser,
