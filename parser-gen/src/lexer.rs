@@ -1,5 +1,3 @@
-use core::fmt::Alignment::Left;
-
 pub type ParseResult<'a> = Result<usize, &'a str>;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -9,6 +7,10 @@ enum LexToken {
 
 #[derive(Debug)]
 struct Lexer {}
+
+trait Matcher {
+  fn check(&self, input: &str) -> ParseResult;
+}
 
 impl Lexer {
   pub fn new() -> Lexer {
@@ -42,16 +44,29 @@ impl Lexer {
   }
 }
 
-fn open_brace(input: &str) -> ParseResult {
-  match input.get(0..1) {
-    Some(c) => {
-      if c == "{" {
-        return Ok(1);
-      } else {
-        return Err("");
+struct LiteralMatcher {
+  literal: &'static str,
+}
+
+impl LiteralMatcher {
+  fn new(literal: &'static str)-> LiteralMatcher {
+    LiteralMatcher { literal }
+  }
+}
+
+impl Matcher for LiteralMatcher {
+  fn check(&self, input: &str) -> Result<usize, &str> {
+    let len = self.literal.len();
+    match input.get(0..len) {
+      Some(next) => {
+        if next == self.literal {
+          Ok(len)
+        } else {
+          Ok(0)
+        }
       }
+      _ => Err("unexpected end of input"),
     }
-    _ => return Err(""),
   }
 }
 
@@ -113,11 +128,6 @@ fn whitespace_parser() {
 }
 
 #[test]
-fn open_brace_parser() {
-  assert_eq!(Ok(1), open_brace("{"));
-}
-
-#[test]
 fn lexer_parse_whitespace() {
   let lexer = Lexer::new();
   let res = lexer.lex("        ".to_string());
@@ -138,4 +148,16 @@ fn lexer_parse_identifier() {
     ]),
     lexer.lex("   hello    hello ".to_string())
   );
+}
+
+#[test]
+fn literal_matcher(){
+  let matcher = LiteralMatcher::new("{");
+  assert_eq!(matcher.check("{not"), Ok(1));
+  assert_eq!(matcher.check("not"), Ok(0));
+  let matcher = LiteralMatcher::new("not");
+  assert_eq!(matcher.check("not"), Ok(3));
+  assert_eq!(matcher.check("!not"), Ok(0));
+  assert_eq!(matcher.check(""), Err("unexpected end of input"));
+
 }
