@@ -1,8 +1,15 @@
 pub type ParseResult<'a> = Result<usize, &'a str>;
 
 #[derive(Debug, PartialEq, Eq)]
-enum LexToken {
-  Identifier(usize, usize),
+enum TokenType {
+  Identifier,
+}
+
+#[derive(Debug, PartialEq)]
+struct Token {
+  start: usize,
+  end: usize,
+  kind:TokenType,
 }
 
 #[derive(Debug)]
@@ -17,8 +24,9 @@ impl Lexer {
     Lexer {}
   }
 
-  pub fn lex(&self, input: String) -> Result<Vec<LexToken>, &str> {
+  pub fn lex(&self, input: String) -> Result<Vec<Token>, &str> {
     let mut current_pos = 0;
+    let identifier_matcher = IdentifierMatcher::new();
     let end_pos = input.len();
     let mut result = vec![];
     while current_pos < end_pos {
@@ -30,9 +38,10 @@ impl Lexer {
       if current_pos == end_pos {
         break;
       };
-      match identifier(&input[current_pos..]) {
+      match identifier_matcher.check(&input[current_pos..]) {
         Ok(pos) => {
-          result.push(LexToken::Identifier(current_pos, current_pos + pos));
+          result.push(Token{start:current_pos, end: current_pos+pos, kind:TokenType::Identifier});
+          //result.push(LexToken::Identifier(current_pos, current_pos + pos));
           current_pos += pos;
           continue;
         }
@@ -49,7 +58,7 @@ struct LiteralMatcher {
 }
 
 impl LiteralMatcher {
-  fn new(literal: &'static str)-> LiteralMatcher {
+  fn new(literal: &'static str) -> LiteralMatcher {
     LiteralMatcher { literal }
   }
 }
@@ -70,25 +79,41 @@ impl Matcher for LiteralMatcher {
   }
 }
 
-fn identifier(input: &str) -> ParseResult {
-  let mut matched = String::new();
-  let mut chars = input.chars();
+struct IdentifierMatcher {}
 
-  match chars.next() {
-    Some(next) if next.is_alphabetic() => matched.push(next),
-    _ => return Err("Not an identifier"),
+impl IdentifierMatcher {
+  fn new() -> IdentifierMatcher {
+    IdentifierMatcher {}
   }
+}
 
-  while let Some(next) = chars.next() {
-    if next.is_alphanumeric() || next == '-' || next == '_' {
-      matched.push(next);
-    } else {
-      break;
+impl Matcher for IdentifierMatcher {
+  fn check(&self, input: &str) -> Result<usize, &str> {
+    let mut matched = String::new();
+    let mut chars = input.chars();
+
+    match chars.next() {
+      Some(next) => {
+        if next.is_alphabetic() {
+          matched.push(next)
+        } else {
+          return Ok(0)
+        }
+      }
+      _ => return Err("EOF"),
     }
-  }
 
-  let next_index = matched.len();
-  Ok(next_index)
+    while let Some(next) = chars.next() {
+      if next.is_alphanumeric() || next == '-' || next == '_' {
+        matched.push(next);
+      } else {
+        break;
+      }
+    }
+
+    let next_index = matched.len();
+    Ok(next_index)
+  }
 }
 
 fn whitespace(input: &str) -> ParseResult {
@@ -110,16 +135,6 @@ fn whitespace(input: &str) -> ParseResult {
 }
 
 #[test]
-fn identifier_parser() {
-  assert_eq!(Ok(18), identifier("i-am-an-identifier"));
-  assert_eq!(Ok(3), identifier("not entirely an identifier"));
-  assert_eq!(
-    Err("Not an identifier"),
-    identifier("!not at all an identifier")
-  );
-}
-
-#[test]
 fn whitespace_parser() {
   assert_eq!(Ok(0), whitespace("hallo"));
   assert_eq!(Ok(3), whitespace("   hallo"));
@@ -138,20 +153,20 @@ fn lexer_parse_whitespace() {
 fn lexer_parse_identifier() {
   let lexer = Lexer::new();
   assert_eq!(
-    Ok(vec![LexToken::Identifier(3, 8)]),
+    Ok(vec![Token {start:3, end:8, kind:TokenType::Identifier }]),
     lexer.lex("   hello     ".to_string())
   );
   assert_eq!(
     Ok(vec![
-      LexToken::Identifier(3, 8),
-      LexToken::Identifier(12, 17)
+      Token{ start:3, end:8, kind:TokenType::Identifier},
+      Token{ start:12, end:17, kind:TokenType::Identifier}
     ]),
     lexer.lex("   hello    hello ".to_string())
   );
 }
 
 #[test]
-fn literal_matcher(){
+fn literal_matcher() {
   let matcher = LiteralMatcher::new("{");
   assert_eq!(matcher.check("{not"), Ok(1));
   assert_eq!(matcher.check("not"), Ok(0));
@@ -159,5 +174,15 @@ fn literal_matcher(){
   assert_eq!(matcher.check("not"), Ok(3));
   assert_eq!(matcher.check("!not"), Ok(0));
   assert_eq!(matcher.check(""), Err("unexpected end of input"));
+}
 
+#[test]
+fn identifier_matcher() {
+  let i_matcher = IdentifierMatcher::new();
+  assert_eq!(Ok(18), i_matcher.check("i-am-an-identifier"));
+  assert_eq!(Ok(3), i_matcher.check("not entirely an identifier"));
+  assert_eq!(-
+    Ok(0),
+    i_matcher.check("!not at all an identifier")
+  );
 }
