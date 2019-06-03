@@ -1,8 +1,8 @@
 #![allow(unused_imports)]
 
 mod cdl;
+mod cdl_parser_gen;
 mod common;
-mod lexer;
 mod xmlparser;
 
 fn main() {

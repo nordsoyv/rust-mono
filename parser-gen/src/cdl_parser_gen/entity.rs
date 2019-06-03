@@ -5,7 +5,7 @@ use crate::common::{
   Parser,
 };
 
-use crate::cdl::field::Field;
+use crate::cdl_parser_gen::field::Field;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Entity {
