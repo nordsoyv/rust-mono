@@ -1,5 +1,6 @@
 use crate::cdl::lexer::matcher::Matcher;
 
+#[derive(Debug)]
 pub struct LiteralMatcher {
   literal: &'static str,
 }
