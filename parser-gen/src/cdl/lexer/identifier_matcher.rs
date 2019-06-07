@@ -75,6 +75,7 @@ impl Matcher for ReferenceMatcher {
     Ok(next_index)
   }
 }
+
 #[derive(Debug)]
 pub struct EntityIdMatcher {}
 
@@ -113,6 +114,44 @@ impl Matcher for EntityIdMatcher {
   }
 }
 
+#[derive(Debug)]
+pub struct NumberMatcher {}
+
+impl NumberMatcher {
+  pub fn new() -> NumberMatcher {
+    NumberMatcher {}
+  }
+}
+
+impl Matcher for NumberMatcher {
+  fn check(&self, input: &str) -> Result<usize, &str> {
+    let mut matched = String::new();
+    let mut chars = input.chars();
+
+    match chars.next() {
+      Some(next) => {
+        if next.is_numeric() {
+          matched.push(next)
+        } else {
+          return Ok(0);
+        }
+      }
+      _ => return Err("EOF"),
+    }
+
+    while let Some(next) = chars.next() {
+      if next.is_numeric() {
+        matched.push(next);
+      } else {
+        break;
+      }
+    }
+
+    let next_index = matched.len();
+    Ok(next_index)
+  }
+}
+
 #[test]
 fn identifier_matcher() {
   let i_matcher = IdentifierMatcher::new();
@@ -135,4 +174,13 @@ fn entity_id_matcher() {
   assert_eq!(Ok(3), i_matcher.check("#id"));
   assert_eq!(Ok(4), i_matcher.check("#not entirely an identifier"));
   assert_eq!(Ok(0), i_matcher.check("identifier"));
+}
+
+#[test]
+fn number_matcher() {
+  let i_matcher = NumberMatcher::new();
+  assert_eq!(Ok(4), i_matcher.check("1234"));
+  assert_eq!(Ok(4), i_matcher.check("1234 entirely an identifier"));
+  assert_eq!(Ok(4), i_matcher.check("1234qerf"));
+  assert_eq!(Ok(0), i_matcher.check("qerf"));
 }

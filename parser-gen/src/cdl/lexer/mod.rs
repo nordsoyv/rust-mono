@@ -6,6 +6,7 @@ mod whitespace_matcher;
 use identifier_matcher::IdentifierMatcher;
 use identifier_matcher::EntityIdMatcher;
 use identifier_matcher::ReferenceMatcher;
+use identifier_matcher::NumberMatcher;
 use literal_matcher::LiteralMatcher;
 use matcher::Matcher;
 use matcher::ParseResult;
@@ -19,6 +20,7 @@ enum TokenType {
   Reference,
   OpenBracket,
   CloseBracket,
+  Number,
 }
 
 #[derive(Debug, PartialEq)]
@@ -39,6 +41,7 @@ impl Lexer {
         (Box::new(IdentifierMatcher::new()), TokenType::Identifier),
         (Box::new(ReferenceMatcher::new()), TokenType::Reference),
         (Box::new(EntityIdMatcher::new()), TokenType::EntityId),
+        (Box::new(NumberMatcher::new()), TokenType::Number),
         (Box::new(LiteralMatcher::new("{")), TokenType::OpenBracket),
         (Box::new(LiteralMatcher::new("}")), TokenType::CloseBracket),
       ],
@@ -158,9 +161,14 @@ fn lexer_parse_identifier_entityid_reference() {
         start: 19,
         end: 25,
         kind: TokenType::EntityId,
+      },
+      Token {
+        start: 26,
+        end: 32,
+        kind: TokenType::Number,
       }
     ]),
-    lexer.lex("   hello    @hello #hello".to_string())
+    lexer.lex("   hello    @hello #hello 121234".to_string())
   );
 }
 
