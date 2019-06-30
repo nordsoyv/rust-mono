@@ -17,7 +17,7 @@ impl Matcher for WhitespaceMatcher {
       let next = chars.next();
       match next {
         Some(c) => {
-          if c.is_whitespace() {
+          if c.is_whitespace() && c != '\n' {
             len += 1;
           } else {
             return Ok(len);
@@ -36,4 +36,5 @@ fn whitespace_matcher() {
   assert_eq!(Ok(3), matcher.check("   hallo"));
   assert_eq!(Ok(1), matcher.check(" "));
   assert_eq!(Ok(2), matcher.check("  "));
+  assert_eq!(Ok(1), matcher.check(" \n "));
 }

@@ -64,7 +64,7 @@ impl Matcher for ReferenceMatcher {
     }
 
     while let Some(next) = chars.next() {
-      if next.is_alphanumeric() || next == '-' || next == '_' || next=='.' {
+      if next.is_alphanumeric() || next == '-' || next == '_' || next == '.' {
         matched.push(next);
       } else {
         break;
@@ -102,7 +102,7 @@ impl Matcher for EntityIdMatcher {
     }
 
     while let Some(next) = chars.next() {
-      if next.is_alphanumeric() || next == '-' || next == '_'{
+      if next.is_alphanumeric() || next == '-' || next == '_' {
         matched.push(next);
       } else {
         break;
@@ -152,6 +152,46 @@ impl Matcher for NumberMatcher {
   }
 }
 
+#[derive(Debug)]
+pub struct StringMatcher {
+  quote_char: char
+}
+
+impl StringMatcher {
+  pub fn new(quote_char: char) -> StringMatcher {
+    StringMatcher {
+      quote_char
+    }
+  }
+}
+
+impl Matcher for StringMatcher {
+  fn check(&self, input: &str) -> Result<usize, &str> {
+    let mut matched = String::new();
+    let mut chars = input.chars();
+
+    match chars.next() {
+      Some(next) => {
+        if next != self.quote_char {
+          return Ok(0);
+        }
+      }
+      _ => return Err("EOF"),
+    }
+
+    while let Some(next) = chars.next() {
+      if next != self.quote_char {
+        matched.push(next);
+      } else {
+        break;
+      }
+    }
+
+    let next_index = matched.len();
+    Ok(next_index+1)
+  }
+}
+
 #[test]
 fn identifier_matcher() {
   let i_matcher = IdentifierMatcher::new();
@@ -183,4 +223,14 @@ fn number_matcher() {
   assert_eq!(Ok(4), i_matcher.check("1234 entirely an identifier"));
   assert_eq!(Ok(4), i_matcher.check("1234qerf"));
   assert_eq!(Ok(0), i_matcher.check("qerf"));
+}
+
+#[test]
+fn string_matcher() {
+  let i_matcher = StringMatcher::new('"');
+  assert_eq!(Ok(5), i_matcher.check("\"1234\""));
+  assert_eq!(Ok(5), i_matcher.check("\"1234\"        "));
+  let i_matcher = StringMatcher::new('\'');
+  assert_eq!(Ok(5), i_matcher.check("'1234'"));
+  assert_eq!(Ok(5), i_matcher.check("'1234'        "));
 }
