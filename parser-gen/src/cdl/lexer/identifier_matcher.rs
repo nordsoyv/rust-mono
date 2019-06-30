@@ -188,7 +188,7 @@ impl Matcher for StringMatcher {
     }
 
     let next_index = matched.len();
-    Ok(next_index+1)
+    Ok(next_index + 2)
   }
 }
 
@@ -228,9 +228,9 @@ fn number_matcher() {
 #[test]
 fn string_matcher() {
   let i_matcher = StringMatcher::new('"');
-  assert_eq!(Ok(5), i_matcher.check("\"1234\""));
-  assert_eq!(Ok(5), i_matcher.check("\"1234\"        "));
+  assert_eq!(Ok(6), i_matcher.check("\"1234\""));
+  assert_eq!(Ok(6), i_matcher.check("\"1234\"        "));
   let i_matcher = StringMatcher::new('\'');
-  assert_eq!(Ok(5), i_matcher.check("'1234'"));
-  assert_eq!(Ok(5), i_matcher.check("'1234'        "));
+  assert_eq!(Ok(6), i_matcher.check("'1234'"));
+  assert_eq!(Ok(6), i_matcher.check("'1234'        "));
 }
