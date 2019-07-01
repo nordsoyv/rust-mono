@@ -10,7 +10,7 @@ impl WhitespaceMatcher {
 }
 
 impl Matcher for WhitespaceMatcher {
-  fn check(&self, input: &str) -> Result<usize, &str> {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let mut chars = input.chars();
     let mut len = 0;
     loop {
@@ -20,10 +20,10 @@ impl Matcher for WhitespaceMatcher {
           if c.is_whitespace() && c != '\n' {
             len += 1;
           } else {
-            return Ok(len);
+            return Ok((len, None));
           }
         }
-        _ => return Ok(len),
+        _ => return Ok((len, None)),
       }
     }
   }
@@ -32,9 +32,9 @@ impl Matcher for WhitespaceMatcher {
 #[test]
 fn whitespace_matcher() {
   let matcher = WhitespaceMatcher::new();
-  assert_eq!(Ok(0), matcher.check("hallo"));
-  assert_eq!(Ok(3), matcher.check("   hallo"));
-  assert_eq!(Ok(1), matcher.check(" "));
-  assert_eq!(Ok(2), matcher.check("  "));
-  assert_eq!(Ok(1), matcher.check(" \n "));
+  assert_eq!(Ok((0, None)), matcher.check("hallo"));
+  assert_eq!(Ok((3, None)), matcher.check("   hallo"));
+  assert_eq!(Ok((1, None)), matcher.check(" "));
+  assert_eq!(Ok((2, None)), matcher.check("  "));
+  assert_eq!(Ok((1, None)), matcher.check(" \n "));
 }

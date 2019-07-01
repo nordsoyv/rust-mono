@@ -10,7 +10,7 @@ impl IdentifierMatcher {
 }
 
 impl Matcher for IdentifierMatcher {
-  fn check(&self, input: &str) -> Result<usize, &str> {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let mut matched = String::new();
     let mut chars = input.chars();
 
@@ -19,7 +19,7 @@ impl Matcher for IdentifierMatcher {
         if next.is_alphabetic() {
           matched.push(next)
         } else {
-          return Ok(0);
+          return Ok((0, None));
         }
       }
       _ => return Err("EOF"),
@@ -34,7 +34,7 @@ impl Matcher for IdentifierMatcher {
     }
 
     let next_index = matched.len();
-    Ok(next_index)
+    Ok((next_index, Some(matched)))
   }
 }
 
@@ -48,7 +48,7 @@ impl ReferenceMatcher {
 }
 
 impl Matcher for ReferenceMatcher {
-  fn check(&self, input: &str) -> Result<usize, &str> {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let mut matched = String::new();
     let mut chars = input.chars();
 
@@ -57,7 +57,7 @@ impl Matcher for ReferenceMatcher {
         if next == '@' {
           matched.push(next)
         } else {
-          return Ok(0);
+          return Ok((0, None));
         }
       }
       _ => return Err("EOF"),
@@ -72,7 +72,7 @@ impl Matcher for ReferenceMatcher {
     }
 
     let next_index = matched.len();
-    Ok(next_index)
+    Ok((next_index, Some(matched[1..].to_string())))
   }
 }
 
@@ -86,7 +86,7 @@ impl EntityIdMatcher {
 }
 
 impl Matcher for EntityIdMatcher {
-  fn check(&self, input: &str) -> Result<usize, &str> {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let mut matched = String::new();
     let mut chars = input.chars();
 
@@ -95,7 +95,7 @@ impl Matcher for EntityIdMatcher {
         if next == '#' {
           matched.push(next)
         } else {
-          return Ok(0);
+          return Ok((0, None));
         }
       }
       _ => return Err("EOF"),
@@ -110,7 +110,7 @@ impl Matcher for EntityIdMatcher {
     }
 
     let next_index = matched.len();
-    Ok(next_index)
+    Ok((next_index, Some(matched[1..].to_string())))
   }
 }
 
@@ -124,7 +124,7 @@ impl NumberMatcher {
 }
 
 impl Matcher for NumberMatcher {
-  fn check(&self, input: &str) -> Result<usize, &str> {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let mut matched = String::new();
     let mut chars = input.chars();
 
@@ -133,7 +133,7 @@ impl Matcher for NumberMatcher {
         if next.is_numeric() {
           matched.push(next)
         } else {
-          return Ok(0);
+          return Ok((0, None));
         }
       }
       _ => return Err("EOF"),
@@ -148,7 +148,7 @@ impl Matcher for NumberMatcher {
     }
 
     let next_index = matched.len();
-    Ok(next_index)
+    Ok((next_index, Some(matched)))
   }
 }
 
@@ -166,14 +166,14 @@ impl StringMatcher {
 }
 
 impl Matcher for StringMatcher {
-  fn check(&self, input: &str) -> Result<usize, &str> {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let mut matched = String::new();
     let mut chars = input.chars();
 
     match chars.next() {
       Some(next) => {
         if next != self.quote_char {
-          return Ok(0);
+          return Ok((0, None));
         }
       }
       _ => return Err("EOF"),
@@ -188,49 +188,49 @@ impl Matcher for StringMatcher {
     }
 
     let next_index = matched.len();
-    Ok(next_index + 2)
+    Ok((next_index + 2, Some(matched)))
   }
 }
 
 #[test]
 fn identifier_matcher() {
   let i_matcher = IdentifierMatcher::new();
-  assert_eq!(Ok(18), i_matcher.check("i-am-an-identifier"));
-  assert_eq!(Ok(3), i_matcher.check("not entirely an identifier"));
-  assert_eq!(Ok(0), i_matcher.check("!not at all an identifier"));
+  assert_eq!(Ok((18, Some("i-am-an-identifier".to_string()))), i_matcher.check("i-am-an-identifier"));
+  assert_eq!(Ok((3, Some("not".to_string()))), i_matcher.check("not entirely an identifier"));
+  assert_eq!(Ok((0, None)), i_matcher.check("!not at all an identifier"));
 }
 
 #[test]
 fn reference_matcher() {
   let i_matcher = ReferenceMatcher::new();
-  assert_eq!(Ok(4), i_matcher.check("@ref"));
-  assert_eq!(Ok(11), i_matcher.check("@path.match entirely an identifier"));
-  assert_eq!(Ok(0), i_matcher.check("identifier"));
+  assert_eq!(Ok((4, Some("ref".to_string()))), i_matcher.check("@ref"));
+  assert_eq!(Ok((11, Some("path.match".to_string()))), i_matcher.check("@path.match entirely an identifier"));
+  assert_eq!(Ok((0, None)), i_matcher.check("identifier"));
 }
 
 #[test]
 fn entity_id_matcher() {
   let i_matcher = EntityIdMatcher::new();
-  assert_eq!(Ok(3), i_matcher.check("#id"));
-  assert_eq!(Ok(4), i_matcher.check("#not entirely an identifier"));
-  assert_eq!(Ok(0), i_matcher.check("identifier"));
+  assert_eq!(Ok((3, Some("id".to_string()))), i_matcher.check("#id"));
+  assert_eq!(Ok((4, Some("not".to_string()))), i_matcher.check("#not entirely an identifier"));
+  assert_eq!(Ok((0, None)), i_matcher.check("identifier"));
 }
 
 #[test]
 fn number_matcher() {
   let i_matcher = NumberMatcher::new();
-  assert_eq!(Ok(4), i_matcher.check("1234"));
-  assert_eq!(Ok(4), i_matcher.check("1234 entirely an identifier"));
-  assert_eq!(Ok(4), i_matcher.check("1234qerf"));
-  assert_eq!(Ok(0), i_matcher.check("qerf"));
+  assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234"));
+  assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234 entirely an identifier"));
+  assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234qerf"));
+  assert_eq!(Ok((0, None)), i_matcher.check("qerf"));
 }
 
 #[test]
 fn string_matcher() {
   let i_matcher = StringMatcher::new('"');
-  assert_eq!(Ok(6), i_matcher.check("\"1234\""));
-  assert_eq!(Ok(6), i_matcher.check("\"1234\"        "));
+  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("\"1234\""));
+  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("\"1234\"        "));
   let i_matcher = StringMatcher::new('\'');
-  assert_eq!(Ok(6), i_matcher.check("'1234'"));
-  assert_eq!(Ok(6), i_matcher.check("'1234'        "));
+  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'"));
+  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'        "));
 }

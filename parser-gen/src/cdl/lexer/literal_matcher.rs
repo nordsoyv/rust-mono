@@ -12,14 +12,14 @@ impl LiteralMatcher {
 }
 
 impl Matcher for LiteralMatcher {
-  fn check(&self, input: &str) -> Result<usize, &str> {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let len = self.literal.len();
     match input.get(0..len) {
       Some(next) => {
         if next == self.literal {
-          Ok(len)
+          Ok((len, None))
         } else {
-          Ok(0)
+          Ok((0, None))
         }
       }
       _ => Err("unexpected end of input"),
@@ -30,10 +30,10 @@ impl Matcher for LiteralMatcher {
 #[test]
 fn literal_matcher() {
   let matcher = LiteralMatcher::new("{");
-  assert_eq!(matcher.check("{not"), Ok(1));
-  assert_eq!(matcher.check("not"), Ok(0));
+  assert_eq!(matcher.check("{not"), Ok((1,None)));
+  assert_eq!(matcher.check("not"), Ok((0,None)));
   let matcher = LiteralMatcher::new("not");
-  assert_eq!(matcher.check("not"), Ok(3));
-  assert_eq!(matcher.check("!not"), Ok(0));
+  assert_eq!(matcher.check("not"), Ok((3, None)));
+  assert_eq!(matcher.check("!not"), Ok((0, None)));
   assert_eq!(matcher.check(""), Err("unexpected end of input"));
 }

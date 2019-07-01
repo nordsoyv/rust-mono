@@ -10,7 +10,6 @@ use matcher::ParseResult;
 use whitespace_matcher::WhitespaceMatcher;
 
 use crate::cdl::lexer::identifier_matcher::StringMatcher;
-use std::intrinsics::transmute;
 
 mod identifier_matcher;
 mod literal_matcher;
@@ -48,6 +47,7 @@ pub struct Token {
   start: usize,
   end: usize,
   kind: TokenType,
+  text: Option<String>,
 }
 
 pub struct Lexer {
@@ -96,8 +96,8 @@ impl Lexer {
     let mut errors = vec![];
     'chars: while current_pos < end_pos {
       match whitespace_matcher.check(&input[current_pos..]) {
-        Ok(0) => {}
-        Ok(len) => current_pos += len,
+        Ok((0, _)) => {}
+        Ok((len, _)) => current_pos += len,
         Err(_) => {}
       }
       if current_pos == end_pos {
@@ -106,12 +106,13 @@ impl Lexer {
 
       for (m, token_type) in &self.matchers {
         match m.check(&input[current_pos..]) {
-          Ok(0) => {}
-          Ok(pos) => {
+          Ok((0, _)) => {}
+          Ok((pos, got_string)) => {
             result.push(Token {
               start: current_pos,
               end: current_pos + pos,
               kind: *token_type,
+              text: got_string,
             });
             current_pos += pos;
             continue 'chars;
@@ -146,6 +147,7 @@ fn lexer_parse_literal() {
       start: 3,
       end: 4,
       kind: TokenType::OpenBracket,
+      text: None,
     }]),
     res
   );
@@ -159,6 +161,7 @@ fn lexer_parse_identifier() {
       start: 3,
       end: 8,
       kind: TokenType::Identifier,
+      text: Some("hello".to_string()),
     }]),
     lexer.lex("   hello     ".to_string())
   );
@@ -168,11 +171,13 @@ fn lexer_parse_identifier() {
         start: 3,
         end: 8,
         kind: TokenType::Identifier,
+        text: Some("hello".to_string()),
       },
       Token {
         start: 12,
         end: 17,
         kind: TokenType::Identifier,
+        text: Some("hello".to_string()),
       }
     ]),
     lexer.lex("   hello    hello ".to_string())
@@ -187,6 +192,7 @@ fn lexer_parse_string() {
       start: 3,
       end: 9,
       kind: TokenType::String,
+      text: Some("1234".to_string()),
     }]),
     lexer.lex("   '1234'     ".to_string())
   );
@@ -201,26 +207,31 @@ fn lexer_parse_identifier_entityid_reference() {
         start: 3,
         end: 8,
         kind: TokenType::Identifier,
+        text: Some("hello".to_string()),
       },
       Token {
         start: 12,
         end: 18,
         kind: TokenType::Reference,
+        text:Some("hello".to_string()),
       },
       Token {
         start: 19,
         end: 20,
         kind: TokenType::Hash,
+        text: None,
       },
       Token {
         start: 20,
         end: 25,
         kind: TokenType::Identifier,
+        text:Some("hello".to_string()),
       },
       Token {
         start: 26,
         end: 32,
         kind: TokenType::Number,
+        text:Some("121234".to_string()),
       }
     ]),
     lexer.lex("   hello    @hello #hello 121234".to_string())
@@ -237,16 +248,19 @@ fn lexer_multiline() {
         start: 3,
         end: 8,
         kind: TokenType::Identifier,
+        text:Some("hello".to_string()),
       },
       Token {
         start: 8,
         end: 9,
         kind: TokenType::EOL,
+        text: None,
       },
       Token {
         start: 10,
         end: 15,
         kind: TokenType::Identifier,
+        text:Some("hello".to_string()),
       }
     ]),
     lexer.lex("   hello\n hello ".to_string())
@@ -262,16 +276,19 @@ fn lexer_parse_identifier_and_literal() {
         start: 3,
         end: 8,
         kind: TokenType::Identifier,
+        text:Some("hello".to_string()),
       },
       Token {
         start: 9,
         end: 10,
         kind: TokenType::OpenBracket,
+        text: None,
       },
       Token {
         start: 10,
         end: 11,
         kind: TokenType::CloseBracket,
+        text: None,
       }
     ]),
     lexer.lex("   hello {} ".to_string())
@@ -313,11 +330,13 @@ fn lexer_unknown_char() {
           start: 3,
           end: 8,
           kind: TokenType::Identifier,
+          text:Some("hello".to_string()),
         },
         Token {
           start: 11,
           end: 16,
           kind: TokenType::Identifier,
+          text:Some("hello".to_string()),
         }
       ]
     )),
