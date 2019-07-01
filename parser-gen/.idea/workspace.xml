@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CargoProjects">
+    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c28bd142-d53d-4675-863f-30cc20233dd3" name="Default Changelist" comment="" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="9306">
+              <caret line="467" column="1" selection-start-line="467" selection-start-column="1" selection-end-line="467" selection-end-column="1" />
+              <folding>
+                <element signature="e#556#557#0" expanded="true" />
+                <element signature="e#606#607#0" expanded="true" />
+                <element signature="e#782#783#0" expanded="true" />
+                <element signature="e#834#835#0" expanded="true" />
+                <element signature="e#1082#1083#0" expanded="true" />
+                <element signature="e#1132#1133#0" expanded="true" />
+                <element signature="e#474#475#0" expanded="true" />
+                <element signature="e#500#501#0" expanded="true" />
+                <element signature="e#970#971#0" expanded="true" />
+                <element signature="e#1009#1010#0" expanded="true" />
+                <element signature="e#2082#2083#0" expanded="true" />
+                <element signature="e#2139#2140#0" expanded="true" />
+                <element signature="e#2286#2287#0" expanded="true" />
+                <element signature="e#2344#2345#0" expanded="true" />
+                <element signature="e#3799#3800#0" expanded="true" />
+                <element signature="e#3843#3844#0" expanded="true" />
+                <element signature="e#3893#3894#0" expanded="true" />
+                <element signature="e#3930#3931#0" expanded="true" />
+                <element signature="e#3979#3980#0" expanded="true" />
+                <element signature="e#4017#4018#0" expanded="true" />
+                <element signature="e#7659#7660#0" expanded="true" />
+                <element signature="e#7705#7706#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>pred</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/main.rs" />
+      </list>
+    </option>
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="VNhTkFkY" />
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="430" />
+    <option name="y" value="46" />
+    <option name="width" value="974" />
+    <option name="height" value="1047" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="PackagesPane" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="parser-gen" type="b2602c69:ProjectViewProjectNode" />
+              <item name="parser-gen" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parser-gen" type="b2602c69:ProjectViewProjectNode" />
+              <item name="parser-gen" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c28bd142-d53d-4675-863f-30cc20233dd3" name="Default Changelist" comment="" />
+      <created>1558940373478</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1558940373478</updated>
+      <workItem from="1558940374758" duration="7906000" />
+    </task>
+    <task id="LOCAL-00001" summary="followed article at https://bodil.lol/parser-combinators/">
+      <created>1558963291975</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1558963291975</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="7906000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1936" height="1176" extended-state="6" />
+    <layout>
+      <window_info id="Designer" />
+      <window_info id="Favorites" side_tool="true" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.25" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Database Changes" />
+      <window_info active="true" anchor="bottom" id="Version Control" visible="true" weight="0.32941177" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="right" id="Cargo" />
+      <window_info anchor="right" id="Palette&#9;" />
+      <window_info anchor="right" id="Database" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+    <option name="exactExcludedFiles">
+      <list>
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/components/LayoutManager/ModalPage.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/utils/bem-builder/BemBuilder.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/timings.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/components/SearchInput/SearchInput.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/tabularEngine/tests/makeListRequest.spec.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/query/list-worker.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/ReportListModeTabs.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/tabularEngine/tests/makeAggregationRequest.spec.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/FilterFooter.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/FilterWrapper.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/components/GlobalHeader.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/ReportListToolbar.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/FilterOptionsScrollArea.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/SearchBox.spec.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/redux/dashboard/sagas.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/tabularEngine/tests/__data__/expectedTabularRequest.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/vpath.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/DeleteReportDialog.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/enhanceByPrimaryKeyFilters.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/utils/bem-builder/BemBlockBuilder.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/OptionItem.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/utils/bem-builder/index.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/tabularEngine/tests/__data__/listRequestConfiguration.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/api/survey-responses/survey-response-queries.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/SearchBox.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/components/DashboardCanvas/Toolbar.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/components/LayoutManager/ModalPage.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/SelectFilter/SelectFilter.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/FilterHeader.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/SelectFilter/index.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/FilterOptionsSearch.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/api/end-user-permissions-controller.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/api/survey-responses/survey-response-service.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/ReportListHeader.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/tabularEngine/expression-builders.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/ReportListPage.spec.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/FallbackFilterPills.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/constants.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/CreateYourFirstReport.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/performanceMeter.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/lib/survey-request.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/components/SearchInput/index.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/utils/bem-builder/makeClassNames.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/common/tabularEngine/tests/__data__/expressions.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/ReportListPage/NoReports.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/filters/common/FilterLabel.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/api/survey-responses/survey-response-controller.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/gateway/worker/widget-worker.js" />
+        <option value="$PROJECT_DIR$/../../confirmit.appstudio.client/src/client/common/utils/bem-builder/BemElementBuilder.js" />
+      </list>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="followed article at https://bodil.lol/parser-combinators/" />
+    <option name="LAST_COMMIT_MESSAGE" value="followed article at https://bodil.lol/parser-combinators/" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/main.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="9306">
+          <caret line="467" column="1" selection-start-line="467" selection-start-column="1" selection-end-line="467" selection-end-column="1" />
+          <folding>
+            <element signature="e#556#557#0" expanded="true" />
+            <element signature="e#606#607#0" expanded="true" />
+            <element signature="e#782#783#0" expanded="true" />
+            <element signature="e#834#835#0" expanded="true" />
+            <element signature="e#1082#1083#0" expanded="true" />
+            <element signature="e#1132#1133#0" expanded="true" />
+            <element signature="e#474#475#0" expanded="true" />
+            <element signature="e#500#501#0" expanded="true" />
+            <element signature="e#970#971#0" expanded="true" />
+            <element signature="e#1009#1010#0" expanded="true" />
+            <element signature="e#2082#2083#0" expanded="true" />
+            <element signature="e#2139#2140#0" expanded="true" />
+            <element signature="e#2286#2287#0" expanded="true" />
+            <element signature="e#2344#2345#0" expanded="true" />
+            <element signature="e#3799#3800#0" expanded="true" />
+            <element signature="e#3843#3844#0" expanded="true" />
+            <element signature="e#3893#3894#0" expanded="true" />
+            <element signature="e#3930#3931#0" expanded="true" />
+            <element signature="e#3979#3980#0" expanded="true" />
+            <element signature="e#4017#4018#0" expanded="true" />
+            <element signature="e#7659#7660#0" expanded="true" />
+            <element signature="e#7705#7706#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>

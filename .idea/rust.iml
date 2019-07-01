@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/parser-gen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/parser-gen/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/parser-gen/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/parser-gen/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/parser-gen/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
