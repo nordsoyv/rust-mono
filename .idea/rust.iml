@@ -19,6 +19,11 @@
       <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/cdl-service/target" />
       <excludeFolder url="file://$MODULE_DIR$/parser-gen/target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/target" />
