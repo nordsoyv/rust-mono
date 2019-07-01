@@ -9,7 +9,7 @@ use matcher::Matcher;
 use matcher::ParseResult;
 use whitespace_matcher::WhitespaceMatcher;
 
-use crate::cdl::lexer::identifier_matcher::StringMatcher;
+use crate::cdl::lexer::identifier_matcher::{StringMatcher, CommentsMatcher};
 
 mod identifier_matcher;
 mod literal_matcher;
@@ -40,6 +40,7 @@ enum TokenType {
   Mul,
   Dot,
   EOL,
+  Comment,
 }
 
 #[derive(Debug, PartialEq)]
@@ -62,6 +63,7 @@ impl Lexer {
         (Box::new(ReferenceMatcher::new()), TokenType::Reference),
 //        (Box::new(EntityIdMatcher::new()), TokenType::EntityId),
         (Box::new(NumberMatcher::new()), TokenType::Number),
+        (Box::new(CommentsMatcher::new()), TokenType::Comment),
         (Box::new(StringMatcher::new('"')), TokenType::String),
         (Box::new(StringMatcher::new('\'')), TokenType::String),
         (Box::new(LiteralMatcher::new(":")), TokenType::Colon),
@@ -980,6 +982,6 @@ format: formatterLTR
 }
     ".to_string());
   assert_eq!(lexed.is_ok(), true);
-  assert_eq!(lexed.unwrap().len(), 2972);
+  assert_eq!(lexed.unwrap().len(), 2944);
 //  assert_eq!(lexed.unwrap().len(), 108);
 }

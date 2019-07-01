@@ -39,6 +39,55 @@ impl Matcher for IdentifierMatcher {
 }
 
 #[derive(Debug)]
+pub struct CommentsMatcher {}
+
+impl CommentsMatcher {
+  pub fn new() -> CommentsMatcher {
+    CommentsMatcher {}
+  }
+}
+
+impl Matcher for CommentsMatcher {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
+    let mut matched = String::new();
+    let mut chars = input.chars();
+
+    match chars.next() {
+      Some(next) => {
+        if next== '/' {
+          matched.push(next)
+        } else {
+          return Ok((0, None));
+        }
+      }
+      _ => return Err("EOF"),
+    }
+
+    match chars.next() {
+      Some(next) => {
+        if next== '/' {
+          matched.push(next)
+        } else {
+          return Ok((0, None));
+        }
+      }
+      _ => return Err("EOF"),
+    }
+
+    while let Some(next) = chars.next() {
+      if next != '\n' {
+        matched.push(next);
+      } else {
+        break;
+      }
+    }
+
+    let next_index = matched.len();
+    Ok((next_index, None))
+  }
+}
+
+#[derive(Debug)]
 pub struct ReferenceMatcher {}
 
 impl ReferenceMatcher {
@@ -234,3 +283,15 @@ fn string_matcher() {
   assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'"));
   assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'        "));
 }
+
+#[test]
+fn comment_matcher() {
+  let i_matcher = CommentsMatcher::new();
+  assert_eq!(Ok((8, None)), i_matcher.check("// hello"));
+  assert_eq!(Ok((9, None)), i_matcher.check( "// hello \n not a comment"));
+//  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("\"1234\"        "));
+//  let i_matcher = StringMatcher::new('\'');
+//  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'"));
+//  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'        "));
+}
+
