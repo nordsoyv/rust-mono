@@ -27,6 +27,11 @@
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/service/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/service/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/service/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/service/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/target" />
       <excludeFolder url="file://$MODULE_DIR$/parser-gen/target" />
