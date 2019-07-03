@@ -11,17 +11,16 @@ fn index(info: web::Path<(String, u32)>) -> impl Responder {
   format!("Hello {}! id:{}", info.0, info.1)
 }
 
-fn lex(item : web::Json<LexRequest>) -> HttpResponse {
+fn lex(item: web::Json<LexRequest>) -> HttpResponse {
   let lexer = lexer::Lexer::new();
-  let res =lexer.lex(item.cdl.clone());
+  let res = lexer.lex(item.cdl.clone());
   return match res {
     Ok(tokens) => HttpResponse::Ok().json(tokens),
     Err(e) => {
       println!("{:?}", e);
       HttpResponse::InternalServerError().finish()
     }
-
-  }
+  };
 }
 
 fn main() -> std::io::Result<()> {
@@ -31,7 +30,7 @@ fn main() -> std::io::Result<()> {
   HttpServer::new(||
     App::new()
       .wrap(middleware::Logger::default())
-      .data(web::JsonConfig::default().limit(1024*100)) // <- limit size of the payload (global configuration)
+      .data(web::JsonConfig::default().limit(1024 * 100)) // <- limit size of the payload (global configuration)
       .service(web::resource("/lex").route(web::post().to(lex)))
       .service(web::resource("/{name}/{id}/index.html").to(index))
   )
