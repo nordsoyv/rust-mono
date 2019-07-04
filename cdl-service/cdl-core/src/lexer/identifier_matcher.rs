@@ -125,43 +125,43 @@ impl Matcher for ReferenceMatcher {
   }
 }
 
-#[derive(Debug)]
-pub struct EntityIdMatcher {}
-
-impl EntityIdMatcher {
-  pub fn new() -> EntityIdMatcher {
-    EntityIdMatcher {}
-  }
-}
-
-impl Matcher for EntityIdMatcher {
-  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
-    let mut matched = String::new();
-    let mut chars = input.chars();
-
-    match chars.next() {
-      Some(next) => {
-        if next == '#' {
-          matched.push(next)
-        } else {
-          return Ok((0, None));
-        }
-      }
-      _ => return Err("EOF"),
-    }
-
-    while let Some(next) = chars.next() {
-      if next.is_alphanumeric() || next == '-' || next == '_' {
-        matched.push(next);
-      } else {
-        break;
-      }
-    }
-
-    let next_index = matched.len();
-    Ok((next_index, Some(matched[1..].to_string())))
-  }
-}
+//#[derive(Debug)]
+//pub struct EntityIdMatcher {}
+//
+//impl EntityIdMatcher {
+//  pub fn new() -> EntityIdMatcher {
+//    EntityIdMatcher {}
+//  }
+//}
+//
+//impl Matcher for EntityIdMatcher {
+//  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
+//    let mut matched = String::new();
+//    let mut chars = input.chars();
+//
+//    match chars.next() {
+//      Some(next) => {
+//        if next == '#' {
+//          matched.push(next)
+//        } else {
+//          return Ok((0, None));
+//        }
+//      }
+//      _ => return Err("EOF"),
+//    }
+//
+//    while let Some(next) = chars.next() {
+//      if next.is_alphanumeric() || next == '-' || next == '_' {
+//        matched.push(next);
+//      } else {
+//        break;
+//      }
+//    }
+//
+//    let next_index = matched.len();
+//    Ok((next_index, Some(matched[1..].to_string())))
+//  }
+//}
 
 #[derive(Debug)]
 pub struct NumberMatcher {}
@@ -257,13 +257,13 @@ fn reference_matcher() {
   assert_eq!(Ok((0, None)), i_matcher.check("identifier"));
 }
 
-#[test]
-fn entity_id_matcher() {
-  let i_matcher = EntityIdMatcher::new();
-  assert_eq!(Ok((3, Some("id".to_string()))), i_matcher.check("#id"));
-  assert_eq!(Ok((4, Some("not".to_string()))), i_matcher.check("#not entirely an identifier"));
-  assert_eq!(Ok((0, None)), i_matcher.check("identifier"));
-}
+//#[test]
+//fn entity_id_matcher() {
+//  let i_matcher = EntityIdMatcher::new();
+//  assert_eq!(Ok((3, Some("id".to_string()))), i_matcher.check("#id"));
+//  assert_eq!(Ok((4, Some("not".to_string()))), i_matcher.check("#not entirely an identifier"));
+//  assert_eq!(Ok((0, None)), i_matcher.check("identifier"));
+//}
 
 #[test]
 fn number_matcher() {

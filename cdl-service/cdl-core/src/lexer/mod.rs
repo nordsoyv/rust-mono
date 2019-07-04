@@ -3,13 +3,13 @@ mod literal_matcher;
 mod matcher;
 mod whitespace_matcher;
 
-use identifier_matcher::EntityIdMatcher;
+//use identifier_matcher::EntityIdMatcher;
 use identifier_matcher::IdentifierMatcher;
 use identifier_matcher::NumberMatcher;
 use identifier_matcher::ReferenceMatcher;
 use literal_matcher::LiteralMatcher;
 use matcher::Matcher;
-use matcher::ParseResult;
+//use matcher::ParseResult;
 use whitespace_matcher::WhitespaceMatcher;
 use serde_derive::{Deserialize, Serialize};
 
@@ -17,7 +17,7 @@ use crate::lexer::identifier_matcher::{StringMatcher, CommentsMatcher};
 
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
-enum TokenType {
+pub enum TokenType {
   Identifier,
   EntityId,
   Reference,
@@ -45,10 +45,10 @@ enum TokenType {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Token {
-  start: usize,
-  end: usize,
-  kind: TokenType,
-  text: Option<String>,
+  pub start: usize,
+  pub end: usize,
+  pub kind: TokenType,
+  pub text: Option<String>,
 }
 
 pub struct Lexer {
@@ -307,19 +307,6 @@ riskValue: IIF(average(SCORE(survey:Q1))<7,'H!',IIF(average(SCORE(survey:Q1))>8,
   assert_eq!(lexed.is_ok(), true);
   assert_eq!(lexed.unwrap().len(), 108);
 }
-
-#[test]
-fn lexer_lots_timing() {
-  let start = std::time::Instant::now();
-  let lexer = Lexer::new();
-  lexer.lex("value: MAX(survey:Q2,survey:interview_start=max(survey:interview_start))
-value: average(score(survey:Q7), @cr.currentPeriodB2b)
-thresholds: #82D854 >= 100%, #FFBD5B >= 80%, #FA5263 < 80%
-riskValue: IIF(average(SCORE(survey:Q1))<7,'H!',IIF(average(SCORE(survey:Q1))>8,'L',IIF(COUNT(survey:responseid)<1,'U','M')))".to_string());
-  let dur = start.elapsed();
-//  assert_eq!(dur < std::time::Duration::new(0,500000), true);
-}
-
 
 #[test]
 fn lexer_unknown_char() {
