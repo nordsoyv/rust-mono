@@ -3,13 +3,11 @@ mod literal_matcher;
 mod matcher;
 mod whitespace_matcher;
 
-//use identifier_matcher::EntityIdMatcher;
 use identifier_matcher::IdentifierMatcher;
 use identifier_matcher::NumberMatcher;
 use identifier_matcher::ReferenceMatcher;
 use literal_matcher::LiteralMatcher;
 use matcher::Matcher;
-//use matcher::ParseResult;
 use whitespace_matcher::WhitespaceMatcher;
 use serde_derive::{Deserialize, Serialize};
 
@@ -61,7 +59,6 @@ impl Lexer {
       matchers: vec![
         (Box::new(IdentifierMatcher::new()), TokenType::Identifier),
         (Box::new(ReferenceMatcher::new()), TokenType::Reference),
-//        (Box::new(EntityIdMatcher::new()), TokenType::EntityId),
         (Box::new(NumberMatcher::new()), TokenType::Number),
         (Box::new(CommentsMatcher::new()), TokenType::Comment),
         (Box::new(StringMatcher::new('"')), TokenType::String),
