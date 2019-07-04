@@ -18,8 +18,7 @@ pub struct AstEntity {
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Parser {
   pub entities: RefCell<Vec<AstEntity>>,
-  tokens: Vec<Token>,
-  curr_pos: usize,
+  pub script_entity: EntityRef,
 }
 
 fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Option<Vec<String>> {
@@ -67,52 +66,64 @@ fn is_tokens_left(tokens: &[Token], pos: usize) -> bool {
   tokens.len() > pos
 }
 
+fn eat_token_if_available(tokens: &[Token], kind: TokenType) -> Option<usize> {
+  if tokens[0].kind == kind {
+    Some(1)
+  } else {
+    None
+  }
+}
+
 impl Parser {
   pub fn new() -> Parser {
     Parser {
       entities: RefCell::new(Vec::new()),
-      tokens: vec![],
-      curr_pos: 0,
+      script_entity: 0,
     }
   }
 
-  pub fn parse(&self, tokens: Vec<Token>) {
+  pub fn parse(&mut self, tokens: Vec<Token>) {
     let mut curr_pos = 0;
+    let mut entity_refs = vec![];
     while is_tokens_left(&tokens, curr_pos) {
-      if let Some(num) = self.eat_token_if_available(&tokens[curr_pos..], TokenType::EOL) {
+      if let Some(num) = eat_token_if_available(&tokens[curr_pos..], TokenType::EOL) {
         curr_pos += num;
         continue;
       }
       let res = self.parse_entity(&tokens[curr_pos..]);
       match res {
-        Ok(0) => println!("No mathc"),
-        Ok(num) => {
-          dbg!(num);
-          println!("Found match {}", num);
+        Ok((0, _)) => println!("No mathc"),
+        Ok((num, entity_ref)) => {
           curr_pos += num;
+          entity_refs.push(entity_ref);
         }
 
         Err(e) => println!("{}", e)
       }
     }
+
+    let script_entity_id = self.add_entity(AstEntity {
+      child_entities: entity_refs,
+      terms: vec![],
+      refs: vec![],
+      entity_id: "".to_string(),
+      start_pos: 0,
+      end_pos: tokens[tokens.len()-1].end,
+    });
+    self.script_entity = script_entity_id;
   }
 
-  fn add_entity(&self, e: AstEntity) {
-    self.entities.borrow_mut().push(e);
+  fn add_entity(&self, e: AstEntity) -> EntityRef {
+    let mut ents = self.entities.borrow_mut();
+    ents.push(e);
+    return ents.len() - 1;
   }
 
-  fn eat_token_if_available(&self, tokens: &[Token], kind: TokenType) -> Option<usize> {
-    if tokens[0].kind == kind {
-      Some(1)
-    } else {
-      None
-    }
-  }
 
-  fn parse_entity(&self, tokens: &[Token]) -> Result<usize, String> {
-    println!("Parsing entity");
+  fn parse_entity(&self, tokens: &[Token]) -> Result<(usize, EntityRef), String> {
     let mut terms;
     let mut refs = vec![];
+    let mut children = vec![];
     let mut tokens_consumed = 0;
     let mut entity_id = "".to_string();
     let start_pos = tokens[0].start;
@@ -120,7 +131,7 @@ impl Parser {
       tokens_consumed += t.len();
       terms = t;
     } else {
-      return Ok(0);
+      return Ok((0, 0));
     }
     if is_tokens_left(tokens, tokens_consumed) {
       if let Some(r) = get_refs(&tokens[tokens_consumed..]) {
@@ -136,10 +147,45 @@ impl Parser {
       }
     }
 
-    let end_pos = tokens[tokens_consumed-1].end;
-    self.add_entity(AstEntity { child_entities: vec![], terms, refs, entity_id, start_pos, end_pos });
+    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::OpenBracket) {
+      tokens_consumed += num;
+    } else {
+      return Ok((0, 0));
+    }
 
-    return Ok(tokens_consumed);
+    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::EOL) {
+      tokens_consumed += num;
+    } else {
+      return Ok((0, 0));
+    }
+
+    loop {
+      match self.parse_entity(&tokens[tokens_consumed..]) {
+        Ok((0, _)) => break,
+        Ok((consumed, child_ref)) => {
+          tokens_consumed += consumed;
+          children.push(child_ref);
+        }
+        Err(e) => return Err(e),
+      }
+    }
+
+    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::CloseBracket) {
+      tokens_consumed += num;
+    } else {
+      return Ok((0, 0));
+    }
+
+    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::EOL) {
+      tokens_consumed += num;
+    } else {
+      return Ok((0, 0));
+    }
+
+    let end_pos = tokens[tokens_consumed - 1].end;
+    let entity_ref = self.add_entity(AstEntity { child_entities: children, terms, refs, entity_id, start_pos, end_pos });
+
+    return Ok((tokens_consumed, entity_ref));
   }
 }
 
@@ -150,26 +196,9 @@ mod test {
 
   #[test]
   fn can_parse() {
-    let n = Parser::new();
+    let mut n = Parser::new();
     let l = Lexer::new();
-    let tokens = l.lex("widget kpi @default #id".to_string()).unwrap();
-    n.parse(tokens);
-    assert_eq!(n.entities.borrow().len(), 1);
-    assert_eq!(n.entities.borrow()[0], AstEntity {
-      terms: vec!["widget".to_string(), "kpi".to_string()],
-      refs: vec!["default".to_string()],
-      entity_id: "id".to_string(),
-      child_entities: vec![],
-      start_pos: 0,
-      end_pos: 23,
-    });
-  }
-
-  #[test]
-  fn can_parse_two() {
-    let n = Parser::new();
-    let l = Lexer::new();
-    let tokens = l.lex("widget kpi @default #id \n widget kpi @default #id2".to_string()).unwrap();
+    let tokens = l.lex("widget kpi @default #id {\n}\n".to_string()).unwrap();
     n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
@@ -178,16 +207,91 @@ mod test {
       entity_id: "id".to_string(),
       child_entities: vec![],
       start_pos: 0,
-      end_pos: 23,
+      end_pos: 28,
+    });
+  }
+
+  #[test]
+  fn can_parse_two() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("widget kpi @default #id {\n} \n widget kpi @default #id2 {\n}\n".to_string()).unwrap();
+    n.parse(tokens);
+    assert_eq!(n.entities.borrow().len(), 3);
+    assert_eq!(n.entities.borrow()[0], AstEntity {
+      terms: vec!["widget".to_string(), "kpi".to_string()],
+      refs: vec!["default".to_string()],
+      entity_id: "id".to_string(),
+      child_entities: vec![],
+      start_pos: 0,
+      end_pos: 29,
     });
     assert_eq!(n.entities.borrow()[1], AstEntity {
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id2".to_string(),
       child_entities: vec![],
-      start_pos: 26,
-      end_pos: 50,
+      start_pos: 30,
+      end_pos: 59,
     });
   }
+
+  #[test]
+  fn can_parse_sub_ent() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("widget kpi @default #id {
+    widget list {
+    }
+    widget list {
+    }
+}
+".to_string()).unwrap();
+    n.parse(tokens);
+    assert_eq!(n.entities.borrow().len(), 4);
+    assert_eq!(n.entities.borrow()[0], AstEntity {
+      terms: vec!["widget".to_string(), "list".to_string()],
+      refs: vec![],
+      entity_id: "".to_string(),
+      child_entities: vec![],
+      start_pos: 30,
+      end_pos: 50,
+    });
+    assert_eq!(n.entities.borrow()[2], AstEntity {
+      terms: vec!["widget".to_string(), "kpi".to_string()],
+      refs: vec!["default".to_string()],
+      entity_id: "id".to_string(),
+      child_entities: vec![0, 1],
+      start_pos: 0,
+      end_pos: 76,
+    });
+  }
+
+  #[test]
+  fn create_script_node() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("widget kpi @default #id {\n}\n".to_string()).unwrap();
+    n.parse(tokens);
+    assert_eq!(n.entities.borrow().len(), 2);
+    assert_eq!(n.entities.borrow()[0], AstEntity {
+      terms: vec!["widget".to_string(), "kpi".to_string()],
+      refs: vec!["default".to_string()],
+      entity_id: "id".to_string(),
+      child_entities: vec![],
+      start_pos: 0,
+      end_pos: 28,
+    });
+    assert_eq!(n.entities.borrow()[1], AstEntity {
+      terms: vec![],
+      refs: vec![],
+      entity_id: "".to_string(),
+      child_entities: vec![0],
+      start_pos: 0,
+      end_pos: 28,
+    });
+  }
+
+
 }
 
