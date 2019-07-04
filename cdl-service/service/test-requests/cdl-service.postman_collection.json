@@ -82,6 +82,34 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "parse - small",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nwidget list {\\n}\\nwidget list {\\n}\\n}\\n\"\n}"
+				},
+				"url": {
+					"raw": "{{server}}/parse",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"parse"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
