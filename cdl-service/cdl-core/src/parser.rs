@@ -11,6 +11,8 @@ pub struct AstEntity {
   pub refs: Vec<String>,
   pub entity_id: String,
   pub child_entities: Vec<EntityRef>,
+  pub start_pos: usize,
+  pub end_pos: usize,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -113,6 +115,7 @@ impl Parser {
     let mut refs = vec![];
     let mut tokens_consumed = 0;
     let mut entity_id = "".to_string();
+    let start_pos = tokens[0].start;
     if let Some(t) = get_terms(&tokens[0..]) {
       tokens_consumed += t.len();
       terms = t;
@@ -133,7 +136,8 @@ impl Parser {
       }
     }
 
-    self.add_entity(AstEntity { child_entities: vec![], terms, refs, entity_id });
+    let end_pos = tokens[tokens_consumed-1].end;
+    self.add_entity(AstEntity { child_entities: vec![], terms, refs, entity_id, start_pos, end_pos });
 
     return Ok(tokens_consumed);
   }
@@ -156,6 +160,8 @@ mod test {
       refs: vec!["default".to_string()],
       entity_id: "id".to_string(),
       child_entities: vec![],
+      start_pos: 0,
+      end_pos: 23,
     });
   }
 
@@ -171,12 +177,16 @@ mod test {
       refs: vec!["default".to_string()],
       entity_id: "id".to_string(),
       child_entities: vec![],
+      start_pos: 0,
+      end_pos: 23,
     });
     assert_eq!(n.entities.borrow()[1], AstEntity {
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id2".to_string(),
       child_entities: vec![],
+      start_pos: 26,
+      end_pos: 50,
     });
   }
 }
