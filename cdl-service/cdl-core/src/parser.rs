@@ -368,7 +368,7 @@ impl Parser {
 #[cfg(test)]
 mod test {
   use crate::lexer::Lexer;
-  use crate::parser::{AstEntity, Parser, Rhs, AstProperty};
+  use crate::parser::{AstEntity, Parser, Rhs, AstProperty, AstIdentifier};
 
   #[test]
   fn can_parse() {
@@ -396,7 +396,11 @@ mod test {
     let _r = n.parse_property(&tokens);
     assert_eq!(n.entities.borrow().len(), 0);
     assert_eq!(n.rhs.borrow().len(), 1);
-    assert_eq!(n.rhs.borrow()[0], Rhs::Identifier("hello".to_string()));
+    assert_eq!(n.rhs.borrow()[0], Rhs::Identifier(AstIdentifier {
+      value: "hello".to_string(),
+      start_pos: 8,
+      end_pos: 13,
+    }));
     assert_eq!(n.properties.borrow().len(), 1);
     assert_eq!(n.properties.borrow()[0], AstProperty {
       name: "label".to_string(),
