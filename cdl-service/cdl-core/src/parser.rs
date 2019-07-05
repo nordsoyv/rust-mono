@@ -22,7 +22,22 @@ pub struct AstEntity {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub enum Rhs {
-  Identifier(String)
+  Identifier(AstIdentifier),
+  String(AstString),
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstIdentifier {
+  pub value: String,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstString {
+  pub value: String,
+  pub start_pos: usize,
+  pub end_pos: usize,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -74,7 +89,7 @@ fn get_terms(tokens: &[Token]) -> Option<Vec<String>> {
   get_tokens_of_kind(tokens, TokenType::Identifier)
 }
 
-fn get_refs(tokens: &[ Token]) -> Option<Vec<String>> {
+fn get_refs(tokens: &[Token]) -> Option<Vec<String>> {
   get_tokens_of_kind(tokens, TokenType::Reference)
 }
 
@@ -114,7 +129,21 @@ fn eat_token_if_available(tokens: &[Token], kind: TokenType) -> Option<usize> {
   }
 }
 
-fn eat_eol(tokens: &[Token]) -> usize {
+
+fn eat_eol_and_comments(tokens: &[Token]) -> usize {
+  let mut curr_pos = 0;
+  loop {
+    if tokens[curr_pos].kind == TokenType::EOL || tokens[curr_pos].kind == TokenType::Comment {
+      curr_pos += 1;
+      continue;
+    } else {
+      break;
+    }
+  }
+  return curr_pos;
+}
+
+fn _eat_eol(tokens: &[Token]) -> usize {
   let mut curr_pos = 0;
   loop {
     if tokens[curr_pos].kind == TokenType::EOL {
@@ -137,7 +166,7 @@ impl Parser {
     }
   }
 
-  pub fn parse(&mut self, tokens: Vec<Token>) {
+  pub fn parse(&mut self, tokens: Vec<Token>) -> Result<(), String> {
     let mut curr_pos = 0;
     let mut entity_refs = vec![];
     while is_tokens_left(&tokens, curr_pos) {
@@ -147,13 +176,19 @@ impl Parser {
       }
       let res = self.parse_entity(&tokens[curr_pos..]);
       match res {
-        Ok((_, 0)) => println!("No match"),
+        Ok((_, 0)) => {
+          println!("No match");
+          return Err("No match".to_string());
+        }
         Ok((entity_ref, num)) => {
           curr_pos += num;
           entity_refs.push(entity_ref);
         }
 
-        Err(e) => println!("{}", e)
+        Err(e) => {
+          println!("{}", e);
+          return Err(e);
+        }
       }
     }
 
@@ -167,6 +202,7 @@ impl Parser {
       end_pos: tokens[tokens.len() - 1].end,
     });
     self.script_entity = script_entity_id;
+    return Ok(());
   }
 
   fn add_entity(&self, e: AstEntity) -> EntityRef {
@@ -211,8 +247,31 @@ impl Parser {
   }
 
   fn parse_rhs(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
-    if tokens[0].kind == TokenType::Identifier && tokens[1].kind == TokenType::EOL {
-      let r_index = self.add_rhs(Rhs::Identifier(tokens[0].text.clone().unwrap_or("".to_string())));
+    let mut curr_pos = 0;
+    let rhs;
+    let curr_token = &tokens[curr_pos];
+    match curr_token.kind {
+      TokenType::Identifier => {
+        let ast_ident = AstIdentifier {
+          start_pos: tokens[0].start,
+          end_pos: tokens[0].end,
+          value: tokens[0].text.clone().unwrap_or("".to_string()),
+        };
+        rhs = Rhs::Identifier(ast_ident);
+      }
+      TokenType::String => {
+        let ast_string = AstString {
+          start_pos: tokens[0].start,
+          end_pos: tokens[0].end,
+          value: tokens[0].text.clone().unwrap_or("".to_string()),
+        };
+        rhs = Rhs::String(ast_string);
+      }
+      _ => return Err(format!("Unkwnon token when trying to parse RHS: {:?}", curr_token.kind)),
+    }
+
+    if tokens[1].kind == TokenType::EOL {
+      let r_index = self.add_rhs(rhs);
       return Ok((r_index, 2));
     }
     return Ok((0, 0));
@@ -254,7 +313,7 @@ impl Parser {
 
 
     loop {
-      tokens_consumed += eat_eol(&tokens[tokens_consumed..]);
+      tokens_consumed += eat_eol_and_comments(&tokens[tokens_consumed..]);
 
       match self.parse_entity(&tokens[tokens_consumed..]) {
         Ok((_, 0)) => {}
@@ -277,7 +336,7 @@ impl Parser {
       }
       break;
     }
-    tokens_consumed += eat_eol(&tokens[tokens_consumed..]);
+    tokens_consumed += eat_eol_and_comments(&tokens[tokens_consumed..]);
 
     if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::CloseBracket) {
       tokens_consumed += num;
@@ -331,7 +390,7 @@ mod test {
 
   #[test]
   fn can_parse_prop() {
-    let  n = Parser::new();
+    let n = Parser::new();
     let l = Lexer::new();
     let tokens = l.lex("label : hello\n".to_string()).unwrap();
     let _r = n.parse_property(&tokens);
@@ -342,11 +401,9 @@ mod test {
     assert_eq!(n.properties.borrow()[0], AstProperty {
       name: "label".to_string(),
       rhs: 0,
-      start_pos:0,
-      end_pos:14
+      start_pos: 0,
+      end_pos: 14,
     });
-
-
   }
 
   #[test]
@@ -434,7 +491,6 @@ mod test {
       start_pos: 16,
       end_pos: 30,
     });
-
   }
 
 
