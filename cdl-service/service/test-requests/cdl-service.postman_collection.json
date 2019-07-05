@@ -107,6 +107,62 @@
 				}
 			},
 			"response": []
+|		},
+		{
+			"name": "parse - props",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nlabel : \\\"hello\\\"\\n size:small\\n}\\n\"\n}"
+				},
+				"url": {
+					"raw": "{{server}}/parse",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"parse"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "parse - props error",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nlabel : \\\"hello\\\"\\n size:small}\\n\"\n}"
+				},
+				"url": {
+					"raw": "{{server}}/parse",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"parse"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -133,7 +189,7 @@
 	],
 	"variable": [
 		{
-			"id": "4c58315c-976f-4a51-85a7-402f2b396924",
+			"id": "710d9ebe-b0b5-4678-a08d-cf7fdb3dc155",
 			"key": "server",
 			"value": "localhost:8080",
 			"type": "string"

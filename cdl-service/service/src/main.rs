@@ -38,7 +38,10 @@ fn parse(item: web::Json<LexRequest>) -> HttpResponse {
 
   let mut parser = parser::Parser::new();
   let res = parser.parse(tokens);
-  return HttpResponse::Ok().json(parser);
+  match res {
+    Ok(()) =>return HttpResponse::Ok().json(parser),
+    Err(e)=> return HttpResponse::BadRequest().body(e),
+  }
 
 }
 
