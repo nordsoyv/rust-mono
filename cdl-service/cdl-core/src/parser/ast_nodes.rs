@@ -19,6 +19,8 @@ pub struct AstEntity {
 pub enum Rhs {
   Identifier(AstIdentifier),
   String(AstString),
+  Operator(AstOperator),
+  Number(AstNumber),
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -29,8 +31,31 @@ pub struct AstIdentifier {
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub enum Operator {
+  Plus,
+  Minus,
+  Mul,
+  Del,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstOperator {
+  pub op: Operator,
+  pub left: RhsRef,
+  pub right: RhsRef,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstString {
   pub value: String,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}#[derive(Debug, PartialEq, Deserialize, Serialize)]
+
+pub struct AstNumber {
+  pub value: f64,
   pub start_pos: usize,
   pub end_pos: usize,
 }

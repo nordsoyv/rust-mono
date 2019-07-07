@@ -99,3 +99,7 @@ pub fn _eat_eol(tokens: &[Token]) -> usize {
   }
   return curr_pos;
 }
+
+pub fn can_start_prop(tokens: &[Token]) -> bool {
+  tokens[0].kind == TokenType::Identifier && tokens[1].kind == TokenType::Colon
+}

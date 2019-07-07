@@ -54,7 +54,7 @@ impl Matcher for CommentsMatcher {
 
     match chars.next() {
       Some(next) => {
-        if next== '/' {
+        if next == '/' {
           matched.push(next)
         } else {
           return Ok((0, None));
@@ -65,7 +65,7 @@ impl Matcher for CommentsMatcher {
 
     match chars.next() {
       Some(next) => {
-        if next== '/' {
+        if next == '/' {
           matched.push(next)
         } else {
           return Ok((0, None));
@@ -151,7 +151,7 @@ impl Matcher for NumberMatcher {
     }
 
     while let Some(next) = chars.next() {
-      if next.is_numeric() {
+      if next.is_numeric() || next == '.' {
         matched.push(next);
       } else {
         break;
@@ -242,7 +242,7 @@ fn string_matcher() {
 fn comment_matcher() {
   let i_matcher = CommentsMatcher::new();
   assert_eq!(Ok((8, None)), i_matcher.check("// hello"));
-  assert_eq!(Ok((9, None)), i_matcher.check( "// hello \n not a comment"));
+  assert_eq!(Ok((9, None)), i_matcher.check("// hello \n not a comment"));
 //  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("\"1234\"        "));
 //  let i_matcher = StringMatcher::new('\'');
 //  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'"));
