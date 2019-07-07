@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "65370b66-8939-4134-9d64-2dc8a8550e54",
+		"_postman_id": "7810344e-57cd-44f0-8e2e-f769b223f462",
 		"name": "cdl-service",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -66,13 +66,43 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"cdl\": \"widget kpi\"\n}"
+					"raw": "{\n    \"cdl\": \"widget kpi 1234\"\n}"
 				},
 				"url": {
 					"raw": "{{server}}/lex",
 					"host": [
 						"{{server}}"
 					],
+					"port": "8080",
+					"path": [
+						"lex"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "LEX - small 2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nwidget list {\\n}\\nwidget list {\\n}\\n size :small \\n prop : foo + bar\\n\\n\\n\\n//comment \\n}\\n\"\n}"
+				},
+				"url": {
+					"raw": "localhost:8080/lex",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
 					"path": [
 						"lex"
 					]
@@ -94,35 +124,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nwidget list {\\n}\\nwidget list {\\n}\\n}\\n\"\n}"
-				},
-				"url": {
-					"raw": "{{server}}/parse",
-					"host": [
-						"{{server}}"
-					],
-					"path": [
-						"parse"
-					]
-				}
-			},
-			"response": []
-|		},
-		{
-			"name": "parse - props",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nlabel : \\\"hello\\\"\\n size:small\\n}\\n\"\n}"
+					"raw": "{\n    \"cdl\": \"widget kpi  {\\n prop : foo + bar\\nprop2 : foo - bar\\n prop3 : foo * bar\\n prop4 : foo / bar\\n}\\n\"\n}"
 				},
 				"url": {
 					"raw": "{{server}}/parse",
@@ -137,7 +139,7 @@
 			"response": []
 		},
 		{
-			"name": "parse - props error",
+			"name": "parse - expr",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -150,7 +152,63 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nlabel : \\\"hello\\\"\\n size:small}\\n\"\n}"
+					"raw": "{\n    \"cdl\": \"widget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\n\"\n}"
+				},
+				"url": {
+					"raw": "{{server}}/parse",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"parse"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "parse - expr number",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi  {\\n prop : 1234.34\\n }\\n\"\n}"
+				},
+				"url": {
+					"raw": "{{server}}/parse",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"parse"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "parse - small error",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi @default #id {\\nwidget list {\\n}\\nwidget list {\\n}\\n size :small \\n size : \\n}\\n\"\n}"
 				},
 				"url": {
 					"raw": "{{server}}/parse",
@@ -169,7 +227,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "7e9aceb9-6d92-4fda-b2cd-abad40057251",
+				"id": "5463b0ae-53f3-4ffc-b9f5-f782fc3ca15b",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -179,7 +237,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "5c855cf0-5feb-4bd6-8e20-5c3d8b171009",
+				"id": "20cb3d59-8374-4931-9f96-b787b7a67a57",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -189,7 +247,7 @@
 	],
 	"variable": [
 		{
-			"id": "710d9ebe-b0b5-4678-a08d-cf7fdb3dc155",
+			"id": "2e4a4e1c-6bbb-42be-8062-17bbc5706049",
 			"key": "server",
 			"value": "localhost:8080",
 			"type": "string"
