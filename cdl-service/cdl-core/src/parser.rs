@@ -1,52 +1,13 @@
+mod ast_nodes;
+mod utils;
+
 use std::cell::RefCell;
-
 use serde_derive::{Deserialize, Serialize};
-
 use crate::lexer::Token;
 use crate::lexer::TokenType;
+use crate::parser::ast_nodes::{AstEntity, AstProperty, Rhs, AstIdentifier, AstString, EntityRef, PropertyRef, RhsRef};
+use crate::parser::utils::{is_tokens_left, eat_token_if_available, get_terms, get_refs, get_entity_id, eat_eol_and_comments};
 
-type EntityRef = usize;
-type PropertyRef = usize;
-type RhsRef = usize;
-
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
-pub struct AstEntity {
-  pub terms: Vec<String>,
-  pub refs: Vec<String>,
-  pub entity_id: String,
-  pub child_entities: Vec<EntityRef>,
-  pub properties: Vec<PropertyRef>,
-  pub start_pos: usize,
-  pub end_pos: usize,
-}
-
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
-pub enum Rhs {
-  Identifier(AstIdentifier),
-  String(AstString),
-}
-
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
-pub struct AstIdentifier {
-  pub value: String,
-  pub start_pos: usize,
-  pub end_pos: usize,
-}
-
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
-pub struct AstString {
-  pub value: String,
-  pub start_pos: usize,
-  pub end_pos: usize,
-}
-
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
-pub struct AstProperty {
-  pub name: String,
-  pub rhs: RhsRef,
-  pub start_pos: usize,
-  pub end_pos: usize,
-}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Parser {
@@ -54,106 +15,6 @@ pub struct Parser {
   pub properties: RefCell<Vec<AstProperty>>,
   pub rhs: RefCell<Vec<Rhs>>,
   pub script_entity: EntityRef,
-}
-
-fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Option<Vec<String>> {
-  let mut curr_pos = 0;
-  let mut terms = vec![];
-  loop {
-    if curr_pos == tokens.len() {
-      break;
-    }
-    let curr_token = &tokens[curr_pos];
-    if curr_token.kind != kind {
-      break;
-    }
-    let text = curr_token.text.clone();
-    terms.push(text.unwrap_or("".to_string()));
-    curr_pos += 1;
-  }
-  if terms.len() == 0 {
-    return None;
-  }
-  Some(terms)
-}
-
-fn _get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
-  let curr_token = &tokens[0];
-  if curr_token.kind != kind {
-    return None;
-  }
-  return Some(curr_token.text.clone().unwrap_or("".to_string()));
-}
-
-fn get_terms(tokens: &[Token]) -> Option<Vec<String>> {
-  get_tokens_of_kind(tokens, TokenType::Identifier)
-}
-
-fn get_refs(tokens: &[Token]) -> Option<Vec<String>> {
-  get_tokens_of_kind(tokens, TokenType::Reference)
-}
-
-fn get_entity_id(tokens: &[Token]) -> Option<(String, usize)> {
-  if tokens.len() < 2 {
-    return None;
-  }
-  if tokens[0].kind == TokenType::Hash && tokens[1].kind == TokenType::Identifier {
-    let text = tokens[1].text.clone();
-    Some((text.unwrap_or("".to_string()), 2))
-  } else {
-    None
-  }
-}
-
-fn is_tokens_left(tokens: &[Token], pos: usize) -> bool {
-  tokens.len() > pos
-}
-
-fn _eat_tokens_if_available(tokens: &[Token], kind: TokenType) -> usize {
-  let mut curr_pos = 0;
-  loop {
-    if tokens[curr_pos].kind == kind {
-      curr_pos += 1;
-      continue;
-    } else {
-      return curr_pos;
-    }
-  }
-}
-
-fn eat_token_if_available(tokens: &[Token], kind: TokenType) -> Option<usize> {
-  if tokens[0].kind == kind {
-    Some(1)
-  } else {
-    None
-  }
-}
-
-
-fn eat_eol_and_comments(tokens: &[Token]) -> usize {
-  let mut curr_pos = 0;
-  loop {
-    if tokens[curr_pos].kind == TokenType::EOL || tokens[curr_pos].kind == TokenType::Comment {
-      curr_pos += 1;
-      continue;
-    } else {
-      break;
-    }
-  }
-  return curr_pos;
-}
-
-fn _eat_eol(tokens: &[Token]) -> usize {
-  let mut curr_pos = 0;
-  loop {
-    if tokens[curr_pos].kind == TokenType::EOL {
-      curr_pos += 1;
-      continue;
-    } else {
-      break;
-    }
-  }
-  return curr_pos;
 }
 
 impl Parser {
