@@ -345,7 +345,7 @@ mod test {
     let mut n = Parser::new();
     let l = Lexer::new();
     let tokens = l.lex("widget kpi @default #id {\n}\n".to_string()).unwrap();
-    n.parse(tokens);
+    let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
       terms: vec!["widget".to_string(), "kpi".to_string()],
@@ -376,7 +376,7 @@ mod test {
       name: "label".to_string(),
       rhs: 0,
       start_pos: 0,
-      end_pos: 14,
+      end_pos: 13,
     });
   }
 
@@ -385,7 +385,7 @@ mod test {
     let mut n = Parser::new();
     let l = Lexer::new();
     let tokens = l.lex("widget kpi @default #id {\n} \n widget kpi @default #id2 {\n}\n".to_string()).unwrap();
-    n.parse(tokens);
+    let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 3);
     assert_eq!(n.entities.borrow()[0], AstEntity {
       terms: vec!["widget".to_string(), "kpi".to_string()],
@@ -418,7 +418,7 @@ mod test {
     }
 }
 ".to_string()).unwrap();
-    n.parse(tokens);
+    let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 4);
     assert_eq!(n.entities.borrow()[0], AstEntity {
       terms: vec!["widget".to_string(), "list".to_string()],
@@ -448,7 +448,7 @@ mod test {
    label : hello
 }
 ".to_string()).unwrap();
-    n.parse(tokens);
+    let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
       terms: vec!["widget".to_string(), "kpi".to_string()],
@@ -463,7 +463,33 @@ mod test {
       name: "label".to_string(),
       rhs: 0,
       start_pos: 16,
-      end_pos: 30,
+      end_pos: 29,
+    });
+  }
+  #[test]
+  fn can_parse_prop_expr() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("widget kpi {
+   label : 1 + 2 * 3 + hello + \"string\"
+}
+".to_string()).unwrap();
+    let _r = n.parse(tokens);
+    assert_eq!(n.entities.borrow().len(), 2);
+    assert_eq!(n.entities.borrow()[0], AstEntity {
+      terms: vec!["widget".to_string(), "kpi".to_string()],
+      refs: vec![],
+      entity_id: "".to_string(),
+      child_entities: vec![],
+      properties: vec![0],
+      start_pos: 0,
+      end_pos: 55,
+    });
+    assert_eq!(n.properties.borrow()[0], AstProperty {
+      name: "label".to_string(),
+      rhs: 8,
+      start_pos: 16,
+      end_pos: 52,
     });
   }
 
@@ -473,7 +499,7 @@ mod test {
     let mut n = Parser::new();
     let l = Lexer::new();
     let tokens = l.lex("widget kpi @default #id {\n}\n".to_string()).unwrap();
-    n.parse(tokens);
+    let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
       terms: vec!["widget".to_string(), "kpi".to_string()],
