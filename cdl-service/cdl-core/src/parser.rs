@@ -271,6 +271,7 @@ impl Parser {
       }
     }
   }
+
   fn parse_factor(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
     let mut curr_pos = 0;
     let rhs;

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7810344e-57cd-44f0-8e2e-f769b223f462",
+		"_postman_id": "2be5de3b-2de1-4d6d-a7ea-671ceb8b13d8",
 		"name": "cdl-service",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -73,7 +73,6 @@
 					"host": [
 						"{{server}}"
 					],
-					"port": "8080",
 					"path": [
 						"lex"
 					]
@@ -167,6 +166,34 @@
 			"response": []
 		},
 		{
+			"name": "parse - expr large",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\nwidget kpi  {\\n prop : foo * bar * baz\\n prop2 : foo + bar + baz\\n prop3 : \\\"foo\\\" + bar + baz\\n }\\n\"\n}"
+				},
+				"url": {
+					"raw": "{{server}}/parse",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"parse"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "parse - expr number",
 			"request": {
 				"method": "POST",
@@ -180,7 +207,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"cdl\": \"widget kpi  {\\n prop : 1234.34\\n }\\n\"\n}"
+					"raw": "{\n    \"cdl\": \"widget kpi  {\\n prop : 1234.34\\n prop2 : 1234.34 + ( 1234 + - 25 ) + 12\\n }\\n\"\n}"
 				},
 				"url": {
 					"raw": "{{server}}/parse",
