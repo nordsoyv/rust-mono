@@ -21,6 +21,7 @@ pub enum Rhs {
   String(AstString),
   Operator(AstOperator),
   Number(AstNumber),
+  UnaryOp(AstUnaryOp),
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -52,10 +53,19 @@ pub struct AstString {
   pub value: String,
   pub start_pos: usize,
   pub end_pos: usize,
-}#[derive(Debug, PartialEq, Deserialize, Serialize)]
+}
 
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstNumber {
   pub value: f64,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstUnaryOp {
+  pub op : Operator,
+  pub right: RhsRef,
   pub start_pos: usize,
   pub end_pos: usize,
 }

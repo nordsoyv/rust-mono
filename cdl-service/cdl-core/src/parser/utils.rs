@@ -1,5 +1,6 @@
 use crate::lexer::{Token, TokenType};
 
+#[inline]
 pub fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Option<Vec<String>> {
   let mut curr_pos = 0;
   let mut terms = vec![];
@@ -21,6 +22,7 @@ pub fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Option<Vec<Strin
   Some(terms)
 }
 
+#[inline]
 pub fn _get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
   let curr_token = &tokens[0];
   if curr_token.kind != kind {
@@ -29,14 +31,18 @@ pub fn _get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
   return Some(curr_token.text.clone().unwrap_or("".to_string()));
 }
 
+#[inline]
 pub fn get_terms(tokens: &[Token]) -> Option<Vec<String>> {
   get_tokens_of_kind(tokens, TokenType::Identifier)
 }
 
+#[inline]
 pub fn get_refs(tokens: &[Token]) -> Option<Vec<String>> {
   get_tokens_of_kind(tokens, TokenType::Reference)
 }
 
+
+#[inline]
 pub fn get_entity_id(tokens: &[Token]) -> Option<(String, usize)> {
   if tokens.len() < 2 {
     return None;
@@ -49,10 +55,12 @@ pub fn get_entity_id(tokens: &[Token]) -> Option<(String, usize)> {
   }
 }
 
+#[inline]
 pub fn is_tokens_left(tokens: &[Token], pos: usize) -> bool {
   tokens.len() > pos
 }
 
+#[inline]
 pub fn _eat_tokens_if_available(tokens: &[Token], kind: TokenType) -> usize {
   let mut curr_pos = 0;
   loop {
@@ -65,6 +73,7 @@ pub fn _eat_tokens_if_available(tokens: &[Token], kind: TokenType) -> usize {
   }
 }
 
+#[inline]
 pub fn eat_token_if_available(tokens: &[Token], kind: TokenType) -> Option<usize> {
   if tokens[0].kind == kind {
     Some(1)
@@ -73,7 +82,12 @@ pub fn eat_token_if_available(tokens: &[Token], kind: TokenType) -> Option<usize
   }
 }
 
+#[inline]
+pub fn is_next_token(tokens: &[Token], kind: TokenType) -> bool {
+  tokens[0].kind == kind
+}
 
+#[inline]
 pub fn eat_eol_and_comments(tokens: &[Token]) -> usize {
   let mut curr_pos = 0;
   loop {
@@ -87,6 +101,7 @@ pub fn eat_eol_and_comments(tokens: &[Token]) -> usize {
   return curr_pos;
 }
 
+#[inline]
 pub fn _eat_eol(tokens: &[Token]) -> usize {
   let mut curr_pos = 0;
   loop {
@@ -100,6 +115,7 @@ pub fn _eat_eol(tokens: &[Token]) -> usize {
   return curr_pos;
 }
 
+#[inline]
 pub fn can_start_prop(tokens: &[Token]) -> bool {
   tokens[0].kind == TokenType::Identifier && tokens[1].kind == TokenType::Colon
 }

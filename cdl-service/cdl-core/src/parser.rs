@@ -4,8 +4,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::lexer::Token;
 use crate::lexer::TokenType;
-use crate::parser::ast_nodes::{AstEntity, AstIdentifier, AstOperator, AstProperty, AstString, EntityRef, Operator, PropertyRef, Rhs, RhsRef, AstNumber};
-use crate::parser::utils::{can_start_prop, eat_eol_and_comments, eat_token_if_available, get_entity_id, get_refs, get_terms, is_tokens_left};
+use crate::parser::ast_nodes::{AstEntity, AstIdentifier, AstOperator, AstProperty, AstString, EntityRef, Operator, PropertyRef, Rhs, RhsRef, AstNumber, AstUnaryOp};
+use crate::parser::utils::{can_start_prop, eat_eol_and_comments, eat_token_if_available, get_entity_id, get_refs, get_terms, is_tokens_left, is_next_token};
 
 mod ast_nodes;
 mod utils;
@@ -165,7 +165,6 @@ impl Parser {
   pub fn parse_property(&self, tokens: &[Token]) -> Result<(PropertyRef, usize), String> {
     if tokens[0].kind == TokenType::Identifier && tokens[1].kind == TokenType::Colon {
       let rhs = self.parse_expr(&tokens[2..])?;
-//      println!("Got expr {} {}", rhs.0, rhs.1);
       match rhs {
         (_, 0) => return Ok((0, 0)),
         (index, num) => {
@@ -175,7 +174,6 @@ impl Parser {
             start_pos: tokens[0].start,
             end_pos: tokens[1 + num].end,
           };
-//          println!("adding prop");
           let p_index = self.add_property(p);
           return Ok((p_index, 2 + num));
         }
@@ -188,7 +186,6 @@ impl Parser {
   fn parse_expr(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
     let mut curr_pos = 0;
     let mut curr_rhs_index;
-//    println!("Parsing expr. current token is : {:?}", tokens[0]);
     let (term_index, tokens_consumed) = self.parse_term(tokens)?;
     if tokens_consumed == 0 {
       return Err(format!("Error when parsing expression at pos {}, token: {:?}", tokens[0].start, tokens[0].kind));
@@ -225,7 +222,6 @@ impl Parser {
           return Ok((curr_rhs_index, curr_pos));
         }
         _ => {
-//          println!("returning expr {}", curr_pos);
           return Ok((curr_rhs_index, curr_pos));
         }
       }
@@ -234,7 +230,6 @@ impl Parser {
   fn parse_term(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
     let mut curr_pos = 0;
     let mut curr_rhs_index;
-//    println!("Parsing term. current token is : {:?}", tokens[0]);
     let (left_factor_index, tokens_consumed) = self.parse_factor(tokens)?;
     if tokens_consumed == 0 {
       return Err(format!("Error when parsing term at pos {}, token: {:?}", tokens[0].start, tokens[0].kind));
@@ -272,19 +267,16 @@ impl Parser {
         }
         _ => {
           return Ok((curr_rhs_index, curr_pos));
-          //return Err(format!("not implemented in Term pos: {}, token: {:?}", tokens[tokens_consumed].start, tokens[tokens_consumed].kind));
         }
       }
     }
   }
   fn parse_factor(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
     let mut curr_pos = 0;
-//    println!("Parsing factor. current token is : {:?}", tokens[0]);
     let rhs;
     let curr_token = &tokens[curr_pos];
     match curr_token.kind {
       TokenType::Identifier => {
-//        println!("Found ident");
         let ast_ident = AstIdentifier {
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
@@ -306,11 +298,39 @@ impl Parser {
         let ast_number = AstNumber {
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
-          value :tokens[0].text.clone().unwrap_or("".to_string()).parse::<f64>().unwrap_or(0f64)
-
+          value: tokens[0].text.clone().unwrap_or("".to_string()).parse::<f64>().unwrap_or(0f64),
         };
+
         rhs = self.add_rhs(Rhs::Number(ast_number));
         return Ok((rhs, 1));
+      }
+      TokenType::OpenParen => {
+        let expr = self.parse_expr(&tokens[1..])?;
+        match expr {
+          (_, 0) => return Err(format!("Error parsing factor after '(', token : {:?}, pos {}", curr_token.kind, curr_token.start)),
+          (expr_index, tokens_consumed) => {
+            if is_next_token(&tokens[1 + tokens_consumed..], TokenType::CloseParen) {
+              return Ok((expr_index, 1 + tokens_consumed + 1));
+            } else {
+              return Err(format!("Error parsing factor found token : {:?} at pos {}, expected CloseParen", curr_token.kind, curr_token.start));
+            }
+          }
+        }
+      }
+      TokenType::Minus => {
+        let expr = self.parse_expr(&tokens[1..])?;
+        match expr {
+          (_, 0) => return Err(format!("Error parsing factor after '-', token : {:?}, pos {}", curr_token.kind, curr_token.start)),
+          (expr_index, tokens_consumed) => {
+            let op_index = self.add_rhs(Rhs::UnaryOp(AstUnaryOp{
+              right: expr_index,
+              op: Operator::Minus,
+              start_pos : curr_token.start,
+              end_pos : tokens[tokens_consumed+1].end,
+            }));
+            return Ok((op_index, tokens_consumed +1)); // plus 1 for the minus token
+          }
+        }
       }
       _ => return Err(format!("Unknown token when trying to parse factor: {:?} , at pos {:?}", curr_token.kind, curr_token.start)),
     }
@@ -466,6 +486,7 @@ mod test {
       end_pos: 29,
     });
   }
+
   #[test]
   fn can_parse_prop_expr() {
     let mut n = Parser::new();
