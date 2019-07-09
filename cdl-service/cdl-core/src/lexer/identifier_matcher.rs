@@ -26,7 +26,7 @@ impl Matcher for IdentifierMatcher {
     }
 
     while let Some(next) = chars.next() {
-      if next.is_alphanumeric() || next == '-' || next == '_' {
+      if next.is_alphanumeric() || next == '-' || next == '_' || next == '.' {
         matched.push(next);
       } else {
         break;

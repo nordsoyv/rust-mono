@@ -65,7 +65,7 @@ impl Lexer {
         (Box::new(StringMatcher::new('\'')), TokenType::String),
         (Box::new(LiteralMatcher::new(":")), TokenType::Colon),
         (Box::new(LiteralMatcher::new(",")), TokenType::Comma),
-        (Box::new(LiteralMatcher::new(".")), TokenType::Dot),
+//        (Box::new(LiteralMatcher::new(".")), TokenType::Dot),
         (Box::new(LiteralMatcher::new("=")), TokenType::Equal),
         (Box::new(LiteralMatcher::new("<")), TokenType::LessThan),
         (Box::new(LiteralMatcher::new(">")), TokenType::MoreThan),
@@ -966,6 +966,6 @@ format: formatterLTR
 }
     ".to_string());
   assert_eq!(lexed.is_ok(), true);
-  assert_eq!(lexed.unwrap().len(), 2944);
+  assert_eq!(lexed.unwrap().len(), 2930);
 //  assert_eq!(lexed.unwrap().len(), 108);
 }
