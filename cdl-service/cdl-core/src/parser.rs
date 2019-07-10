@@ -447,23 +447,7 @@ impl Parser {
       let mut rhs_vec = self.rhs.borrow_mut();
       rhs_vec[rhs_index] = new_rhs;
     }
-    //self.rhs.borrow_mut()[rhs_index] = ;
   }
-
-//  fn set_parent_rhs(&self, rhs_index: RhsRef, parent: Parent ){
-//    let  r= &self.rhs.borrow()[rhs_index];
-//    match r {
-//     Rhs::Operator(mut o) => o.parent = parent,
-//     Rhs::Identifier(mut i) => i.parent = parent,
-//     Rhs::String(mut s) => s.parent = parent,
-//     Rhs::Number(mut n) => n.parent = parent,
-//     Rhs::UnaryOp(mut u) => u.parent = parent,
-//    }
-//
-//
-////    rhs.push(r);
-////    return rhs.len() - 1;
-//  }
 }
 
 #[cfg(test)]
