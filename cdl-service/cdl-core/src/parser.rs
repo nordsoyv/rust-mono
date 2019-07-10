@@ -171,7 +171,7 @@ impl Parser {
 
     let end_pos = tokens[tokens_consumed - 1].end;
     let entity_ref = self.add_entity(AstEntity {
-      parent : Parent::None,
+      parent: Parent::None,
       child_entities: children,
       properties,
       terms,
@@ -199,6 +199,7 @@ impl Parser {
             end_pos: tokens[1 + num].end,
           };
           let p_index = self.add_property(p);
+          self.set_parent_rhs(index, Parent::Property(p_index));
           return Ok((p_index, 2 + num));
         }
       }
@@ -222,7 +223,7 @@ impl Parser {
           let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Mul token
           let expr_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent : Parent::None,
+            parent: Parent::None,
             left: curr_rhs_index,
             right: term_index,
             op: Operator::Mul,
@@ -235,7 +236,7 @@ impl Parser {
           let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Div token
           let expr_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent : Parent::None,
+            parent: Parent::None,
             left: curr_rhs_index,
             right: term_index,
             op: Operator::Del,
@@ -269,7 +270,7 @@ impl Parser {
           let (factor_index, tokens_consumed) = self.parse_factor(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Plus token
           let term_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent : Parent::None,
+            parent: Parent::None,
             left: curr_rhs_index,
             right: factor_index,
             op: Operator::Plus,
@@ -282,7 +283,7 @@ impl Parser {
           let (factor_index, tokens_consumed) = self.parse_factor(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Minus token
           let term_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent : Parent::None,
+            parent: Parent::None,
             left: curr_rhs_index,
             right: factor_index,
             op: Operator::Minus,
@@ -308,7 +309,7 @@ impl Parser {
     match curr_token.kind {
       TokenType::Identifier => {
         let ast_ident = AstIdentifier {
-          parent : Parent::None,
+          parent: Parent::None,
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
           value: tokens[0].text.clone().unwrap_or("".to_string()),
@@ -318,7 +319,7 @@ impl Parser {
       }
       TokenType::String => {
         let ast_string = AstString {
-          parent : Parent::None,
+          parent: Parent::None,
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
           value: tokens[0].text.clone().unwrap_or("".to_string()),
@@ -328,7 +329,7 @@ impl Parser {
       }
       TokenType::Number => {
         let ast_number = AstNumber {
-          parent : Parent::None,
+          parent: Parent::None,
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
           value: tokens[0].text.clone().unwrap_or("".to_string()).parse::<f64>().unwrap_or(0f64),
@@ -356,7 +357,7 @@ impl Parser {
           (_, 0) => return Err(format!("Error parsing factor after '-', token : {:?}, pos {}", curr_token.kind, curr_token.start)),
           (expr_index, tokens_consumed) => {
             let op_index = self.add_rhs(Rhs::UnaryOp(AstUnaryOp {
-              parent : Parent::None,
+              parent: Parent::None,
               right: expr_index,
               op: Operator::Minus,
               start_pos: curr_token.start,
@@ -373,7 +374,7 @@ impl Parser {
   fn add_entity(&self, e: AstEntity) -> EntityRef {
     let mut ents = self.entities.borrow_mut();
     ents.push(e);
-    return ents.len() - 1 ;
+    return ents.len() - 1;
   }
 
   fn add_property(&self, p: AstProperty) -> PropertyRef {
@@ -386,6 +387,67 @@ impl Parser {
     let mut rhs = self.rhs.borrow_mut();
     rhs.push(r);
     return rhs.len() - 1;
+  }
+
+  fn set_parent_rhs(&self, rhs_index: usize, new_parent: Parent) {
+    let new_rhs = {
+      let r = &self.rhs.borrow()[rhs_index];
+       match r {
+        Rhs::Operator(o) => {
+          let new_op = AstOperator {
+            end_pos: o.end_pos,
+            start_pos: o.start_pos,
+            op: o.op.clone(),
+            right: o.right,
+            left: o.left,
+            parent: new_parent,
+          };
+          Rhs::Operator(new_op)
+        }
+        Rhs::UnaryOp(o) => {
+          let new_op = AstUnaryOp {
+            end_pos: o.end_pos,
+            start_pos: o.start_pos,
+            op: o.op.clone(),
+            right: o.right,
+            parent: new_parent,
+          };
+          Rhs::UnaryOp(new_op)
+        }
+        Rhs::String(o) => {
+          let new_op = AstString {
+            end_pos: o.end_pos,
+            start_pos: o.start_pos,
+            value: o.value.clone(),
+            parent: new_parent,
+          };
+          Rhs::String(new_op)
+        }
+        Rhs::Identifier(o) => {
+          let new_op = AstIdentifier {
+            end_pos: o.end_pos,
+            start_pos: o.start_pos,
+            value: o.value.clone(),
+            parent: new_parent,
+          };
+          Rhs::Identifier(new_op)
+        }
+        Rhs::Number(o) => {
+          let new_op = AstNumber {
+            end_pos: o.end_pos,
+            start_pos: o.start_pos,
+            value: o.value,
+            parent: new_parent,
+          };
+          Rhs::Number(new_op)
+        }
+      }
+    };
+    {
+      let mut rhs_vec = self.rhs.borrow_mut();
+      rhs_vec[rhs_index] = new_rhs;
+    }
+    //self.rhs.borrow_mut()[rhs_index] = ;
   }
 
 //  fn set_parent_rhs(&self, rhs_index: RhsRef, parent: Parent ){
@@ -436,14 +498,14 @@ mod test {
     assert_eq!(n.entities.borrow().len(), 0);
     assert_eq!(n.rhs.borrow().len(), 1);
     assert_eq!(n.rhs.borrow()[0], Rhs::Identifier(AstIdentifier {
-      parent : Parent::None,
+      parent: Parent::None,
       value: "hello".to_string(),
       start_pos: 8,
       end_pos: 13,
     }));
     assert_eq!(n.properties.borrow().len(), 1);
     assert_eq!(n.properties.borrow()[0], AstProperty {
-      parent : Parent::None,
+      parent: Parent::None,
       name: "label".to_string(),
       rhs: 0,
       start_pos: 0,

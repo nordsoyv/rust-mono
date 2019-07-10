@@ -2,6 +2,7 @@ use actix_web::{App, HttpServer, Responder, web, middleware, HttpResponse};
 use serde_derive::{Deserialize, Serialize};
 use cdl_core::lexer;
 use cdl_core::parser;
+use log::{info, error};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LexRequest {
@@ -18,7 +19,7 @@ fn lex(item: web::Json<LexRequest>) -> HttpResponse {
   return match res {
     Ok(tokens) => HttpResponse::Ok().json(tokens),
     Err(e) => {
-      println!("{:?}", e);
+      error!("{:?}", e);
       HttpResponse::InternalServerError().finish()
     }
   };
@@ -32,7 +33,7 @@ fn parse(item: web::Json<LexRequest>) -> HttpResponse {
   let tokens = match res {
     Ok(tokens) => tokens,
     Err(e) => {
-      println!("{:?}", e);
+      error!("{:?}", e);
       return HttpResponse::InternalServerError().finish()
     }
   };
@@ -40,7 +41,7 @@ fn parse(item: web::Json<LexRequest>) -> HttpResponse {
   let mut parser = parser::Parser::new();
   let res = parser.parse(tokens);
   let end = start.elapsed();
-  println!("Time taken to lex + parse : {} milliseconds", (end.as_nanos() as f64) / (1000.0 * 1000.0) );
+  info!("Time taken to lex + parse : {} milliseconds", (end.as_nanos() as f64) / (1000.0 * 1000.0) );
   match res {
     Ok(()) =>return HttpResponse::Ok().json(parser),
     Err(e)=> return HttpResponse::BadRequest().body(e),
@@ -49,7 +50,7 @@ fn parse(item: web::Json<LexRequest>) -> HttpResponse {
 }
 
 fn main() -> std::io::Result<()> {
-  std::env::set_var("RUST_LOG", "actix_web=info");
+  std::env::set_var("RUST_LOG", "actix_web=info,service");
   env_logger::init();
 
   HttpServer::new(||

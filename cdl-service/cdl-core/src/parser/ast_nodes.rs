@@ -42,7 +42,7 @@ pub struct AstIdentifier {
   pub end_pos: usize,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 pub enum Operator {
   Plus,
   Minus,
