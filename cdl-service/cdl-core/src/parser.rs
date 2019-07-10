@@ -6,18 +6,14 @@ use crate::lexer::Token;
 use crate::lexer::TokenType;
 use crate::parser::ast_nodes::{
   AstEntity,
+  AstProperty,
   AstIdentifier,
   AstNumber,
   AstOperator,
-  AstProperty,
   AstString,
   AstUnaryOp,
-  EntityRef,
   Operator,
-  Parent,
-  PropertyRef,
-  Rhs,
-  RhsRef};
+  NodeRef};
 use crate::parser::utils::{
   can_start_prop,
   eat_eol_and_comments,
@@ -35,8 +31,13 @@ mod utils;
 pub struct Parser {
   pub entities: RefCell<Vec<AstEntity>>,
   pub properties: RefCell<Vec<AstProperty>>,
-  pub rhs: RefCell<Vec<Rhs>>,
-  pub script_entity: EntityRef,
+  pub identifiers: RefCell<Vec<AstIdentifier>>,
+  pub numbers: RefCell<Vec<AstNumber>>,
+  pub operators: RefCell<Vec<AstOperator>>,
+  pub strings: RefCell<Vec<AstString>>,
+  pub unary_ops: RefCell<Vec<AstUnaryOp>>,
+  //pub rhs: RefCell<Vec<Rhs>>,
+  pub script_entity: NodeRef,
 }
 
 impl Parser {
@@ -44,8 +45,12 @@ impl Parser {
     Parser {
       entities: RefCell::new(Vec::new()),
       properties: RefCell::new(Vec::new()),
-      rhs: RefCell::new(Vec::new()),
-      script_entity: 0,
+      identifiers: RefCell::new(Vec::new()),
+      numbers: RefCell::new(Vec::new()),
+      operators: RefCell::new(Vec::new()),
+      strings: RefCell::new(Vec::new()),
+      unary_ops: RefCell::new(Vec::new()),
+      script_entity: NodeRef::None,
     }
   }
 
@@ -76,11 +81,10 @@ impl Parser {
     }
 
     let script_entity_id = self.add_entity(AstEntity {
-      parent: Parent::None,
-      child_entities: entity_refs,
+      parent: NodeRef::None,
+      children: entity_refs,
       terms: vec![],
       refs: vec![],
-      properties: vec![],
       entity_id: "".to_string(),
       start_pos: 0,
       end_pos: tokens[tokens.len() - 1].end,
@@ -89,12 +93,10 @@ impl Parser {
     return Ok(());
   }
 
-
-  fn parse_entity(&self, tokens: &[Token]) -> Result<(EntityRef, usize), String> {
+  fn parse_entity(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
     let terms;
     let mut refs = vec![];
     let mut children = vec![];
-    let mut properties = vec![];
     let mut tokens_consumed = 0;
     let mut entity_id = "".to_string();
     let start_pos = tokens[0].start;
@@ -102,7 +104,7 @@ impl Parser {
       tokens_consumed += t.len();
       terms = t;
     } else {
-      return Ok((0, 0));
+      return Ok((NodeRef::None, 0));
     }
     if is_tokens_left(tokens, tokens_consumed) {
       if let Some(r) = get_refs(&tokens[tokens_consumed..]) {
@@ -121,7 +123,7 @@ impl Parser {
     if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::OpenBracket) {
       tokens_consumed += num;
     } else {
-      return Ok((0, 0));
+      return Ok((NodeRef::None, 0));
     }
 
 
@@ -139,7 +141,7 @@ impl Parser {
           (_, 0) => {}
           (prop_ref, consumed) => {
             tokens_consumed += consumed;
-            properties.push(prop_ref);
+            children.push(prop_ref);
             continue;
           }
         }
@@ -160,20 +162,19 @@ impl Parser {
     if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::CloseBracket) {
       tokens_consumed += num;
     } else {
-      return Ok((0, 0));
+      return Ok((NodeRef::None, 0));
     }
 
     if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::EOL) {
       tokens_consumed += num;
     } else {
-      return Ok((0, 0));
+      return Ok((NodeRef::None, 0));
     }
 
     let end_pos = tokens[tokens_consumed - 1].end;
     let entity_ref = self.add_entity(AstEntity {
-      parent: Parent::None,
-      child_entities: children,
-      properties,
+      parent: NodeRef::None,
+      children,
       terms,
       refs,
       entity_id,
@@ -184,167 +185,166 @@ impl Parser {
     return Ok((entity_ref, tokens_consumed));
   }
 
-
-  pub fn parse_property(&self, tokens: &[Token]) -> Result<(PropertyRef, usize), String> {
+  pub fn parse_property(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
     if tokens[0].kind == TokenType::Identifier && tokens[1].kind == TokenType::Colon {
       let rhs = self.parse_expr(&tokens[2..])?;
       match rhs {
-        (_, 0) => return Ok((0, 0)),
-        (index, num) => {
+        (_, 0) => return Ok((NodeRef::None, 0)),
+        (node_ref, num) => {
           let p = AstProperty {
-            parent: Parent::None,
-            rhs: index,
+            parent: NodeRef::None,
+            rhs: node_ref,
             name: tokens[0].text.clone().unwrap_or("".to_string()),
             start_pos: tokens[0].start,
             end_pos: tokens[1 + num].end,
           };
-          let p_index = self.add_property(p);
-          self.set_parent_rhs(index, Parent::Property(p_index));
-          return Ok((p_index, 2 + num));
+          let prop_ref = self.add_property(p);
+         // self.set_parent_rhs(&node_ref, &prop_ref);
+          return Ok((prop_ref, 2 + num));
         }
       }
     } else {
-      return Ok((0, 0));
+      return Ok((NodeRef::None, 0));
     }
   }
 
-  fn parse_expr(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
+  fn parse_expr(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
     let mut curr_pos = 0;
-    let mut curr_rhs_index;
-    let (term_index, tokens_consumed) = self.parse_term(tokens)?;
+    let mut curr_node_ref;
+    let (term_node_ref, tokens_consumed) = self.parse_term(tokens)?;
     if tokens_consumed == 0 {
       return Err(format!("Error when parsing expression at pos {}, token: {:?}", tokens[0].start, tokens[0].kind));
     }
-    curr_rhs_index = term_index;
+    curr_node_ref = term_node_ref;
     curr_pos += tokens_consumed;
     loop {
       match tokens[curr_pos].kind {
         TokenType::Mul => {
-          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          let (term_node_ref, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Mul token
-          let expr_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent: Parent::None,
-            left: curr_rhs_index,
-            right: term_index,
+          let node_expr_ref = self.add_operator(AstOperator {
+            parent: NodeRef::None,
+            left: curr_node_ref,
+            right: term_node_ref,
             op: Operator::Mul,
             start_pos: tokens[0].start,
             end_pos: tokens[curr_pos - 1].end,
-          }));
-          curr_rhs_index = expr_ref;
+          });
+          curr_node_ref = node_expr_ref;
         }
         TokenType::Div => {
-          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          let (term_node_ref, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Div token
-          let expr_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent: Parent::None,
-            left: curr_rhs_index,
-            right: term_index,
+          let expr_ref = self.add_operator(AstOperator {
+            parent: NodeRef::None,
+            left: curr_node_ref,
+            right: term_node_ref,
             op: Operator::Del,
             start_pos: tokens[0].start,
             end_pos: tokens[curr_pos - 1].end,
-          }));
-          curr_rhs_index = expr_ref;
+          });
+          curr_node_ref = expr_ref;
         }
         TokenType::EOL => {
-          return Ok((curr_rhs_index, curr_pos));
+          return Ok((curr_node_ref, curr_pos));
         }
         _ => {
-          return Ok((curr_rhs_index, curr_pos));
+          return Ok((curr_node_ref, curr_pos));
         }
       }
     }
   }
 
-  fn parse_term(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
+  fn parse_term(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
     let mut curr_pos = 0;
-    let mut curr_rhs_index;
-    let (left_factor_index, tokens_consumed) = self.parse_factor(tokens)?;
+    let mut curr_node_ref;
+    let (left_node_ref, tokens_consumed) = self.parse_factor(tokens)?;
     if tokens_consumed == 0 {
       return Err(format!("Error when parsing term at pos {}, token: {:?}", tokens[0].start, tokens[0].kind));
     }
-    curr_rhs_index = left_factor_index;
+    curr_node_ref = left_node_ref;
     curr_pos += tokens_consumed;
     loop {
       match tokens[curr_pos].kind {
         TokenType::Plus => {
-          let (factor_index, tokens_consumed) = self.parse_factor(&tokens[(curr_pos + 1)..])?;
+          let (factor_node_ref, tokens_consumed) = self.parse_factor(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Plus token
-          let term_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent: Parent::None,
-            left: curr_rhs_index,
-            right: factor_index,
+          let term_ref = self.add_operator(AstOperator {
+            parent: NodeRef::None,
+            left: curr_node_ref,
+            right: factor_node_ref,
             op: Operator::Plus,
             start_pos: tokens[0].start,
             end_pos: tokens[curr_pos - 1].end,
-          }));
-          curr_rhs_index = term_ref;
+          });
+          curr_node_ref = term_ref;
         }
         TokenType::Minus => {
-          let (factor_index, tokens_consumed) = self.parse_factor(&tokens[(curr_pos + 1)..])?;
+          let (factor_node_ref, tokens_consumed) = self.parse_factor(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the Minus token
-          let term_ref = self.add_rhs(Rhs::Operator(AstOperator {
-            parent: Parent::None,
-            left: curr_rhs_index,
-            right: factor_index,
+          let term_ref = self.add_operator(AstOperator {
+            parent: NodeRef::None,
+            left: curr_node_ref,
+            right: factor_node_ref,
             op: Operator::Minus,
             start_pos: tokens[0].start,
             end_pos: tokens[curr_pos - 1].end,
-          }));
-          curr_rhs_index = term_ref;
+          });
+          curr_node_ref = term_ref;
         }
         TokenType::EOL => {
-          return Ok((curr_rhs_index, curr_pos));
+          return Ok((curr_node_ref, curr_pos));
         }
         _ => {
-          return Ok((curr_rhs_index, curr_pos));
+          return Ok((curr_node_ref, curr_pos));
         }
       }
     }
   }
 
-  fn parse_factor(&self, tokens: &[Token]) -> Result<(RhsRef, usize), String> {
+  fn parse_factor(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
     let mut curr_pos = 0;
-    let rhs;
+    let node_ref;
     let curr_token = &tokens[curr_pos];
     match curr_token.kind {
       TokenType::Identifier => {
         let ast_ident = AstIdentifier {
-          parent: Parent::None,
+          parent: NodeRef::None,
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
           value: tokens[0].text.clone().unwrap_or("".to_string()),
         };
-        rhs = self.add_rhs(Rhs::Identifier(ast_ident));
-        return Ok((rhs, 1));
+        node_ref = self.add_identifier(ast_ident);
+        return Ok((node_ref, 1));
       }
       TokenType::String => {
         let ast_string = AstString {
-          parent: Parent::None,
+          parent: NodeRef::None,
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
           value: tokens[0].text.clone().unwrap_or("".to_string()),
         };
-        rhs = self.add_rhs(Rhs::String(ast_string));
-        return Ok((rhs, 1));
+        node_ref = self.add_string(ast_string);
+        return Ok((node_ref, 1));
       }
       TokenType::Number => {
         let ast_number = AstNumber {
-          parent: Parent::None,
+          parent: NodeRef::None,
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
           value: tokens[0].text.clone().unwrap_or("".to_string()).parse::<f64>().unwrap_or(0f64),
         };
 
-        rhs = self.add_rhs(Rhs::Number(ast_number));
-        return Ok((rhs, 1));
+        node_ref = self.add_number(ast_number);
+        return Ok((node_ref, 1));
       }
       TokenType::OpenParen => {
         let expr = self.parse_expr(&tokens[1..])?;
         match expr {
           (_, 0) => return Err(format!("Error parsing factor after '(', token : {:?}, pos {}", curr_token.kind, curr_token.start)),
-          (expr_index, tokens_consumed) => {
+          (expr_node_ref, tokens_consumed) => {
             if is_next_token(&tokens[1 + tokens_consumed..], TokenType::CloseParen) {
-              return Ok((expr_index, 1 + tokens_consumed + 1));
+              return Ok((expr_node_ref, 1 + tokens_consumed + 1));
             } else {
               return Err(format!("Error parsing factor found token : {:?} at pos {}, expected CloseParen", curr_token.kind, curr_token.start));
             }
@@ -355,14 +355,14 @@ impl Parser {
         let expr = self.parse_expr(&tokens[1..])?;
         match expr {
           (_, 0) => return Err(format!("Error parsing factor after '-', token : {:?}, pos {}", curr_token.kind, curr_token.start)),
-          (expr_index, tokens_consumed) => {
-            let op_index = self.add_rhs(Rhs::UnaryOp(AstUnaryOp {
-              parent: Parent::None,
-              right: expr_index,
+          (expr_node_ref, tokens_consumed) => {
+            let op_index = self.add_unary_op(AstUnaryOp {
+              parent: NodeRef::None,
+              right: expr_node_ref,
               op: Operator::Minus,
               start_pos: curr_token.start,
               end_pos: tokens[tokens_consumed + 1].end,
-            }));
+            });
             return Ok((op_index, tokens_consumed + 1)); // plus 1 for the minus token
           }
         }
@@ -371,83 +371,107 @@ impl Parser {
     }
   }
 
-  fn add_entity(&self, e: AstEntity) -> EntityRef {
+  fn add_entity(&self, e: AstEntity) -> NodeRef {
     let mut ents = self.entities.borrow_mut();
     ents.push(e);
-    return ents.len() - 1;
+    return NodeRef::Entity(ents.len() - 1);
   }
-
-  fn add_property(&self, p: AstProperty) -> PropertyRef {
+  fn add_property(&self, p: AstProperty) -> NodeRef {
     let mut props = self.properties.borrow_mut();
     props.push(p);
-    return props.len() - 1;
+    return NodeRef::Property(props.len() - 1);
+  }
+  fn add_identifier(&self, i: AstIdentifier) -> NodeRef {
+    let mut idents = self.identifiers.borrow_mut();
+    idents.push(i);
+    return NodeRef::Identifier(idents.len() - 1);
+  }
+  fn add_number(&self, n: AstNumber) -> NodeRef {
+    let mut numbers = self.numbers.borrow_mut();
+    numbers.push(n);
+    return NodeRef::Number(numbers.len() - 1);
+  }
+  fn add_operator(&self, n: AstOperator) -> NodeRef {
+    let mut operators = self.operators.borrow_mut();
+    operators.push(n);
+    return NodeRef::Operator(operators.len() - 1);
+  }
+  fn add_string(&self, s: AstString) -> NodeRef {
+    let mut strings = self.strings.borrow_mut();
+    strings.push(s);
+    return NodeRef::String(strings.len() - 1);
+  }
+  fn add_unary_op(&self, u: AstUnaryOp) -> NodeRef {
+    let mut unary = self.unary_ops.borrow_mut();
+    unary.push(u);
+    return NodeRef::UnaryOperator(unary.len() - 1);
   }
 
-  fn add_rhs(&self, r: Rhs) -> RhsRef {
-    let mut rhs = self.rhs.borrow_mut();
-    rhs.push(r);
-    return rhs.len() - 1;
-  }
+//  fn add_rhs(&self, r: Rhs) -> NodeRef {
+//    let mut rhs = self.rhs.borrow_mut();
+//    rhs.push(r);
+//    return rhs.len() - 1;
+//  }
 
-  fn set_parent_rhs(&self, rhs_index: usize, new_parent: Parent) {
-    let new_rhs = {
-      let r = &self.rhs.borrow()[rhs_index];
-       match r {
-        Rhs::Operator(o) => {
-          let new_op = AstOperator {
-            end_pos: o.end_pos,
-            start_pos: o.start_pos,
-            op: o.op.clone(),
-            right: o.right,
-            left: o.left,
-            parent: new_parent,
-          };
-          Rhs::Operator(new_op)
-        }
-        Rhs::UnaryOp(o) => {
-          let new_op = AstUnaryOp {
-            end_pos: o.end_pos,
-            start_pos: o.start_pos,
-            op: o.op.clone(),
-            right: o.right,
-            parent: new_parent,
-          };
-          Rhs::UnaryOp(new_op)
-        }
-        Rhs::String(o) => {
-          let new_op = AstString {
-            end_pos: o.end_pos,
-            start_pos: o.start_pos,
-            value: o.value.clone(),
-            parent: new_parent,
-          };
-          Rhs::String(new_op)
-        }
-        Rhs::Identifier(o) => {
-          let new_op = AstIdentifier {
-            end_pos: o.end_pos,
-            start_pos: o.start_pos,
-            value: o.value.clone(),
-            parent: new_parent,
-          };
-          Rhs::Identifier(new_op)
-        }
-        Rhs::Number(o) => {
-          let new_op = AstNumber {
-            end_pos: o.end_pos,
-            start_pos: o.start_pos,
-            value: o.value,
-            parent: new_parent,
-          };
-          Rhs::Number(new_op)
-        }
-      }
-    };
-    {
-      let mut rhs_vec = self.rhs.borrow_mut();
-      rhs_vec[rhs_index] = new_rhs;
-    }
-  }
+//  fn set_parent_rhs(&self, node_ref: &NodeRef, new_parent: &NodeRef) {
+//    let new_rhs = {
+//      let r = &self.rhs.borrow()[rhs_index];
+//      match r {
+//        Rhs::Operator(o) => {
+//          let new_op = AstOperator {
+//            end_pos: o.end_pos,
+//            start_pos: o.start_pos,
+//            op: o.op.clone(),
+//            right: o.right,
+//            left: o.left,
+//            parent: new_parent.clone(),
+//          };
+//          Rhs::Operator(new_op)
+//        }
+//        Rhs::UnaryOp(o) => {
+//          let new_op = AstUnaryOp {
+//            end_pos: o.end_pos,
+//            start_pos: o.start_pos,
+//            op: o.op.clone(),
+//            right: o.right,
+//            parent: new_parent.clone(),
+//          };
+//          Rhs::UnaryOp(new_op)
+//        }
+//        Rhs::String(o) => {
+//          let new_op = AstString {
+//            end_pos: o.end_pos,
+//            start_pos: o.start_pos,
+//            value: o.value.clone(),
+//            parent: new_parent.clone(),
+//          };
+//          Rhs::String(new_op)
+//        }
+//        Rhs::Identifier(o) => {
+//          let new_op = AstIdentifier {
+//            end_pos: o.end_pos,
+//            start_pos: o.start_pos,
+//            value: o.value.clone(),
+//            parent: new_parent.clone(),
+//          };
+//          Rhs::Identifier(new_op)
+//        }
+//        Rhs::Number(o) => {
+//          let new_op = AstNumber {
+//            end_pos: o.end_pos,
+//            start_pos: o.start_pos,
+//            value: o.value,
+//            parent: new_parent.clone(),
+//          };
+//          Rhs::Number(new_op)
+//        }
+//      }
+//    };
+//    {
+//      let mut rhs_vec = self.rhs.borrow_mut();
+//      rhs_vec[rhs_index] = new_rhs;
+//    }
+//  }
 }
 
 #[cfg(test)]
