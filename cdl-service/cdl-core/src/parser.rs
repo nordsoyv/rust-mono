@@ -36,7 +36,6 @@ pub struct Parser {
   pub operators: RefCell<Vec<AstOperator>>,
   pub strings: RefCell<Vec<AstString>>,
   pub unary_ops: RefCell<Vec<AstUnaryOp>>,
-  //pub rhs: RefCell<Vec<Rhs>>,
   pub script_entity: NodeRef,
 }
 
@@ -407,12 +406,58 @@ impl Parser {
     return NodeRef::UnaryOperator(unary.len() - 1);
   }
 
-//  fn add_rhs(&self, r: Rhs) -> NodeRef {
-//    let mut rhs = self.rhs.borrow_mut();
-//    rhs.push(r);
-//    return rhs.len() - 1;
-//  }
+  fn set_parent(&self, node_to_change: NodeRef, new_parent: NodeRef) {
+    match node_to_change {
+      NodeRef::Identifier(index) => {
+        let new_i = {
+          let i = &self.identifiers.borrow()[index];
+          AstIdentifier {
+            end_pos: i.end_pos,
+            start_pos: i.start_pos,
+            value: i.value.clone(),
+            parent: new_parent.clone(),
+          }
+        };
+        {
+          let mut ident_vec = self.identifiers.borrow_mut();
+          ident_vec[index] = new_i;
+        }
+      }
+      NodeRef::String(index) => {
+        let new_s = {
+          let s = &self.strings.borrow()[index];
+          AstString {
+            end_pos: s.end_pos,
+            start_pos: s.start_pos,
+            value: s.value.clone(),
+            parent: new_parent.clone(),
+          }
+        };
+        {
+          let mut string_vec = self.strings.borrow_mut();
+          string_vec[index] = new_s;
+        }
+      }
+      NodeRef::Property(index) => {
+        let new_p = {
+          let p = &self.properties.borrow()[index];
+          AstProperty {
+            rhs: p.rhs.clone(),
+            name : p.name.clone(),
+            end_pos: p.end_pos,
+            start_pos: p.start_pos,
+            parent: new_parent.clone(),
+          }
+        };
+        {
+          let mut prop_vec = self.properties.borrow_mut();
+          prop_vec[index] = new_p;
+        }
+      }
 
+      _ => {}
+    }
+  }
 //  fn set_parent_rhs(&self, node_ref: &NodeRef, new_parent: &NodeRef) {
 //    let new_rhs = {
 //      let r = &self.rhs.borrow()[rhs_index];
