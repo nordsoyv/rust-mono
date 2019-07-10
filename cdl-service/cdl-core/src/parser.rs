@@ -199,7 +199,7 @@ impl Parser {
             end_pos: tokens[1 + num].end,
           };
           let prop_ref = self.add_property(p);
-         // self.set_parent_rhs(&node_ref, &prop_ref);
+          // self.set_parent_rhs(&node_ref, &prop_ref);
           return Ok((prop_ref, 2 + num));
         }
       }
@@ -477,7 +477,8 @@ impl Parser {
 #[cfg(test)]
 mod test {
   use crate::lexer::Lexer;
-  use crate::parser::{AstEntity, AstIdentifier, AstProperty, Parser, Rhs, Parent};
+  use crate::parser::{AstEntity, AstIdentifier, AstProperty, Parser};
+  use crate::parser::ast_nodes::NodeRef;
 
   #[test]
   fn can_parse() {
@@ -487,11 +488,11 @@ mod test {
     let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id".to_string(),
-      child_entities: vec![],
-      properties: vec![],
+      children: vec![],
       start_pos: 0,
       end_pos: 28,
     });
@@ -504,18 +505,18 @@ mod test {
     let tokens = l.lex("label : hello\n".to_string()).unwrap();
     let _r = n.parse_property(&tokens);
     assert_eq!(n.entities.borrow().len(), 0);
-    assert_eq!(n.rhs.borrow().len(), 1);
-    assert_eq!(n.rhs.borrow()[0], Rhs::Identifier(AstIdentifier {
-      parent: Parent::None,
+    assert_eq!(n.identifiers.borrow().len(), 1);
+    assert_eq!(n.identifiers.borrow()[0], AstIdentifier {
+      parent: NodeRef::None,
       value: "hello".to_string(),
       start_pos: 8,
       end_pos: 13,
-    }));
+    });
     assert_eq!(n.properties.borrow().len(), 1);
     assert_eq!(n.properties.borrow()[0], AstProperty {
-      parent: Parent::None,
+      parent: NodeRef::None,
       name: "label".to_string(),
-      rhs: 0,
+      rhs: NodeRef::Identifier(0),
       start_pos: 0,
       end_pos: 13,
     });
@@ -529,20 +530,20 @@ mod test {
     let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 3);
     assert_eq!(n.entities.borrow()[0], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id".to_string(),
-      child_entities: vec![],
-      properties: vec![],
+      children: vec![],
       start_pos: 0,
       end_pos: 29,
     });
     assert_eq!(n.entities.borrow()[1], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id2".to_string(),
-      child_entities: vec![],
-      properties: vec![],
+      children: vec![],
       start_pos: 30,
       end_pos: 59,
     });
@@ -562,20 +563,20 @@ mod test {
     let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 4);
     assert_eq!(n.entities.borrow()[0], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "list".to_string()],
       refs: vec![],
       entity_id: "".to_string(),
-      child_entities: vec![],
-      properties: vec![],
+      children: vec![],
       start_pos: 30,
       end_pos: 50,
     });
     assert_eq!(n.entities.borrow()[2], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id".to_string(),
-      child_entities: vec![0, 1],
-      properties: vec![],
+      children: vec![NodeRef::Entity(0), NodeRef::Entity(1)],
       start_pos: 0,
       end_pos: 76,
     });
@@ -592,17 +593,18 @@ mod test {
     let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec![],
       entity_id: "".to_string(),
-      child_entities: vec![],
-      properties: vec![0],
+      children: vec![NodeRef::Property(0)],
       start_pos: 0,
       end_pos: 32,
     });
     assert_eq!(n.properties.borrow()[0], AstProperty {
+      parent: NodeRef::None,
       name: "label".to_string(),
-      rhs: 0,
+      rhs: NodeRef::Identifier(0),
       start_pos: 16,
       end_pos: 29,
     });
@@ -619,17 +621,18 @@ mod test {
     let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec![],
       entity_id: "".to_string(),
-      child_entities: vec![],
-      properties: vec![0],
+      children: vec![NodeRef::Property(0)],
       start_pos: 0,
       end_pos: 55,
     });
     assert_eq!(n.properties.borrow()[0], AstProperty {
+      parent: NodeRef::None,
       name: "label".to_string(),
-      rhs: 8,
+      rhs: NodeRef::Operator(3),
       start_pos: 16,
       end_pos: 52,
     });
@@ -644,20 +647,20 @@ mod test {
     let _r = n.parse(tokens);
     assert_eq!(n.entities.borrow().len(), 2);
     assert_eq!(n.entities.borrow()[0], AstEntity {
+      parent: NodeRef::None,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id".to_string(),
-      child_entities: vec![],
-      properties: vec![],
+      children: vec![],
       start_pos: 0,
       end_pos: 28,
     });
     assert_eq!(n.entities.borrow()[1], AstEntity {
+      parent: NodeRef::None,
       terms: vec![],
       refs: vec![],
       entity_id: "".to_string(),
-      child_entities: vec![0],
-      properties: vec![],
+      children: vec![NodeRef::Entity(0)],
       start_pos: 0,
       end_pos: 28,
     });
