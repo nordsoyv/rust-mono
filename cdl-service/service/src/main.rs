@@ -25,6 +25,7 @@ fn lex(item: web::Json<LexRequest>) -> HttpResponse {
 }
 
 fn parse(item: web::Json<LexRequest>) -> HttpResponse {
+  let start = std::time::Instant::now();
   let lexer = lexer::Lexer::new();
   let res = lexer.lex(item.cdl.clone());
 
@@ -38,6 +39,8 @@ fn parse(item: web::Json<LexRequest>) -> HttpResponse {
 
   let mut parser = parser::Parser::new();
   let res = parser.parse(tokens);
+  let end = start.elapsed();
+  println!("Time taken to lex + parse : {} milliseconds", (end.as_nanos() as f64) / (1000.0 * 1000.0) );
   match res {
     Ok(()) =>return HttpResponse::Ok().json(parser),
     Err(e)=> return HttpResponse::BadRequest().body(e),

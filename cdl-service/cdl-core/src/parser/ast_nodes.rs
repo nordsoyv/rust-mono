@@ -6,6 +6,7 @@ pub type RhsRef = usize;
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstEntity {
+  pub parent : Parent,
   pub terms: Vec<String>,
   pub refs: Vec<String>,
   pub entity_id: String,
@@ -25,7 +26,17 @@ pub enum Rhs {
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub enum Parent {
+  None,
+  Entity(EntityRef),
+  Property(PropertyRef),
+  Rhs(RhsRef)
+}
+
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstIdentifier {
+  pub parent : Parent,
   pub value: String,
   pub start_pos: usize,
   pub end_pos: usize,
@@ -41,6 +52,7 @@ pub enum Operator {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstOperator {
+  pub parent : Parent,
   pub op: Operator,
   pub left: RhsRef,
   pub right: RhsRef,
@@ -50,6 +62,7 @@ pub struct AstOperator {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstString {
+  pub parent : Parent,
   pub value: String,
   pub start_pos: usize,
   pub end_pos: usize,
@@ -57,6 +70,7 @@ pub struct AstString {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstNumber {
+  pub parent : Parent,
   pub value: f64,
   pub start_pos: usize,
   pub end_pos: usize,
@@ -64,6 +78,7 @@ pub struct AstNumber {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstUnaryOp {
+  pub parent : Parent,
   pub op : Operator,
   pub right: RhsRef,
   pub start_pos: usize,
@@ -72,6 +87,7 @@ pub struct AstUnaryOp {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstProperty {
+  pub parent : Parent,
   pub name: String,
   pub rhs: RhsRef,
   pub start_pos: usize,
