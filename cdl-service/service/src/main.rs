@@ -14,8 +14,11 @@ fn index(info: web::Path<(String, u32)>) -> impl Responder {
 }
 
 fn lex(item: web::Json<LexRequest>) -> HttpResponse {
+  let start = std::time::Instant::now();
   let lexer = lexer::Lexer::new();
   let res = lexer.lex(item.cdl.clone());
+  let end = start.elapsed();
+  info!("Time taken to lex : {} milliseconds", (end.as_nanos() as f64) / (1000.0 * 1000.0) );
   return match res {
     Ok(tokens) => HttpResponse::Ok().json(tokens),
     Err(e) => {
