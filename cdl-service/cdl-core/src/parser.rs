@@ -3,15 +3,15 @@ use std::cell::RefCell;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-  lexer::TokenType,
   lexer::Token,
+  lexer::TokenType,
   parser::{
     ast_nodes::{
-      AstOperator,
-      AstFunctionCall,
-      AstNumber,
-      AstIdentifier,
       AstEntity,
+      AstFunctionCall,
+      AstIdentifier,
+      AstNumber,
+      AstOperator,
       AstProperty,
       AstString,
       AstUnaryOp,
@@ -22,14 +22,12 @@ use crate::{
       can_start_prop,
       eat_eol_and_comments,
       eat_token_if_available,
-      get_entity_id,
-      get_refs,
-      get_terms,
       is_next_token,
       is_tokens_left},
   },
 };
-use crate::parser::ast_nodes::AstList;
+use crate::parser::ast_nodes::{AstList, AstReference, AstTableDecl, AstTitle, AstVPath};
+use crate::parser::utils::{is_config_hub_entity, parse_entity_header};
 
 mod ast_nodes;
 mod utils;
@@ -45,6 +43,10 @@ pub enum Node {
   UnaryOp(AstUnaryOp),
   FunctionCall(AstFunctionCall),
   List(AstList),
+  VPath(AstVPath),
+  Title(AstTitle),
+  TableDecl(AstTableDecl),
+  Reference(AstReference),
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -52,6 +54,7 @@ pub struct Parser {
   pub nodes: RefCell<Vec<Node>>,
   pub script_entity: NodeRef,
 }
+
 
 impl Parser {
   pub fn new() -> Parser {
@@ -63,72 +66,71 @@ impl Parser {
 
   pub fn parse(&mut self, tokens: Vec<Token>) -> Result<(), String> {
     let mut curr_pos = 0;
-    let mut entity_refs = vec![];
+    let mut children = vec![];
     while is_tokens_left(&tokens, curr_pos) {
-      if let Some(num) = eat_token_if_available(&tokens[curr_pos..], TokenType::EOL) {
-        curr_pos += num;
-        continue;
-      }
-      let res = self.parse_entity(&tokens[curr_pos..]);
+      curr_pos += eat_eol_and_comments(&tokens[curr_pos..]);
+      let res = self.parse_entity(&tokens[curr_pos..])?;
       match res {
-        Ok((_, 0)) => {
-          println!("No match");
-          return Err("No match".to_string());
-        }
-        Ok((entity_ref, num)) => {
+        (_, 0) => {}
+        (entity_ref, num) => {
           curr_pos += num;
-          entity_refs.push(entity_ref);
-        }
-
-        Err(e) => {
-          println!("{}", e);
-          return Err(e);
+          children.push(entity_ref);
+          continue;
         }
       }
+      let title = self.parse_title(&tokens[curr_pos..])?;
+      match title {
+        (_, 0) => {}
+        (title_ref, num) => {
+          curr_pos += num;
+          children.push(title_ref);
+          continue;
+        }
+      }
+      return Err(format!("Can not parse script . Current symbol is {:?}:{:?} at pos {:?}",
+                         tokens[curr_pos].kind,
+                         tokens[curr_pos].text,
+                         tokens[curr_pos].start));
     }
 
-    let copy = entity_refs[0];
+    let copy = children.clone();
     let script_entity_id = self.add_node(Node::Entity(AstEntity {
       parent: 0,
-      children: entity_refs,
+      children,
       terms: vec![],
       refs: vec![],
       entity_id: "".to_string(),
       start_pos: 0,
       end_pos: tokens[tokens.len() - 1].end,
     }));
-    self.set_parent(copy, script_entity_id);
+    self.set_parents(copy, script_entity_id);
     self.script_entity = script_entity_id;
     return Ok(());
   }
 
+  fn parse_title(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
+    if tokens[0].kind == TokenType::Identifier
+      && tokens[0].text == Some("title".to_string())
+      && tokens[1].kind == TokenType::String
+      && tokens[2].kind == TokenType::EOL {
+      let n = self.add_node(Node::Title(AstTitle {
+        start_pos: tokens[0].start,
+        end_pos: tokens[2].end,
+        parent: 0,
+        title: tokens[1].text.clone().unwrap_or("".to_string()),
+      }));
+      return Ok((n, 3));
+    }
+    return Ok((0, 0));
+  }
 
   fn parse_entity(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
-    let terms;
-    let mut refs = vec![];
-    let mut children = vec![];
     let mut tokens_consumed = 0;
-    let mut entity_id = "".to_string();
     let start_pos = tokens[0].start;
-    if let Some(t) = get_terms(&tokens[0..]) {
-      tokens_consumed += t.len();
-      terms = t;
-    } else {
-      return Ok((0, 0));
-    }
-    if is_tokens_left(tokens, tokens_consumed) {
-      if let Some(r) = get_refs(&tokens[tokens_consumed..]) {
-        tokens_consumed += r.len();
-        refs = r;
-      }
-    }
 
-    if is_tokens_left(tokens, tokens_consumed) {
-      if let Some((parsed_entity_id, tokens_used)) = get_entity_id(&tokens[tokens_consumed..]) {
-        tokens_consumed += tokens_used;
-        entity_id = parsed_entity_id;
-      }
-    }
+    let header = parse_entity_header(&tokens[0..])?;
+
+    tokens_consumed += header.size;
 
     if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::OpenBracket) {
       tokens_consumed += num;
@@ -136,7 +138,94 @@ impl Parser {
       return Ok((0, 0));
     }
 
+    let (children, body_tokens_consumed) = match is_config_hub_entity(&header.terms) {
+      true => self.parse_config_hub_body(&tokens[tokens_consumed..])?,
+      false => self.parse_entity_body(&tokens[tokens_consumed..])?,
+    };
 
+    tokens_consumed += body_tokens_consumed;
+
+    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::CloseBracket) {
+      tokens_consumed += num;
+    } else {
+      return Ok((0, 0));
+    }
+
+    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::EOL) {
+      tokens_consumed += num;
+    } else {
+      return Ok((0, 0));
+    }
+
+    // fixme : Do we really need this copy? its just for iterating after node creation
+    let child_copy = children.clone();
+
+    let end_pos = tokens[tokens_consumed - 1].end;
+    let entity_ref = self.add_node(Node::Entity(AstEntity {
+      parent: 0,
+      children,
+      terms: header.terms,
+      refs: header.refs,
+      entity_id: header.entity_id,
+      start_pos,
+      end_pos,
+    }));
+    self.set_parents(child_copy, entity_ref);
+    return Ok((entity_ref, tokens_consumed));
+  }
+
+
+  fn parse_config_hub_body(&self, tokens: &[Token]) -> Result<(Vec<NodeRef>, usize), String> {
+    let mut tokens_consumed = 0;
+    let mut children = vec![];
+    loop {
+      // skip empty lines and comments
+      tokens_consumed += eat_eol_and_comments(&tokens[tokens_consumed..]);
+
+      // are we done?
+      if tokens[tokens_consumed].kind == TokenType::CloseBracket {
+        break;
+      }
+
+      if can_start_prop(&tokens[tokens_consumed..]) {
+        match self.parse_property(&tokens[tokens_consumed..])? {
+          (_, 0) => {}
+          (prop_ref, consumed) => {
+            tokens_consumed += consumed;
+            children.push(prop_ref);
+            continue;
+          }
+        }
+      }
+      match self.parse_table_decl(&tokens[tokens_consumed..])? {
+        (_, 0) => {}
+        (table_decl, consumed) => {
+          tokens_consumed += consumed;
+          children.push(table_decl);
+          continue;
+        }
+      }
+      match self.parse_entity(&tokens[tokens_consumed..])? {
+        (_, 0) => {}
+        (child_ref, consumed) => {
+          tokens_consumed += consumed;
+          children.push(child_ref);
+          continue;
+        }
+      }
+      return Err(format!("Can not parse entity body. Current symbol is {:?}:{:?} at pos {:?}",
+                         tokens[tokens_consumed].kind,
+                         tokens[tokens_consumed].text,
+                         tokens[tokens_consumed].start));
+    }
+
+    return Ok((children, tokens_consumed));
+  }
+
+
+  fn parse_entity_body(&self, tokens: &[Token]) -> Result<(Vec<NodeRef>, usize), String> {
+    let mut tokens_consumed = 0;
+    let mut children = vec![];
     loop {
       // skip empty lines and comments
       tokens_consumed += eat_eol_and_comments(&tokens[tokens_consumed..]);
@@ -169,35 +258,8 @@ impl Parser {
                          tokens[tokens_consumed].text,
                          tokens[tokens_consumed].start));
     }
-    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::CloseBracket) {
-      tokens_consumed += num;
-    } else {
-      return Ok((0, 0));
-    }
 
-    if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::EOL) {
-      tokens_consumed += num;
-    } else {
-      return Ok((0, 0));
-    }
-
-    // fixme : Do we really need this copy? its just for iterating after node creation
-    let child_copy = children.clone();
-
-    let end_pos = tokens[tokens_consumed - 1].end;
-    let entity_ref = self.add_node(Node::Entity(AstEntity {
-      parent: 0,
-      children,
-      terms,
-      refs,
-      entity_id,
-      start_pos,
-      end_pos,
-    }));
-    for child in child_copy {
-      self.set_parent(child, entity_ref);
-    }
-    return Ok((entity_ref, tokens_consumed));
+    return Ok((children, tokens_consumed));
   }
 
   pub fn parse_property(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
@@ -221,6 +283,37 @@ impl Parser {
     } else {
       return Ok((0, 0));
     }
+  }
+
+  fn parse_table_decl(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
+    if is_next_token(tokens, TokenType::Identifier) {
+      if Some("table".to_string()) != tokens[0].text {
+        return Ok((0, 0));
+      }
+    }
+
+    if !is_next_token(&tokens[1..], TokenType::Identifier) {
+      return Ok((0, 0));
+    }
+
+    let table_name = tokens[1].text.clone().unwrap_or("".to_string());
+
+    if !is_next_token(&tokens[2..], TokenType::Equal) {
+      return Ok((0, 0));
+    }
+    if !is_next_token(&tokens[3..], TokenType::Identifier) {
+      return Ok((0, 0));
+    }
+    let path_name = tokens[3].text.clone().unwrap_or("".to_string());
+
+    let r = self.add_node(Node::TableDecl(AstTableDecl {
+      parent: 0,
+      name: table_name,
+      path: path_name,
+      start_pos: tokens[0].start,
+      end_pos: tokens[3].end,
+    }));
+    return Ok((r, 4));
   }
 
   fn parse_expr(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
@@ -263,6 +356,47 @@ impl Parser {
           self.set_parent(curr_rhs_index, expr_ref);
           self.set_parent(term_index, expr_ref);
           curr_rhs_index = expr_ref;
+        }
+        TokenType::Equal => {
+          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          curr_pos += tokens_consumed + 1; //  +1 for the equal token
+          let expr_ref = self.add_node(Node::Operator(AstOperator {
+            parent: 0,
+            left: curr_rhs_index,
+            right: term_index,
+            op: Operator::Equal,
+            start_pos: tokens[0].start,
+            end_pos: tokens[curr_pos - 1].end,
+          }));
+          self.set_parent(curr_rhs_index, expr_ref);
+          self.set_parent(term_index, expr_ref);
+          curr_rhs_index = expr_ref;
+        }
+        TokenType::Identifier => {
+          let i_text = tokens[curr_pos].text.clone().unwrap_or("NONE".to_string());
+          if i_text == "AND" || i_text == "OR" {
+            let op = if i_text =="AND" {
+              Operator::And
+            }else{
+              Operator::Or
+            };
+            let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+            curr_pos += tokens_consumed + 1; //  +1 for the ident token
+            let expr_ref = self.add_node(Node::Operator(AstOperator {
+              parent: 0,
+              left: curr_rhs_index,
+              right: term_index,
+              op,
+              start_pos: tokens[0].start,
+              end_pos: tokens[curr_pos - 1].end,
+            }));
+            self.set_parent(curr_rhs_index, expr_ref);
+            self.set_parent(term_index, expr_ref);
+            curr_rhs_index = expr_ref;
+          }else {
+            return Ok((curr_rhs_index, curr_pos)); // CHECK: is this right ?
+          }
+
         }
         TokenType::EOL => {
           return Ok((curr_rhs_index, curr_pos));
@@ -337,6 +471,10 @@ impl Parser {
             return Err(format!("Error parsing function token : {:?}, pos {}", curr_token.kind, curr_token.start));
           }
           return Ok(func);
+        } else if tokens[curr_pos + 1].kind == TokenType::Colon {
+          let vpath = self.parse_vpath(&tokens[curr_pos..])?;
+
+          return Ok(vpath);
         } else {
           let ast_ident = AstIdentifier {
             parent: 0,
@@ -356,6 +494,16 @@ impl Parser {
           value: tokens[0].text.clone().unwrap_or("".to_string()),
         };
         rhs = self.add_node(Node::String(ast_string));
+        return Ok((rhs, 1));
+      }
+      TokenType::Reference => {
+        let ast_ref = AstReference {
+          parent: 0,
+          start_pos: tokens[0].start,
+          end_pos: tokens[0].end,
+          value: tokens[0].text.clone().unwrap_or("".to_string()),
+        };
+        rhs = self.add_node(Node::Reference(ast_ref));
         return Ok((rhs, 1));
       }
       TokenType::Number => {
@@ -459,16 +607,52 @@ impl Parser {
       start_pos: tokens[0].start,
       end_pos: tokens[curr_pos].end,
     }));
-    for item in list_copy {
-      self.set_parent(item, list_index);
-    }
+    self.set_parents(list_copy, list_index);
     return Ok((Some(list_index), curr_pos));
   }
+
+  fn parse_vpath(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
+    let token = &tokens[0];
+
+    let source = match token.kind {
+      TokenType::Identifier => token.text.clone().unwrap_or("".to_string()),
+      _ => return Err(format!("Error parsing vpath at token {:?}", tokens[0]))
+    };
+
+
+    if !is_next_token(&tokens[1..], TokenType::Colon) {
+      return Err(format!("Error parsing vpath at token {:?}", tokens[1]));
+    }
+
+    let q_token = &tokens[2];
+    let question = match q_token.kind {
+      TokenType::Identifier => q_token.text.clone().unwrap_or("".to_string()),
+      _ => "".to_string(),
+    };
+
+
+    let i = self.add_node(Node::VPath(AstVPath {
+      parent: 0,
+      source,
+      question,
+      start_pos: tokens[0].start,
+      end_pos: tokens[2].end,
+    }));
+
+    return Ok((i, 3));
+  }
+
 
   fn add_node(&self, e: Node) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
     nodes.push(e);
     return nodes.len() - 1;
+  }
+
+  fn set_parents(&self, nodes_to_change: Vec<NodeRef>, new_parent: NodeRef) {
+    for n in nodes_to_change {
+      self.set_parent(n, new_parent);
+    }
   }
 
   fn set_parent(&self, node_to_change: NodeRef, new_parent: NodeRef) {
@@ -501,6 +685,18 @@ impl Parser {
       Node::List(ref mut inner) => {
         inner.parent = new_parent;
       }
+      Node::VPath(ref mut inner) => {
+        inner.parent = new_parent;
+      }
+      Node::Title(ref mut inner) => {
+        inner.parent = new_parent;
+      }
+      Node::TableDecl(ref mut inner) => {
+        inner.parent = new_parent;
+      }
+      Node::Reference(ref mut inner) => {
+        inner.parent = new_parent;
+      }
     }
   }
 }
@@ -509,6 +705,7 @@ impl Parser {
 mod test {
   use crate::lexer::Lexer;
   use crate::parser::{AstEntity, AstIdentifier, AstProperty, Node, Parser};
+  use crate::parser::ast_nodes::AstTitle;
 
   #[test]
   fn can_parse() {
@@ -567,7 +764,7 @@ mod test {
       end_pos: 29,
     }));
     assert_eq!(n.nodes.borrow()[1], Node::Entity(AstEntity {
-      parent: 0,
+      parent: 2,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
       entity_id: "id2".to_string(),
@@ -691,6 +888,21 @@ mod test {
       children: vec![0],
       start_pos: 0,
       end_pos: 28,
+    }));
+  }
+
+  #[test]
+  fn can_parse_title() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("title \"hello title\" \n widget kpi { \n } \n".to_string()).unwrap();
+    let _r = n.parse(tokens);
+    assert_eq!(n.nodes.borrow().len(), 3);
+    assert_eq!(n.nodes.borrow()[0], Node::Title(AstTitle {
+      parent: 2,
+      title: "hello title".to_string(),
+      start_pos: 0,
+      end_pos: 21,
     }));
   }
 }

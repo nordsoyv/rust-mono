@@ -1,7 +1,7 @@
 use crate::lexer::{Token, TokenType};
 
 #[inline]
-pub fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Option<Vec<String>> {
+pub fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Vec<String> {
   let mut curr_pos = 0;
   let mut terms = vec![];
   loop {
@@ -16,10 +16,8 @@ pub fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Option<Vec<Strin
     terms.push(text.unwrap_or("".to_string()));
     curr_pos += 1;
   }
-  if terms.len() == 0 {
-    return None;
-  }
-  Some(terms)
+
+  terms
 }
 
 #[inline]
@@ -32,12 +30,12 @@ pub fn _get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
 }
 
 #[inline]
-pub fn get_terms(tokens: &[Token]) -> Option<Vec<String>> {
+pub fn get_terms(tokens: &[Token]) -> Vec<String> {
   get_tokens_of_kind(tokens, TokenType::Identifier)
 }
 
 #[inline]
-pub fn get_refs(tokens: &[Token]) -> Option<Vec<String>> {
+pub fn get_refs(tokens: &[Token]) -> Vec<String> {
   get_tokens_of_kind(tokens, TokenType::Reference)
 }
 
@@ -119,3 +117,54 @@ pub fn _eat_eol(tokens: &[Token]) -> usize {
 pub fn can_start_prop(tokens: &[Token]) -> bool {
   tokens[0].kind == TokenType::Identifier && tokens[1].kind == TokenType::Colon
 }
+
+
+#[inline]
+pub fn is_config_hub_entity(terms: &Vec<String>) -> bool {
+  if terms.len() == 2 && terms[0] == "config" && terms[1] == "hub" {
+    return true;
+  }
+  return false;
+}
+
+pub struct EntityHeader {
+  pub terms: Vec<String>,
+  pub refs: Vec<String>,
+  pub entity_id: String,
+  pub size: usize,
+}
+
+
+pub fn parse_entity_header(tokens: &[Token]) -> Result<EntityHeader, String> {
+  let terms;
+  let mut refs = vec![];
+  let mut tokens_consumed = 0;
+  let mut entity_id = "".to_string();
+
+  terms = get_terms(&tokens[0..]);
+  if terms.len() == 0 { // no terms, something is wrong
+    return Err(format!("Error parsing entity header, at token {:?}", tokens[0]));
+  }
+  tokens_consumed += terms.len();
+
+  if is_tokens_left(tokens, tokens_consumed) {
+    refs = get_refs(&tokens[tokens_consumed..]);
+    tokens_consumed += refs.len();
+  }
+
+
+  if is_tokens_left(tokens, tokens_consumed) {
+    if let Some((parsed_entity_id, tokens_used)) = get_entity_id(&tokens[tokens_consumed..]) {
+      tokens_consumed += tokens_used;
+      entity_id = parsed_entity_id;
+    }
+  }
+
+  return Ok(EntityHeader {
+    terms,
+    refs,
+    entity_id,
+    size: tokens_consumed,
+  });
+}
+

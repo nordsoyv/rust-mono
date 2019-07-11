@@ -27,6 +27,9 @@ pub enum Operator {
   Minus,
   Mul,
   Del,
+  Equal,
+  And,
+  Or,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -41,6 +44,14 @@ pub struct AstOperator {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstString {
+  pub parent : NodeRef,
+  pub value: String,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstReference {
   pub parent : NodeRef,
   pub value: String,
   pub start_pos: usize,
@@ -86,6 +97,33 @@ pub struct AstFunctionCall{
 pub struct AstList{
   pub parent : NodeRef,
   pub items: Vec<NodeRef>,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstVPath{
+  pub parent : NodeRef,
+  pub source : String,
+  pub question: String,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstTitle{
+  pub parent : NodeRef,
+  pub title : String,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstTableDecl{
+  pub parent : NodeRef,
+  pub name : String,
+  pub path : String,
   pub start_pos: usize,
   pub end_pos: usize,
 }
