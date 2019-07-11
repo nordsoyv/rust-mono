@@ -138,6 +138,34 @@
 			"response": []
 		},
 		{
+			"name": "parse - simple",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cdl\": \"widget kpi  {\\n size : small\\n}\\n\"\n}"
+				},
+				"url": {
+					"raw": "{{server}}/parse",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"parse"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "parse - expr",
 			"request": {
 				"method": "POST",
