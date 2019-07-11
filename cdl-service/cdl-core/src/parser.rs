@@ -326,19 +326,17 @@ impl Parser {
   }
 
   fn parse_factor(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
-    let mut curr_pos = 0;
+    let curr_pos = 0;
     let rhs;
     let curr_token = &tokens[curr_pos];
     match curr_token.kind {
       TokenType::Identifier => {
         if tokens[curr_pos + 1].kind == TokenType::OpenParen {
           let func = self.parse_func(&tokens[curr_pos..])?;
-          match func {
-            (_, 0) => return Err(format!("Error parsing function token : {:?}, pos {}", curr_token.kind, curr_token.start)),
-            (func_index, tokens_consumed) => {
-              return Ok(func);
-            }
+          if func.1 == 0 {
+            return Err(format!("Error parsing function token : {:?}, pos {}", curr_token.kind, curr_token.start));
           }
+          return Ok(func);
         } else {
           let ast_ident = AstIdentifier {
             parent: 0,
@@ -410,21 +408,37 @@ impl Parser {
       return Ok((0, 0));
     }
     let name_token = &tokens[0];
-    let arg_list = self.parse_arg_list(&tokens[2..])?;
-
-    return Ok((0, 0));
+    let (arg_list, tokens_consumed) = match self.parse_arg_list(&tokens[2..])? {
+      (None, tokens_consumed) => (None, tokens_consumed),
+      (list_ref, tokens_consumed) => (list_ref, tokens_consumed)
+    };
+    let f = AstFunctionCall {
+      parent: 0,
+      name: name_token.text.clone().unwrap_or("".to_string()),
+      args: arg_list,
+      start_pos: tokens[0].start,
+      end_pos: tokens[tokens_consumed + 2].end,
+    };
+    let f_index = self.add_node(Node::FunctionCall(f));
+    if let Some(list_index) = arg_list {
+      self.set_parent(list_index, f_index);
+    }
+    return Ok((f_index, tokens_consumed + 2));
   }
 
-  fn parse_arg_list(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
+  fn parse_arg_list(&self, tokens: &[Token]) -> Result<(Option<NodeRef>, usize), String> {
     let mut list = vec![];
     let mut curr_pos = 0;
     loop {
       let curr_token = &tokens[curr_pos];
       match curr_token.kind {
-        TokenType::CloseParen => break,
+        TokenType::CloseParen => {
+          curr_pos += 1;
+          break;
+        }
         TokenType::Comma => curr_pos += 1,
         _ => {
-          let expr = self.parse_expr(&token[curr_pos..])?;
+          let expr = self.parse_expr(&tokens[curr_pos..])?;
           match expr {
             (_, 0) => return Err(format!("Error parsing expression in argument list, token : {:?}, pos {}", curr_token.kind, curr_token.start)),
             (node_index, tokens_consumed) => {
@@ -435,13 +449,20 @@ impl Parser {
         }
       }
     }
+    if list.len() == 0 {
+      return Ok((None, curr_pos));
+    }
+    let list_copy = list.clone();
     let list_index = self.add_node(Node::List(AstList {
       parent: 0,
       items: list,
       start_pos: tokens[0].start,
       end_pos: tokens[curr_pos].end,
     }));
-    return Ok((list_index, curr_pos));
+    for item in list_copy {
+      self.set_parent(item, list_index);
+    }
+    return Ok((Some(list_index), curr_pos));
   }
 
   fn add_node(&self, e: Node) -> NodeRef {
@@ -477,6 +498,9 @@ impl Parser {
       Node::FunctionCall(ref mut inner) => {
         inner.parent = new_parent;
       }
+      Node::List(ref mut inner) => {
+        inner.parent = new_parent;
+      }
     }
   }
 }
@@ -484,7 +508,7 @@ impl Parser {
 #[cfg(test)]
 mod test {
   use crate::lexer::Lexer;
-  use crate::parser::{AstEntity, AstIdentifier, AstProperty, Parser, Node};
+  use crate::parser::{AstEntity, AstIdentifier, AstProperty, Node, Parser};
 
   #[test]
   fn can_parse() {
