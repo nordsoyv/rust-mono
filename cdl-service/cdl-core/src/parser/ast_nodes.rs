@@ -72,3 +72,23 @@ pub struct AstProperty {
   pub start_pos: usize,
   pub end_pos: usize,
 }
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstFunctionCall{
+  pub parent : NodeRef,
+  pub name: String,
+  pub args: NodeRef,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstList{
+  pub parent : NodeRef,
+  pub items: Vec<NodeRef>,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+
+

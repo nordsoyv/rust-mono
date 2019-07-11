@@ -2,26 +2,34 @@ use std::cell::RefCell;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::lexer::Token;
-use crate::lexer::TokenType;
-use crate::parser::ast_nodes::AstOperator;
-use crate::parser::ast_nodes::AstNumber;
-use crate::parser::ast_nodes::AstIdentifier;
-use crate::parser::ast_nodes::AstEntity;
-use crate::parser::ast_nodes::AstProperty;
-use crate::parser::ast_nodes::AstString;
-use crate::parser::ast_nodes::AstUnaryOp;
-use crate::parser::ast_nodes::NodeRef;
-use crate::parser::ast_nodes::Operator;
-use crate::parser::utils::{
-  can_start_prop,
-  eat_eol_and_comments,
-  eat_token_if_available,
-  get_entity_id,
-  get_refs,
-  get_terms,
-  is_next_token,
-  is_tokens_left};
+use crate::{
+  lexer::TokenType,
+  lexer::Token,
+  parser::{
+    ast_nodes::{
+      AstOperator,
+      AstFunctionCall,
+      AstNumber,
+      AstIdentifier,
+      AstEntity,
+      AstProperty,
+      AstString,
+      AstUnaryOp,
+      NodeRef,
+      Operator,
+    },
+    utils::{
+      can_start_prop,
+      eat_eol_and_comments,
+      eat_token_if_available,
+      get_entity_id,
+      get_refs,
+      get_terms,
+      is_next_token,
+      is_tokens_left},
+  },
+};
+use crate::parser::ast_nodes::AstList;
 
 mod ast_nodes;
 mod utils;
@@ -35,6 +43,8 @@ pub enum Node {
   Property(AstProperty),
   String(AstString),
   UnaryOp(AstUnaryOp),
+  FunctionCall(AstFunctionCall),
+  List(AstList),
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -185,7 +195,7 @@ impl Parser {
       end_pos,
     }));
     for child in child_copy {
-      self.set_parent(child,entity_ref);
+      self.set_parent(child, entity_ref);
     }
     return Ok((entity_ref, tokens_consumed));
   }
@@ -321,14 +331,24 @@ impl Parser {
     let curr_token = &tokens[curr_pos];
     match curr_token.kind {
       TokenType::Identifier => {
-        let ast_ident = AstIdentifier {
-          parent: 0,
-          start_pos: tokens[0].start,
-          end_pos: tokens[0].end,
-          value: tokens[0].text.clone().unwrap_or("".to_string()),
-        };
-        rhs = self.add_node(Node::Identifier(ast_ident));
-        return Ok((rhs, 1));
+        if tokens[curr_pos + 1].kind == TokenType::OpenParen {
+          let func = self.parse_func(&tokens[curr_pos..])?;
+          match func {
+            (_, 0) => return Err(format!("Error parsing function token : {:?}, pos {}", curr_token.kind, curr_token.start)),
+            (func_index, tokens_consumed) => {
+              return Ok(func);
+            }
+          }
+        } else {
+          let ast_ident = AstIdentifier {
+            parent: 0,
+            start_pos: tokens[0].start,
+            end_pos: tokens[0].end,
+            value: tokens[0].text.clone().unwrap_or("".to_string()),
+          };
+          rhs = self.add_node(Node::Identifier(ast_ident));
+          return Ok((rhs, 1));
+        }
       }
       TokenType::String => {
         let ast_string = AstString {
@@ -376,13 +396,52 @@ impl Parser {
               start_pos: curr_token.start,
               end_pos: tokens[tokens_consumed + 1].end,
             }));
-            self.set_parent(expr_index,op_index);
+            self.set_parent(expr_index, op_index);
             return Ok((op_index, tokens_consumed + 1)); // plus 1 for the minus token
           }
         }
       }
       _ => return Err(format!("Unknown token when trying to parse factor: {:?} , at pos {:?}", curr_token.kind, curr_token.start)),
     }
+  }
+
+  fn parse_func(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
+    if !(is_next_token(&tokens, TokenType::Identifier) && is_next_token(&tokens[1..], TokenType::OpenParen)) {
+      return Ok((0, 0));
+    }
+    let name_token = &tokens[0];
+    let arg_list = self.parse_arg_list(&tokens[2..])?;
+
+    return Ok((0, 0));
+  }
+
+  fn parse_arg_list(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
+    let mut list = vec![];
+    let mut curr_pos = 0;
+    loop {
+      let curr_token = &tokens[curr_pos];
+      match curr_token.kind {
+        TokenType::CloseParen => break,
+        TokenType::Comma => curr_pos += 1,
+        _ => {
+          let expr = self.parse_expr(&token[curr_pos..])?;
+          match expr {
+            (_, 0) => return Err(format!("Error parsing expression in argument list, token : {:?}, pos {}", curr_token.kind, curr_token.start)),
+            (node_index, tokens_consumed) => {
+              list.push(node_index);
+              curr_pos += tokens_consumed;
+            }
+          }
+        }
+      }
+    }
+    let list_index = self.add_node(Node::List(AstList {
+      parent: 0,
+      items: list,
+      start_pos: tokens[0].start,
+      end_pos: tokens[curr_pos].end,
+    }));
+    return Ok((list_index, curr_pos));
   }
 
   fn add_node(&self, e: Node) -> NodeRef {
@@ -415,9 +474,11 @@ impl Parser {
       Node::Number(ref mut inner) => {
         inner.parent = new_parent;
       }
+      Node::FunctionCall(ref mut inner) => {
+        inner.parent = new_parent;
+      }
     }
   }
-
 }
 
 #[cfg(test)]
@@ -432,7 +493,7 @@ mod test {
     let tokens = l.lex("widget kpi @default #id {\n}\n".to_string()).unwrap();
     let _r = n.parse(tokens);
     assert_eq!(n.nodes.borrow().len(), 2);
-    assert_eq!(n.nodes.borrow()[0], Node::Entity( AstEntity {
+    assert_eq!(n.nodes.borrow()[0], Node::Entity(AstEntity {
       parent: 1,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
@@ -456,7 +517,7 @@ mod test {
       start_pos: 8,
       end_pos: 13,
     }));
-    assert_eq!(n.nodes.borrow()[1], Node::Property( AstProperty {
+    assert_eq!(n.nodes.borrow()[1], Node::Property(AstProperty {
       parent: 0,
       name: "label".to_string(),
       rhs: 0,
@@ -472,7 +533,7 @@ mod test {
     let tokens = l.lex("widget kpi @default #id {\n} \n widget kpi @default #id2 {\n}\n".to_string()).unwrap();
     let _r = n.parse(tokens);
     assert_eq!(n.nodes.borrow().len(), 3);
-    assert_eq!(n.nodes.borrow()[0],  Node::Entity(AstEntity {
+    assert_eq!(n.nodes.borrow()[0], Node::Entity(AstEntity {
       parent: 2,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
@@ -481,7 +542,7 @@ mod test {
       start_pos: 0,
       end_pos: 29,
     }));
-    assert_eq!(n.nodes.borrow()[1],  Node::Entity(AstEntity {
+    assert_eq!(n.nodes.borrow()[1], Node::Entity(AstEntity {
       parent: 0,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
@@ -505,7 +566,7 @@ mod test {
 ".to_string()).unwrap();
     let _r = n.parse(tokens);
     assert_eq!(n.nodes.borrow().len(), 4);
-    assert_eq!(n.nodes.borrow()[0],  Node::Entity(AstEntity {
+    assert_eq!(n.nodes.borrow()[0], Node::Entity(AstEntity {
       parent: 2,
       terms: vec!["widget".to_string(), "list".to_string()],
       refs: vec![],
@@ -514,7 +575,7 @@ mod test {
       start_pos: 30,
       end_pos: 50,
     }));
-    assert_eq!(n.nodes.borrow()[2],  Node::Entity(AstEntity {
+    assert_eq!(n.nodes.borrow()[2], Node::Entity(AstEntity {
       parent: 3,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
@@ -535,7 +596,7 @@ mod test {
 ".to_string()).unwrap();
     let _r = n.parse(tokens);
     assert_eq!(n.nodes.borrow().len(), 4);
-    assert_eq!(n.nodes.borrow()[2],  Node::Entity(AstEntity {
+    assert_eq!(n.nodes.borrow()[2], Node::Entity(AstEntity {
       parent: 3,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec![],
@@ -544,7 +605,7 @@ mod test {
       start_pos: 0,
       end_pos: 32,
     }));
-    assert_eq!(n.nodes.borrow()[1],  Node::Property(AstProperty {
+    assert_eq!(n.nodes.borrow()[1], Node::Property(AstProperty {
       parent: 2,
       name: "label".to_string(),
       rhs: 0,
@@ -572,7 +633,7 @@ mod test {
       start_pos: 0,
       end_pos: 55,
     }));
-    assert_eq!(n.nodes.borrow()[9],  Node::Property(AstProperty {
+    assert_eq!(n.nodes.borrow()[9], Node::Property(AstProperty {
       parent: 10,
       name: "label".to_string(),
       rhs: 8,
@@ -589,7 +650,7 @@ mod test {
     let tokens = l.lex("widget kpi @default #id {\n}\n".to_string()).unwrap();
     let _r = n.parse(tokens);
     assert_eq!(n.nodes.borrow().len(), 2);
-    assert_eq!(n.nodes.borrow()[0],  Node::Entity(AstEntity {
+    assert_eq!(n.nodes.borrow()[0], Node::Entity(AstEntity {
       parent: 1,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
@@ -598,7 +659,7 @@ mod test {
       start_pos: 0,
       end_pos: 28,
     }));
-    assert_eq!(n.nodes.borrow()[1],  Node::Entity(AstEntity {
+    assert_eq!(n.nodes.borrow()[1], Node::Entity(AstEntity {
       parent: 0,
       terms: vec![],
       refs: vec![],
