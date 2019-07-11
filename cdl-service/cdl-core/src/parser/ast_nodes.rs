@@ -77,7 +77,7 @@ pub struct AstProperty {
 pub struct AstFunctionCall{
   pub parent : NodeRef,
   pub name: String,
-  pub args: NodeRef,
+  pub args: Option<NodeRef>,
   pub start_pos: usize,
   pub end_pos: usize,
 }
