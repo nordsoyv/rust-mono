@@ -132,11 +132,21 @@ pub fn is_config_hub_entity(terms: &Vec<String>) -> bool {
   return false;
 }
 
+pub fn parse_number_token(token: &Token) -> f64 {
+  if token.kind == TokenType::Number {
+    return token.text.clone().unwrap_or("".to_string()).parse::<f64>().unwrap_or(0f64);
+  }
+  0.0
+}
+
 pub struct EntityHeader {
   pub terms: Vec<String>,
   pub refs: Vec<String>,
-  pub entity_id: String,
+  pub entity_id: f64,
+  pub identifier: String,
   pub size: usize,
+  pub label: String,
+
 }
 
 
@@ -145,7 +155,8 @@ pub fn parse_entity_header(tokens: &[Token]) -> Result<EntityHeader, String> {
   let mut refs = vec![];
   let mut label = String::new();
   let mut tokens_consumed = 0;
-  let mut entity_id = "".to_string();
+  let mut entity_id = 0.0;
+  let mut identifier = "".to_string();
 
   terms = get_terms(&tokens[0..]);
   if terms.len() == 0 { // no terms, something is wrong
@@ -170,14 +181,21 @@ pub fn parse_entity_header(tokens: &[Token]) -> Result<EntityHeader, String> {
   if is_tokens_left(tokens, tokens_consumed) {
     if let Some((parsed_entity_id, tokens_used)) = get_entity_id(&tokens[tokens_consumed..]) {
       tokens_consumed += tokens_used;
-      entity_id = parsed_entity_id;
+      identifier = parsed_entity_id;
     }
+  }
+
+  if is_next_token(&tokens[tokens_consumed..], TokenType::Number) {
+    entity_id = parse_number_token(&tokens[tokens_consumed]);
+    tokens_consumed +=1;
   }
 
   return Ok(EntityHeader {
     terms,
     refs,
-    entity_id: label,
+    label,
+    entity_id,
+    identifier,
     size: tokens_consumed,
   });
 }

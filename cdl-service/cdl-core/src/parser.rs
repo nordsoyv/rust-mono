@@ -26,7 +26,7 @@ use crate::{
       is_tokens_left},
   },
 };
-use crate::parser::ast_nodes::{AstList, AstReference, AstTableDecl, AstTitle, AstVPath, AstColor};
+use crate::parser::ast_nodes::{AstColor, AstList, AstReference, AstTableDecl, AstTitle, AstVPath};
 use crate::parser::utils::{is_config_hub_entity, parse_entity_header};
 
 mod ast_nodes;
@@ -100,8 +100,10 @@ impl Parser {
       children,
       terms: vec![],
       refs: vec![],
-      entity_id: "".to_string(),
+      entity_id: 0.0,
       start_pos: 0,
+      identifier: String::new(),
+      label: String::new(),
       end_pos: tokens[tokens.len() - 1].end,
     }));
     self.set_parents(copy, script_entity_id);
@@ -152,6 +154,12 @@ impl Parser {
       return Ok((0, 0));
     }
 
+
+    if is_tokens_left(&tokens, tokens_consumed) && is_next_token(&tokens[tokens_consumed..], TokenType::Comment) {
+      tokens_consumed += 1;
+    }
+
+
     if let Some(num) = eat_token_if_available(&tokens[tokens_consumed..], TokenType::EOL) {
       tokens_consumed += num;
     } else {
@@ -168,6 +176,8 @@ impl Parser {
       terms: header.terms,
       refs: header.refs,
       entity_id: header.entity_id,
+      label: header.label,
+      identifier: header.identifier,
       start_pos,
       end_pos,
     }));
@@ -461,6 +471,9 @@ impl Parser {
         TokenType::EOL => {
           return Ok((curr_rhs_index, curr_pos));
         }
+        TokenType::Comment => {
+          return Ok((curr_rhs_index, curr_pos));
+        }
         TokenType::Comma => {
           return Ok((curr_rhs_index, curr_pos));
         }
@@ -513,6 +526,9 @@ impl Parser {
           curr_rhs_index = term_ref;
         }
         TokenType::EOL => {
+          return Ok((curr_rhs_index, curr_pos));
+        }
+        TokenType::Comment => {
           return Ok((curr_rhs_index, curr_pos));
         }
         TokenType::Comma => {
@@ -584,6 +600,9 @@ impl Parser {
       TokenType::Colon => {
         let vpath_ref = self.parse_vpath(tokens)?;
         return Ok(vpath_ref);
+      }
+      TokenType::Comment => {
+        return Ok((0, 1));
       }
       TokenType::Number => {
         let num_string = tokens[0].text.clone().unwrap_or("".to_string());
@@ -757,21 +776,16 @@ impl Parser {
 
     curr_pos += 1;
     let q_token = &tokens[curr_pos];
-    println!("parsing vpath");
-    println!("lst token {:?}", q_token);
 
     let question = match q_token.kind {
       TokenType::Identifier => {
-        curr_pos +=1;
+        curr_pos += 1;
         q_token.text.clone().unwrap_or("".to_string())
       }
       _ => {
         "".to_string()
       }
     };
-
-    println!("question {:?}", question);
-
     let i = self.add_node(Node::VPath(AstVPath {
       parent: 0,
       source,
@@ -849,7 +863,7 @@ impl Parser {
 mod test {
   use crate::lexer::Lexer;
   use crate::parser::{AstEntity, AstIdentifier, AstProperty, Node, Parser};
-  use crate::parser::ast_nodes::{AstTitle, AstNumber, AstList, AstString, AstVPath};
+  use crate::parser::ast_nodes::{AstList, AstNumber, AstString, AstTitle, AstVPath};
 
   #[test]
   fn can_parse() {
@@ -862,12 +876,35 @@ mod test {
       parent: 1,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
-      entity_id: "id".to_string(),
+      entity_id: 0.0,
+      label: String::new(),
+      identifier: "id".to_string(),
       children: vec![],
       start_pos: 0,
       end_pos: 28,
     }));
   }
+
+  #[test]
+  fn can_parse_minimal_entity() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("summary {\n}\n".to_string()).unwrap();
+    let _r = n.parse(tokens);
+    assert_eq!(n.nodes.borrow().len(), 2);
+    assert_eq!(n.nodes.borrow()[0], Node::Entity(AstEntity {
+      parent: 1,
+      terms: vec!["summary".to_string()],
+      refs: vec![],
+      entity_id: 0.0,
+      identifier: String::new(),
+      label: String::new(),
+      children: vec![],
+      start_pos: 0,
+      end_pos: 12,
+    }));
+  }
+
 
   #[test]
   fn can_parse_prop() {
@@ -902,7 +939,10 @@ mod test {
       parent: 2,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
-      entity_id: "id".to_string(),
+      entity_id: 0.0,
+      identifier: "id".to_string(),
+      label: String::new(),
+
       children: vec![],
       start_pos: 0,
       end_pos: 29,
@@ -911,7 +951,9 @@ mod test {
       parent: 2,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
-      entity_id: "id2".to_string(),
+      entity_id: 0.0,
+      identifier: "id2".to_string(),
+      label: String::new(),
       children: vec![],
       start_pos: 30,
       end_pos: 59,
@@ -935,7 +977,10 @@ mod test {
       parent: 2,
       terms: vec!["widget".to_string(), "list".to_string()],
       refs: vec![],
-      entity_id: "".to_string(),
+      entity_id: 0.0,
+      identifier: String::new(),
+      label: String::new(),
+
       children: vec![],
       start_pos: 30,
       end_pos: 50,
@@ -944,7 +989,10 @@ mod test {
       parent: 3,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
-      entity_id: "id".to_string(),
+      entity_id: 0.0,
+      identifier: "id".to_string(),
+      label: String::new(),
+
       children: vec![0, 1],
       start_pos: 0,
       end_pos: 76,
@@ -965,7 +1013,10 @@ mod test {
       parent: 3,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec![],
-      entity_id: "".to_string(),
+      entity_id: 0.0,
+      identifier: String::new(),
+      label: String::new(),
+
       children: vec![1],
       start_pos: 0,
       end_pos: 32,
@@ -993,7 +1044,9 @@ mod test {
       parent: 11,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec![],
-      entity_id: "".to_string(),
+      entity_id: 0.0,
+      identifier: String::new(),
+      label: String::new(),
       children: vec![9],
       start_pos: 0,
       end_pos: 55,
@@ -1019,7 +1072,9 @@ mod test {
       parent: 1,
       terms: vec!["widget".to_string(), "kpi".to_string()],
       refs: vec!["default".to_string()],
-      entity_id: "id".to_string(),
+      entity_id: 0.0,
+      identifier: "id".to_string(),
+      label: String::new(),
       children: vec![],
       start_pos: 0,
       end_pos: 28,
@@ -1028,7 +1083,9 @@ mod test {
       parent: 0,
       terms: vec![],
       refs: vec![],
-      entity_id: "".to_string(),
+      entity_id: 0.0,
+      identifier: String::new(),
+      label: String::new(),
       children: vec![0],
       start_pos: 0,
       end_pos: 28,
@@ -1110,7 +1167,7 @@ mod test {
       source: "survey".to_string(),
       question: "".to_string(),
     }));
- assert_eq!(n.nodes.borrow()[4], Node::VPath(AstVPath {
+    assert_eq!(n.nodes.borrow()[4], Node::VPath(AstVPath {
       parent: 5,
       start_pos: 58,
       end_pos: 61,

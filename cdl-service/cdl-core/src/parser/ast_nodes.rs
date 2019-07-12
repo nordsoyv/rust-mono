@@ -7,11 +7,14 @@ pub struct AstEntity {
   pub parent : NodeRef,
   pub terms: Vec<String>,
   pub refs: Vec<String>,
-  pub entity_id: String,
+  pub entity_id: f64,
+  pub identifier: String,
+  pub label : String,
   pub children: Vec<NodeRef>,
   pub start_pos: usize,
   pub end_pos: usize,
 }
+
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstIdentifier {
