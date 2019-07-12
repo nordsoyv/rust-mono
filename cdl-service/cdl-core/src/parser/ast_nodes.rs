@@ -120,6 +120,14 @@ pub struct AstTitle{
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct AstColor{
+  pub parent : NodeRef,
+  pub value : String,
+  pub start_pos: usize,
+  pub end_pos: usize,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct AstTableDecl{
   pub parent : NodeRef,
   pub name : String,

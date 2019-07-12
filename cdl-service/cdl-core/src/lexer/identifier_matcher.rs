@@ -126,6 +126,47 @@ impl Matcher for ReferenceMatcher {
 }
 
 #[derive(Debug)]
+pub struct ColorMatcher {}
+
+impl ColorMatcher {
+  pub fn new() -> ColorMatcher {
+    ColorMatcher {}
+  }
+}
+
+impl Matcher for ColorMatcher {
+  fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
+    let mut matched = String::new();
+    let mut chars = input.chars();
+    match chars.next() {
+      Some(next) => {
+        if next == '#' {
+          matched.push(next);
+        } else {
+          return Ok((0, None));
+        }
+      }
+      _ => return Err("EOF"),
+    }
+
+    while let Some(next) = chars.next() {
+      if next.is_ascii_hexdigit() {
+        matched.push(next);
+      } else {
+        break;
+      }
+    }
+
+    let next_index = matched.len();
+    if next_index != 7 { // all colors are 6 digits long
+      return Ok((0, None));
+    }
+    Ok((next_index, Some(matched[1..].to_string())))
+  }
+}
+
+
+#[derive(Debug)]
 pub struct NumberMatcher {}
 
 impl NumberMatcher {
@@ -138,7 +179,6 @@ impl Matcher for NumberMatcher {
   fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
     let mut matched = String::new();
     let mut chars = input.chars();
-
     match chars.next() {
       Some(next) => {
         if next.is_numeric() {
@@ -153,7 +193,10 @@ impl Matcher for NumberMatcher {
     while let Some(next) = chars.next() {
       if next.is_numeric() || next == '.' {
         matched.push(next);
-      } else {
+      } else if next == '%' {
+        matched.push(next);
+        break;
+      }else {
         break;
       }
     }
@@ -225,6 +268,7 @@ fn number_matcher() {
   assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234"));
   assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234 entirely an identifier"));
   assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234qerf"));
+  assert_eq!(Ok((5, Some("1234%".to_string()))), i_matcher.check("1234%"));
   assert_eq!(Ok((0, None)), i_matcher.check("qerf"));
 }
 
@@ -237,6 +281,7 @@ fn string_matcher() {
   assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'"));
   assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("'1234'        "));
 }
+
 
 #[test]
 fn comment_matcher() {

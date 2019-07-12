@@ -26,7 +26,7 @@ use crate::{
       is_tokens_left},
   },
 };
-use crate::parser::ast_nodes::{AstList, AstReference, AstTableDecl, AstTitle, AstVPath};
+use crate::parser::ast_nodes::{AstList, AstReference, AstTableDecl, AstTitle, AstVPath, AstColor};
 use crate::parser::utils::{is_config_hub_entity, parse_entity_header};
 
 mod ast_nodes;
@@ -47,6 +47,7 @@ pub enum Node {
   Title(AstTitle),
   TableDecl(AstTableDecl),
   Reference(AstReference),
+  Color(AstColor),
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -375,9 +376,9 @@ impl Parser {
         TokenType::Identifier => {
           let i_text = tokens[curr_pos].text.clone().unwrap_or("NONE".to_string());
           if i_text == "AND" || i_text == "OR" {
-            let op = if i_text =="AND" {
+            let op = if i_text == "AND" {
               Operator::And
-            }else{
+            } else {
               Operator::Or
             };
             let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
@@ -393,10 +394,9 @@ impl Parser {
             self.set_parent(curr_rhs_index, expr_ref);
             self.set_parent(term_index, expr_ref);
             curr_rhs_index = expr_ref;
-          }else {
+          } else {
             return Ok((curr_rhs_index, curr_pos)); // CHECK: is this right ?
           }
-
         }
         TokenType::EOL => {
           return Ok((curr_rhs_index, curr_pos));
@@ -496,6 +496,16 @@ impl Parser {
         rhs = self.add_node(Node::String(ast_string));
         return Ok((rhs, 1));
       }
+      TokenType::Color => {
+        let r = AstColor {
+          parent: 0,
+          start_pos: tokens[0].start,
+          end_pos: tokens[0].end,
+          value: tokens[0].text.clone().unwrap_or("".to_string()),
+        };
+        rhs = self.add_node(Node::Color(r));
+        return Ok((rhs, 1));
+      }
       TokenType::Reference => {
         let ast_ref = AstReference {
           parent: 0,
@@ -507,11 +517,18 @@ impl Parser {
         return Ok((rhs, 1));
       }
       TokenType::Number => {
+        let num_string = tokens[0].text.clone().unwrap_or("".to_string());
+        let num_value;
+        if num_string.ends_with('%') {
+          num_value = num_string[..(num_string.len() - 1)].parse::<f64>().unwrap_or(0f64) / 100.0;
+        } else {
+          num_value = num_string.parse::<f64>().unwrap_or(0f64);
+        }
         let ast_number = AstNumber {
           parent: 0,
           start_pos: tokens[0].start,
           end_pos: tokens[0].end,
-          value: tokens[0].text.clone().unwrap_or("".to_string()).parse::<f64>().unwrap_or(0f64),
+          value: num_value,
         };
 
         rhs = self.add_node(Node::Number(ast_number));
@@ -695,6 +712,9 @@ impl Parser {
         inner.parent = new_parent;
       }
       Node::Reference(ref mut inner) => {
+        inner.parent = new_parent;
+      }
+      Node::Color(ref mut inner) => {
         inner.parent = new_parent;
       }
     }

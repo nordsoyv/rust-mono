@@ -11,8 +11,7 @@ use matcher::Matcher;
 use whitespace_matcher::WhitespaceMatcher;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::lexer::identifier_matcher::{StringMatcher, CommentsMatcher};
-
+use crate::lexer::identifier_matcher::{StringMatcher, CommentsMatcher, ColorMatcher};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum TokenType {
@@ -25,7 +24,9 @@ pub enum TokenType {
   Comma,
   Equal,
   LessThan,
+  LessThanOrEqual,
   MoreThan,
+  MoreThanOrEqual,
   Percent,
   OpenBracket,
   CloseBracket,
@@ -39,6 +40,7 @@ pub enum TokenType {
   Dot,
   EOL,
   Comment,
+  Color,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -61,13 +63,16 @@ impl Lexer {
         (Box::new(ReferenceMatcher::new()), TokenType::Reference),
         (Box::new(NumberMatcher::new()), TokenType::Number),
         (Box::new(CommentsMatcher::new()), TokenType::Comment),
+        (Box::new(ColorMatcher::new()), TokenType::Color),
         (Box::new(StringMatcher::new('"')), TokenType::String),
         (Box::new(StringMatcher::new('\'')), TokenType::String),
         (Box::new(LiteralMatcher::new(":")), TokenType::Colon),
         (Box::new(LiteralMatcher::new(",")), TokenType::Comma),
 //        (Box::new(LiteralMatcher::new(".")), TokenType::Dot),
         (Box::new(LiteralMatcher::new("=")), TokenType::Equal),
+        (Box::new(LiteralMatcher::new("<=")), TokenType::LessThanOrEqual),
         (Box::new(LiteralMatcher::new("<")), TokenType::LessThan),
+        (Box::new(LiteralMatcher::new(">=")), TokenType::MoreThanOrEqual),
         (Box::new(LiteralMatcher::new(">")), TokenType::MoreThan),
         (Box::new(LiteralMatcher::new("%")), TokenType::Percent),
         (Box::new(LiteralMatcher::new("{")), TokenType::OpenBracket),
@@ -146,6 +151,56 @@ fn lexer_parse_literal() {
       start: 3,
       end: 4,
       kind: TokenType::OpenBracket,
+      text: None,
+    }]),
+    res
+  );
+}
+
+#[test]
+fn lexer_parse_color() {
+  let lexer = Lexer::new();
+  let res = lexer.lex("#01ac4f".to_string());
+  assert_eq!(
+    Ok(vec![Token {
+      start: 0,
+      end: 7,
+      kind: TokenType::Color,
+      text: Some("01ac4f".to_string()),
+    }]),
+    res
+  );
+}
+
+#[test]
+fn lexer_parse_ops() {
+  let lexer = Lexer::new();
+  let res = lexer.lex("< > = <= >=".to_string());
+  assert_eq!(
+    Ok(vec![Token {
+      start: 0,
+      end: 1,
+      kind: TokenType::LessThan,
+      text: None,
+    }, Token {
+      start: 2,
+      end: 3,
+      kind: TokenType::MoreThan,
+      text: None,
+    }, Token {
+      start: 4,
+      end: 5,
+      kind: TokenType::Equal,
+      text: None,
+    }, Token {
+      start: 6,
+      end: 8,
+      kind: TokenType::LessThanOrEqual,
+      text: None,
+    }, Token {
+      start: 9,
+      end: 11,
+      kind: TokenType::MoreThanOrEqual,
       text: None,
     }]),
     res
@@ -293,6 +348,41 @@ fn lexer_parse_identifier_and_literal() {
     lexer.lex("   hello {} ".to_string())
   );
 }
+/*
+#[test]
+fn lexer_parse_threshold() {
+  let lexer = Lexer::new();
+  assert_eq!(
+    Ok(vec![
+      Token {
+        start: 3,
+        end: 8,
+        kind: TokenType::Identifier,
+        text: Some("threshold".to_string()),
+      },
+      Token {
+        start: 9,
+        end: 10,
+        kind: TokenType::Colon,
+        text: None,
+      },
+      Token {
+        start: 10,
+        end: 11,
+        kind: TokenType::Color,
+        text: None,
+      },
+      Token {
+        start: 10,
+        end: 11,
+        kind: TokenType::GreaterOrEqual,
+        text: None,
+      }
+    ]),
+    lexer.lex("thresholds: #388e3c >= 100%, #ff6d00 >= 80%, #d40000 >= 0%".to_string())
+  );
+}
+*/
 
 #[test]
 fn lexer_lots() {
@@ -302,7 +392,7 @@ value: average(score(survey:Q7), @cr.currentPeriodB2b)
 thresholds: #82D854 >= 100%, #FFBD5B >= 80%, #FA5263 < 80%
 riskValue: IIF(average(SCORE(survey:Q1))<7,'H!',IIF(average(SCORE(survey:Q1))>8,'L',IIF(COUNT(survey:responseid)<1,'U','M')))".to_string());
   assert_eq!(lexed.is_ok(), true);
-  assert_eq!(lexed.unwrap().len(), 108);
+  assert_eq!(lexed.unwrap().len(), 99);
 }
 
 #[test]
@@ -329,6 +419,7 @@ fn lexer_unknown_char() {
     lexer.lex("   hello ! hello".to_string())
   );
 }
+
 
 #[test]
 fn lexer_large() {
@@ -966,6 +1057,6 @@ format: formatterLTR
 }
     ".to_string());
   assert_eq!(lexed.is_ok(), true);
-  assert_eq!(lexed.unwrap().len(), 2930);
+  assert_eq!(lexed.unwrap().len(), 2900);
 //  assert_eq!(lexed.unwrap().len(), 108);
 }
