@@ -265,7 +265,7 @@ impl Parser {
 
   pub fn parse_property(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
     if tokens[0].kind == TokenType::Identifier && tokens[1].kind == TokenType::Colon {
-      let rhs = self.parse_expr(&tokens[2..])?;
+      let rhs = self.parse_list(&tokens[2..])?;
       match rhs {
         (_, 0) => return Ok((0, 0)),
         (index, num) => {
@@ -373,6 +373,66 @@ impl Parser {
           self.set_parent(term_index, expr_ref);
           curr_rhs_index = expr_ref;
         }
+        TokenType::LessThan => {
+          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          curr_pos += tokens_consumed + 1; //  +1 for the equal token
+          let expr_ref = self.add_node(Node::Operator(AstOperator {
+            parent: 0,
+            left: curr_rhs_index,
+            right: term_index,
+            op: Operator::LessThan,
+            start_pos: tokens[0].start,
+            end_pos: tokens[curr_pos - 1].end,
+          }));
+          self.set_parent(curr_rhs_index, expr_ref);
+          self.set_parent(term_index, expr_ref);
+          curr_rhs_index = expr_ref;
+        }
+        TokenType::LessThanOrEqual => {
+          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          curr_pos += tokens_consumed + 1; //  +1 for the equal token
+          let expr_ref = self.add_node(Node::Operator(AstOperator {
+            parent: 0,
+            left: curr_rhs_index,
+            right: term_index,
+            op: Operator::LessThanOrEqual,
+            start_pos: tokens[0].start,
+            end_pos: tokens[curr_pos - 1].end,
+          }));
+          self.set_parent(curr_rhs_index, expr_ref);
+          self.set_parent(term_index, expr_ref);
+          curr_rhs_index = expr_ref;
+        }
+        TokenType::MoreThan => {
+          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          curr_pos += tokens_consumed + 1; //  +1 for the equal token
+          let expr_ref = self.add_node(Node::Operator(AstOperator {
+            parent: 0,
+            left: curr_rhs_index,
+            right: term_index,
+            op: Operator::MoreThan,
+            start_pos: tokens[0].start,
+            end_pos: tokens[curr_pos - 1].end,
+          }));
+          self.set_parent(curr_rhs_index, expr_ref);
+          self.set_parent(term_index, expr_ref);
+          curr_rhs_index = expr_ref;
+        }
+        TokenType::MoreThanOrEqual => {
+          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          curr_pos += tokens_consumed + 1; //  +1 for the equal token
+          let expr_ref = self.add_node(Node::Operator(AstOperator {
+            parent: 0,
+            left: curr_rhs_index,
+            right: term_index,
+            op: Operator::MoreThanOrEqual,
+            start_pos: tokens[0].start,
+            end_pos: tokens[curr_pos - 1].end,
+          }));
+          self.set_parent(curr_rhs_index, expr_ref);
+          self.set_parent(term_index, expr_ref);
+          curr_rhs_index = expr_ref;
+        }
         TokenType::Identifier => {
           let i_text = tokens[curr_pos].text.clone().unwrap_or("NONE".to_string());
           if i_text == "AND" || i_text == "OR" {
@@ -399,6 +459,9 @@ impl Parser {
           }
         }
         TokenType::EOL => {
+          return Ok((curr_rhs_index, curr_pos));
+        }
+        TokenType::Comma => {
           return Ok((curr_rhs_index, curr_pos));
         }
         _ => {
@@ -452,6 +515,9 @@ impl Parser {
         TokenType::EOL => {
           return Ok((curr_rhs_index, curr_pos));
         }
+        TokenType::Comma => {
+          return Ok((curr_rhs_index, curr_pos));
+        }
         _ => {
           return Ok((curr_rhs_index, curr_pos));
         }
@@ -473,7 +539,6 @@ impl Parser {
           return Ok(func);
         } else if tokens[curr_pos + 1].kind == TokenType::Colon {
           let vpath = self.parse_vpath(&tokens[curr_pos..])?;
-
           return Ok(vpath);
         } else {
           let ast_ident = AstIdentifier {
@@ -515,6 +580,10 @@ impl Parser {
         };
         rhs = self.add_node(Node::Reference(ast_ref));
         return Ok((rhs, 1));
+      }
+      TokenType::Colon => {
+        let vpath_ref = self.parse_vpath(tokens)?;
+        return Ok(vpath_ref);
       }
       TokenType::Number => {
         let num_string = tokens[0].text.clone().unwrap_or("".to_string());
@@ -591,6 +660,44 @@ impl Parser {
     return Ok((f_index, tokens_consumed + 2));
   }
 
+  fn parse_list(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
+    let mut list: Vec<NodeRef> = vec![];
+    let mut curr_pos = 0;
+    loop {
+      let curr_token = &tokens[curr_pos];
+      match curr_token.kind {
+        TokenType::Comma => {
+          curr_pos += 1;
+          continue;
+        }
+        TokenType::EOL => {
+          if list.len() == 1 {
+            return Ok((list[0], curr_pos));
+          } else {
+            let list_copy = list.clone();
+            let r = self.add_node(Node::List(AstList {
+              parent: 0,
+              items: list,
+              start_pos: tokens[0].start,
+              end_pos: tokens[curr_pos].end,
+            }));
+            self.set_parents(list_copy, r);
+            return Ok((r, curr_pos));
+          }
+        }
+        _ => {
+          let res = self.parse_expr(&tokens[curr_pos..])?;
+          match res {
+            (expr_ref, tokens_consumed) => {
+              list.push(expr_ref);
+              curr_pos += tokens_consumed;
+            }
+          }
+        }
+      }
+    }
+  }
+
   fn parse_arg_list(&self, tokens: &[Token]) -> Result<(Option<NodeRef>, usize), String> {
     let mut list = vec![];
     let mut curr_pos = 0;
@@ -629,34 +736,51 @@ impl Parser {
   }
 
   fn parse_vpath(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
-    let token = &tokens[0];
-
+    let mut curr_pos = 0;
+    ;
+    let token = &tokens[curr_pos];
     let source = match token.kind {
-      TokenType::Identifier => token.text.clone().unwrap_or("".to_string()),
-      _ => return Err(format!("Error parsing vpath at token {:?}", tokens[0]))
+      TokenType::Identifier => {
+        curr_pos += 1;
+        token.text.clone().unwrap_or("".to_string())
+      }
+      TokenType::Colon => {
+        "".to_string()
+      }
+      _ => return Err(format!("Error parsing vpath at token {:?}", tokens[curr_pos]))
     };
 
 
-    if !is_next_token(&tokens[1..], TokenType::Colon) {
+    if !is_next_token(&tokens[curr_pos..], TokenType::Colon) {
       return Err(format!("Error parsing vpath at token {:?}", tokens[1]));
     }
 
-    let q_token = &tokens[2];
+    curr_pos += 1;
+    let q_token = &tokens[curr_pos];
+    println!("parsing vpath");
+    println!("lst token {:?}", q_token);
+
     let question = match q_token.kind {
-      TokenType::Identifier => q_token.text.clone().unwrap_or("".to_string()),
-      _ => "".to_string(),
+      TokenType::Identifier => {
+        curr_pos +=1;
+        q_token.text.clone().unwrap_or("".to_string())
+      }
+      _ => {
+        "".to_string()
+      }
     };
 
+    println!("question {:?}", question);
 
     let i = self.add_node(Node::VPath(AstVPath {
       parent: 0,
       source,
       question,
       start_pos: tokens[0].start,
-      end_pos: tokens[2].end,
+      end_pos: tokens[curr_pos - 1].end,
     }));
 
-    return Ok((i, 3));
+    return Ok((i, curr_pos));
   }
 
 
@@ -725,7 +849,7 @@ impl Parser {
 mod test {
   use crate::lexer::Lexer;
   use crate::parser::{AstEntity, AstIdentifier, AstProperty, Node, Parser};
-  use crate::parser::ast_nodes::AstTitle;
+  use crate::parser::ast_nodes::{AstTitle, AstNumber, AstList, AstString, AstVPath};
 
   #[test]
   fn can_parse() {
@@ -923,6 +1047,75 @@ mod test {
       title: "hello title".to_string(),
       start_pos: 0,
       end_pos: 21,
+    }));
+  }
+
+  #[test]
+  fn can_parse_list() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex(" widget kpi {\n list : 5 , \"hello\" ,7 + 8 \n } \n".to_string()).unwrap();
+    let _r = n.parse(tokens);
+    let num_nodes = n.nodes.borrow().len();
+    assert_eq!(num_nodes, 9);
+    assert_eq!(n.nodes.borrow()[0], Node::Number(AstNumber {
+      start_pos: 22,
+      end_pos: 23,
+      parent: 5,
+      value: 5.0,
+    }));
+    assert_eq!(n.nodes.borrow()[1], Node::String(AstString {
+      start_pos: 26,
+      end_pos: 33,
+      parent: 5,
+      value: "hello".to_string(),
+    }));
+    assert_eq!(n.nodes.borrow()[num_nodes - 4], Node::List(AstList {
+      start_pos: 22,
+      end_pos: 42,
+      parent: 6,
+      items: vec![0, 1, 4],
+    }));
+  }
+
+  #[test]
+  fn can_parse_threshold() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("widget kpi {\n prop : 100 > 100%\n }\n".to_string()).unwrap();
+    let _r = n.parse(tokens);
+    let num_nodes = n.nodes.borrow().len();
+    assert_eq!(num_nodes, 6);
+  }
+
+  #[test]
+  fn can_parse_vpaths() {
+    let mut n = Parser::new();
+    let l = Lexer::new();
+    let tokens = l.lex("widget kpi {\n prop : survey:q1\n prop2 : survey: \n prop3 : :q1 \n }\n".to_string()).unwrap();
+    let _r = n.parse(tokens);
+    let num_nodes = n.nodes.borrow().len();
+    assert_eq!(num_nodes, 8);
+    assert_eq!(n.nodes.borrow()[0], Node::VPath(AstVPath {
+      parent: 1,
+      start_pos: 21,
+      end_pos: 30,
+      source: "survey".to_string(),
+      question: "q1".to_string(),
+    }));
+    assert_eq!(n.nodes.borrow()[2], Node::VPath(AstVPath {
+      parent: 3,
+      start_pos: 40,
+      end_pos: 47,
+      source: "survey".to_string(),
+      question: "".to_string(),
+    }));
+ assert_eq!(n.nodes.borrow()[4], Node::VPath(AstVPath {
+      parent: 5,
+      start_pos: 58,
+      end_pos: 61,
+      source: "".to_string(),
+      question: "q1".to_string(),
     }));
   }
 }

@@ -21,7 +21,7 @@ pub fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Vec<String> {
 }
 
 #[inline]
-pub fn _get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
+pub fn get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
   let curr_token = &tokens[0];
   if curr_token.kind != kind {
     return None;
@@ -37,6 +37,11 @@ pub fn get_terms(tokens: &[Token]) -> Vec<String> {
 #[inline]
 pub fn get_refs(tokens: &[Token]) -> Vec<String> {
   get_tokens_of_kind(tokens, TokenType::Reference)
+}
+
+#[inline]
+pub fn get_string(tokens: &[Token]) -> Vec<String> {
+  get_tokens_of_kind(tokens, TokenType::String)
 }
 
 
@@ -138,6 +143,7 @@ pub struct EntityHeader {
 pub fn parse_entity_header(tokens: &[Token]) -> Result<EntityHeader, String> {
   let terms;
   let mut refs = vec![];
+  let mut label = String::new();
   let mut tokens_consumed = 0;
   let mut entity_id = "".to_string();
 
@@ -146,6 +152,14 @@ pub fn parse_entity_header(tokens: &[Token]) -> Result<EntityHeader, String> {
     return Err(format!("Error parsing entity header, at token {:?}", tokens[0]));
   }
   tokens_consumed += terms.len();
+
+  if is_tokens_left(tokens, tokens_consumed) {
+    let s = get_string(&tokens[tokens_consumed..]);
+    if s.len() > 0 {
+      label = s[0].clone();
+      tokens_consumed += 1;
+    }
+  }
 
   if is_tokens_left(tokens, tokens_consumed) {
     refs = get_refs(&tokens[tokens_consumed..]);
@@ -163,7 +177,7 @@ pub fn parse_entity_header(tokens: &[Token]) -> Result<EntityHeader, String> {
   return Ok(EntityHeader {
     terms,
     refs,
-    entity_id,
+    entity_id: label,
     size: tokens_consumed,
   });
 }

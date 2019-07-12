@@ -30,6 +30,8 @@ pub enum Operator {
   Equal,
   And,
   Or,
+  LessThan,LessThanOrEqual,
+  MoreThan,MoreThanOrEqual,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
