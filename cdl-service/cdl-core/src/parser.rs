@@ -52,10 +52,23 @@ pub enum Node {
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Parser {
-  pub nodes: RefCell<Vec<Node>>,
-  pub script_entity: NodeRef,
+  pub(crate) nodes: RefCell<Vec<Node>>,
+  pub(crate) script_entity: NodeRef,
 }
 
+pub fn parser_to_ast(parser: Parser) -> Ast {
+  Ast {
+    script_entity: parser.script_entity,
+    nodes: parser.nodes.into_inner(),
+  }
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Ast {
+  pub nodes: Vec<Node>,
+  pub script_entity: NodeRef,
+}
 
 impl Parser {
   pub fn new() -> Parser {

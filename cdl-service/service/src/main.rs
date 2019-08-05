@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 use cdl_core::lexer;
 use cdl_core::lexer::Token;
 use cdl_core::parser;
-use cdl_core::parser::Parser;
+use cdl_core::parser::{Ast, parser_to_ast};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Request {
@@ -33,7 +33,7 @@ struct LexResponse {
 #[derive(Debug, Serialize, Deserialize)]
 struct ParseResponse {
   stats: ParseResponseStats,
-  ast : Parser
+  ast: Ast,
 }
 
 
@@ -62,6 +62,7 @@ fn lex(item: web::Json<Request>) -> HttpResponse {
   };
 }
 
+
 fn parse(item: web::Json<Request>) -> HttpResponse {
   let start_lex = std::time::Instant::now();
   let lexer = lexer::Lexer::new();
@@ -88,14 +89,16 @@ fn parse(item: web::Json<Request>) -> HttpResponse {
 
   info!("Time taken to lex + parse : {} milliseconds", total_time);
   match res {
-    Ok(()) => return HttpResponse::Ok().json(ParseResponse {
-       stats: ParseResponseStats {
-         total_time,
-         lex_time,
-         parse_time,
-       },
-      ast: parser
-    }),
+    Ok(()) => {
+      return HttpResponse::Ok().json(ParseResponse {
+        stats: ParseResponseStats {
+          total_time,
+          lex_time,
+          parse_time,
+        },
+        ast : parser_to_ast(parser),
+      });
+    }
     Err(e) => return HttpResponse::BadRequest().body(e),
   }
 }
