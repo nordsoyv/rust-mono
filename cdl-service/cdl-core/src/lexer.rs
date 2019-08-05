@@ -348,41 +348,6 @@ fn lexer_parse_identifier_and_literal() {
     lexer.lex("   hello {} ".to_string())
   );
 }
-/*
-#[test]
-fn lexer_parse_threshold() {
-  let lexer = Lexer::new();
-  assert_eq!(
-    Ok(vec![
-      Token {
-        start: 3,
-        end: 8,
-        kind: TokenType::Identifier,
-        text: Some("threshold".to_string()),
-      },
-      Token {
-        start: 9,
-        end: 10,
-        kind: TokenType::Colon,
-        text: None,
-      },
-      Token {
-        start: 10,
-        end: 11,
-        kind: TokenType::Color,
-        text: None,
-      },
-      Token {
-        start: 10,
-        end: 11,
-        kind: TokenType::GreaterOrEqual,
-        text: None,
-      }
-    ]),
-    lexer.lex("thresholds: #388e3c >= 100%, #ff6d00 >= 80%, #d40000 >= 0%".to_string())
-  );
-}
-*/
 
 #[test]
 fn lexer_lots() {
