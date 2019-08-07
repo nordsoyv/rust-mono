@@ -6,10 +6,16 @@ use cdl_core::lexer;
 use cdl_core::lexer::Token;
 use cdl_core::parser;
 use cdl_core::parser::{Ast, parser_to_ast};
+use cdl_core::print::{print_ast};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Request {
   cdl: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct PrintRequest {
+  ast: Ast
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,6 +42,11 @@ struct ParseResponse {
   ast: Ast,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct PrintResponse {
+  cdl: String,
+}
+
 
 fn index(info: web::Path<(String, u32)>) -> impl Responder {
   format!("Hello {}! id:{}", info.0, info.1)
@@ -60,6 +71,14 @@ fn lex(item: web::Json<Request>) -> HttpResponse {
       HttpResponse::InternalServerError().finish()
     }
   };
+}
+
+fn print(item: web::Json<PrintRequest>)-> HttpResponse {
+  let ast = &item.ast;
+  let cdl = print_ast(ast);
+  return HttpResponse::Ok().json(PrintResponse {
+    cdl
+  });
 }
 
 
@@ -110,9 +129,10 @@ fn main() -> std::io::Result<()> {
   HttpServer::new(||
     App::new()
       .wrap(middleware::Logger::default())
-      .data(web::JsonConfig::default().limit(1024 * 100)) // <- limit size of the payload (global configuration)
+      .data(web::JsonConfig::default().limit(1024 * 500)) // <- limit size of the payload (global configuration)
       .service(web::resource("/lex").route(web::post().to(lex)))
       .service(web::resource("/parse").route(web::post().to(parse)))
+      .service(web::resource("/print").route(web::post().to(print)))
       .service(web::resource("/{name}/{id}/index.html").to(index))
   )
     .bind("127.0.0.1:8080")?

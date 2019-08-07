@@ -1,12 +1,13 @@
-use crate::parser::{Node, Ast};
+use crate::parser::{Node, Parser, parser_to_ast, Ast};
 use crate::parser::ast_nodes::{NodeRef, Operator};
+use crate::lexer::Lexer;
 
-pub fn print_ast(ast: Ast) -> String {
+pub fn print_ast(ast: &Ast) -> String {
   let start = ast.script_entity;
   let script = &ast.nodes[start];
   match script {
     Node::Entity(n) => {
-      let children: Vec<String> = (&n.children).into_iter().map(|c| print_node(&ast, *c, 0)).collect();
+      let children: Vec<String> = (&n.children).into_iter().map(|c| print_node(ast, *c, 0)).collect();
       return format!("{}", children.join("\n"));
     }
     _ => { return format!("did not get entity as start node"); }
@@ -124,6 +125,6 @@ page {
   let mut p = Parser::new();
   p.parse(tokens).unwrap();
   let ast = parser_to_ast(p);
-  let res = print_ast(ast);
+  let res = print_ast(&ast);
   assert_eq!(res, script);
 }
