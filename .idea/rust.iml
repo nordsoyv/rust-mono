@@ -40,6 +40,14 @@
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core\examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/service/target" />
@@ -47,8 +55,11 @@
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/target" />
       <excludeFolder url="file://$MODULE_DIR$/parser-gen/target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/target" />
     </content>
     <orderEntry type="inheritedJdk" />

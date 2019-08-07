@@ -21,7 +21,7 @@ pub fn get_tokens_of_kind(tokens: &[Token], kind: TokenType) -> Vec<String> {
 }
 
 #[inline]
-pub fn get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
+pub fn _get_token_of_kind(tokens: &[Token], kind: TokenType) -> Option<String> {
   let curr_token = &tokens[0];
   if curr_token.kind != kind {
     return None;

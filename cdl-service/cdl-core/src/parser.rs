@@ -29,7 +29,7 @@ use crate::{
 use crate::parser::ast_nodes::{AstColor, AstList, AstReference, AstTableDecl, AstTitle, AstVPath};
 use crate::parser::utils::{is_config_hub_entity, parse_entity_header};
 
-mod ast_nodes;
+pub mod ast_nodes;
 mod utils;
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
