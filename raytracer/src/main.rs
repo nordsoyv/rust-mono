@@ -1,5 +1,7 @@
 use minifb::{Key, Window, WindowOptions};
 
+mod vec3;
+
 const WIDTH: usize = 200;
 const HEIGHT: usize = 100;
 
@@ -14,10 +16,6 @@ fn main() {
   });
 
   while window.is_open() && !window.is_key_down(Key::Escape) {
-    let mut col = 0;
-
-
-//    let mut buffer_iter = buffer.iter_mut();
     let mut buffer_pos = 0;
     for j in 0..HEIGHT {
       for i in 0..WIDTH {
