@@ -29,9 +29,20 @@ fn print_node(ast: &Ast, node_ref: NodeRef, indent: u32) -> String {
       return format!("{}", node.value);
     }
     Node::Entity(node) => {
-      let terms = node.terms.join(" ");
+      let mut header = String::new();
+      header.push_str(&padding);
+      header.push_str(&node.terms.join(" "));
+      if node.refs.len()>0 {
+        let ref_str :Vec<String> = (&node.refs).into_iter().map(|r| format!("@{}",r)).collect();
+        header.push_str(" ");
+        header.push_str(&ref_str.join(" "));
+      }
+      if node.identifier.len() > 0 {
+        header.push_str(" #");
+        header.push_str(&node.identifier);
+      }
       let children: Vec<String> = (&node.children).into_iter().map(|c| print_node(ast, *c, indent + 2)).collect();
-      return format!("{}{} {{\n{}\n{}}}\n", padding, terms, children.join("\n"), padding);
+      return format!("{} {{\n{}\n{}}}\n", header, children.join("\n"), padding);
     }
     Node::Property(node) => {
       return format!("{}{}: {}", padding, node.name, print_node(ast, node.rhs, 0));
@@ -110,7 +121,7 @@ config hub {
 }
 
 page {
-  widget kpi {
+  widget kpi @default @other #widgetId {
     label: \"Label\"
     func: 1 + 2
     func: 1 AND 2
