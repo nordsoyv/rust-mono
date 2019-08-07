@@ -16,7 +16,7 @@ pub fn print_ast(ast: &Ast) -> String {
 
 fn print_node(ast: &Ast, node_ref: NodeRef, indent: u32) -> String {
   let n = &ast.nodes[node_ref];
-  let padding = pad(indent);
+  let padding = get_padding(indent);
 
   match n {
     Node::Title(node) => {
@@ -98,7 +98,7 @@ fn op_to_str(op: &Operator) -> &str {
   }
 }
 
-fn pad(indent: u32) -> String {
+fn get_padding(indent: u32) -> String {
   let mut s: String = "".to_string();
   for _ in 0..indent {
     s.push(' ');
