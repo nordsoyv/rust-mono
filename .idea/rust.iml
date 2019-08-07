@@ -48,12 +48,17 @@
       <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/raytracer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/raytracer\examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/raytracer\tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/raytracer\benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/service/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/service\target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/target" />
       <excludeFolder url="file://$MODULE_DIR$/parser-gen/target" />
+      <excludeFolder url="file://$MODULE_DIR$/raytracer/target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/target" />
