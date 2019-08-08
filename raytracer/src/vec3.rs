@@ -4,6 +4,10 @@ pub fn dot(a: &Vec3, b:&Vec3) -> f32 {
   (a.x() * b.x()) + (a.y() * b.y()) + (a.z() * b.z())
 }
 
+pub fn unit_vec( v : &Vec3) -> Vec3 {
+  v.to_unit()
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
   x: f32,

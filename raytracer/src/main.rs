@@ -1,8 +1,9 @@
 use minifb::{Key, Window, WindowOptions};
 
 use crate::ray::Ray;
-use crate::vec3::Vec3;
 use crate::vec3::dot;
+use crate::vec3::unit_vec;
+use crate::vec3::Vec3;
 
 mod vec3;
 mod ray;
@@ -11,15 +12,18 @@ const WIDTH: usize = 600;
 const HEIGHT: usize = 300;
 
 
-fn hit_sphere(center: Vec3, radius: f32, ray: &Ray) -> bool {
-//  return false;
+fn hit_sphere(center: Vec3, radius: f32, ray: &Ray) -> f32 {
   let oc = ray.origin() - center;
-  let a =  dot(&ray.direction(),&ray.direction());
-  let b = 2.0 *dot(&oc,&ray.direction());
+  let a = dot(&ray.direction(), &ray.direction());
+  let b = 2.0 * dot(&oc, &ray.direction());
   let c = oc.dot(oc) - radius * radius;
   let discriminant = b * b - 4.0 * a * c;
-//dbg!(a,b,c,discriminant);
-  return discriminant > 0.0;
+
+  if discriminant < 0.0 {
+    return -1.0;
+  } else {
+    return (-b - discriminant.sqrt()) / (2.0 * a);
+  }
 }
 
 fn lerp_vector(t: f32, start: Vec3, end: Vec3) -> Vec3 {
@@ -27,9 +31,12 @@ fn lerp_vector(t: f32, start: Vec3, end: Vec3) -> Vec3 {
 }
 
 fn get_color(ray: Ray) -> Vec3 {
-  if hit_sphere(Vec3::new(0.0,0.0,-1.0),0.5, &ray) {
-    return Vec3::new(1.0,0.0,0.0);
+  let t = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, &ray);
+  if t > 0.0 {
+    let N = unit_vec(&(ray.point_at_param(t) - Vec3::new(0.0, 0.0, -1.0)));
+    return (N + 1.0) * 0.5;
   }
+
   let lerp_start = Vec3::new(1.0, 1.0, 1.0);
   let lerp_end = Vec3::new(0.5, 0.7, 1.0);
   let unit_dir = ray.direction().to_unit();
