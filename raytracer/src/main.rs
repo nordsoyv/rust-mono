@@ -1,42 +1,29 @@
 use minifb::{Key, Window, WindowOptions};
 
-use crate::ray::Ray;
-use crate::vec3::dot;
-use crate::vec3::unit_vec;
-use crate::vec3::Vec3;
-
 mod vec3;
 mod ray;
+mod hitable;
+
+use crate::ray::Ray;
+use crate::vec3::Vec3;
+use crate::hitable::{HitableList, Sphere, Hitable};
 
 const WIDTH: usize = 600;
 const HEIGHT: usize = 300;
-
-
-fn hit_sphere(center: Vec3, radius: f32, ray: &Ray) -> f32 {
-  let oc = ray.origin() - center;
-  let a = dot(&ray.direction(), &ray.direction());
-  let b = 2.0 * dot(&oc, &ray.direction());
-  let c = oc.dot(oc) - radius * radius;
-  let discriminant = b * b - 4.0 * a * c;
-
-  if discriminant < 0.0 {
-    return -1.0;
-  } else {
-    return (-b - discriminant.sqrt()) / (2.0 * a);
-  }
-}
 
 fn lerp_vector(t: f32, start: Vec3, end: Vec3) -> Vec3 {
   return (start * (1.0 - t)) + (end * t);
 }
 
-fn get_color(ray: Ray) -> Vec3 {
-  let t = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, &ray);
-  if t > 0.0 {
-    let N = unit_vec(&(ray.point_at_param(t) - Vec3::new(0.0, 0.0, -1.0)));
-    return (N + 1.0) * 0.5;
-  }
+fn get_color(ray: Ray, world : &dyn Hitable) -> Vec3 {
+  let hit= world.hit(&ray,0.0,100000.0);
 
+  match hit {
+    Some(hit_result) => {
+      return (hit_result.normal +1.0) *0.5;
+    }
+    None => {}
+  }
   let lerp_start = Vec3::new(1.0, 1.0, 1.0);
   let lerp_end = Vec3::new(0.5, 0.7, 1.0);
   let unit_dir = ray.direction().to_unit();
@@ -44,8 +31,33 @@ fn get_color(ray: Ray) -> Vec3 {
   return lerp_vector(t, lerp_start, lerp_end);
 }
 
+fn render( width: usize, height:usize) -> Vec<u32>{
+  let mut buffer: Vec<u32> = vec![0; width * height];
+  let mut buffer_pos = 0;
+
+  let lower_left = Vec3::new(-2.0, -1.0, -1.0);
+  let horizontal = Vec3::new(4.0, 0.0, 0.0);
+  let vertical = Vec3::new(0.0, 2.0, 0.0);
+  let origin = Vec3::new(0.0, 0.0, 0.0);
+
+  let mut world = HitableList::new();
+  world.add(Box::new(Sphere::new(Vec3::new(0.0,0.0,-1.0),0.5 )));
+  world.add(Box::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0),100.0 )));
+
+  for j in (0..height).rev() {
+    for i in 0..width {
+      let u = i as f32 / width as f32;
+      let v = j as f32 / height as f32;
+      let ray = Ray::new(origin, lower_left + (horizontal * u) + (vertical * v));
+      let col = get_color(ray, &world);
+      buffer[buffer_pos] = col.to_u32_col();
+      buffer_pos += 1;
+    }
+  }
+  return buffer;
+}
+
 fn main() {
-  let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
   let mut window = Window::new(
     "Test - ESC to exit",
     WIDTH,
@@ -53,26 +65,8 @@ fn main() {
     WindowOptions::default()).unwrap_or_else(|e| {
     panic!("{}", e);
   });
-
+  let buffer = render( WIDTH,HEIGHT);
   while window.is_open() && !window.is_key_down(Key::Escape) {
-    let mut buffer_pos = 0;
-    let lower_left = Vec3::new(-2.0, -1.0, -1.0);
-    let horizontal = Vec3::new(4.0, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, 2.0, 0.0);
-    let origin = Vec3::new(0.0, 0.0, 0.0);
-
-
-    for j in (0..HEIGHT).rev() {
-      for i in 0..WIDTH {
-        let u = i as f32 / WIDTH as f32;
-        let v = j as f32 / HEIGHT as f32;
-        let ray = Ray::new(origin, lower_left + (horizontal * u) + (vertical * v));
-        let col = get_color(ray);
-        buffer[buffer_pos] = col.to_u32_col();
-        buffer_pos += 1;
-      }
-    }
-
     // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
     window.update_with_buffer(&buffer).unwrap();
   }
