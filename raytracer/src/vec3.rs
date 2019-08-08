@@ -1,5 +1,9 @@
 use std::ops;
 
+pub fn dot(a: &Vec3, b:&Vec3) -> f32 {
+  (a.x() * b.x()) + (a.y() * b.y()) + (a.z() * b.z())
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
   x: f32,
