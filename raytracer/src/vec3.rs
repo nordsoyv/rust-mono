@@ -55,6 +55,55 @@ impl Vec3 {
   pub fn squared_length(&self) -> f32 {
     self.x * self.x + self.y * self.y + self.z * self.z
   }
+
+  #[inline]
+  pub fn make_unit(&mut self) -> &mut Vec3 {
+    let l = self.length();
+    self.x = self.x / l;
+    self.y = self.y / l;
+    self.z = self.z / l;
+    self
+  }
+
+  #[inline]
+  pub fn to_unit(&self) -> Vec3 {
+    let l = self.length();
+    Vec3 {
+      x: self.x / l,
+      y: self.y / l,
+      z: self.z / l,
+    }
+  }
+
+  #[inline]
+  pub fn dot(&self, rhs: Vec3) -> f32 {
+    (self.x * rhs.x()) + (self.y * rhs.y()) + (self.z * rhs.z())
+  }
+
+  #[inline]
+  pub fn cross(&self, rhs: Vec3) -> Vec3 {
+    Vec3 {
+      x: self.y * rhs.z() - self.z * rhs.y(),
+      y: self.z * rhs.x() - self.x * rhs.z(),
+      z: self.x * rhs.y() - self.y * rhs.x(),
+    }
+  }
+
+  #[inline]
+  pub fn to_u32_col(&self) -> u32 {
+    let red: u32 = ((self.x * 255.0) as u8) as u32;
+    let green: u32 = ((self.y * 255.0) as u8) as u32;
+    let blue: u32 = ((self.z * 255.0) as u8) as u32;
+    let alpha: u32 = 255 as u32;
+
+
+    let mut c: u32 = 0;
+    c = c | alpha << 24;
+    c = c | red << 16;
+    c = c | green << 8;
+    c = c | blue << 0;
+    c
+  }
 }
 
 impl ops::Add<Vec3> for Vec3 {
@@ -123,7 +172,7 @@ impl ops::Div<f32> for Vec3 {
 
 #[test]
 fn basic() {
-  let v = Vec3::new(1.0, 2.0, 3.0);
+  let mut v = Vec3::new(1.0, 2.0, 3.0);
   let v2 = Vec3::new(1.0, 1.0, 1.0);
   assert_eq!(v.x(), 1.0);
   assert_eq!(v.y(), 2.0);
@@ -145,7 +194,11 @@ fn basic() {
   assert_eq!((v - 10.0).x(), -9.0);
   assert_eq!((v - 10.0).y(), -8.0);
   assert_eq!((v - 10.0).z(), -7.0);
-
-
-
+  assert_eq!(v.make_unit().x(), 0.26726124);
+  assert_eq!(v.to_unit().x(), 0.26726127);
+  assert_eq!(v.dot(v2), 1.6035674);
+  let crossed = v.cross(v2);
+  assert_eq!(crossed.x(), -0.2672612);
+  assert_eq!(crossed.y(), 0.5345224);
+  assert_eq!(crossed.z(), -0.26726124);
 }
