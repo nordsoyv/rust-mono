@@ -1,11 +1,25 @@
 use minifb::{Key, Window, WindowOptions};
 
+use crate::ray::Ray;
 use crate::vec3::Vec3;
 
 mod vec3;
+mod ray;
 
-const WIDTH: usize = 200;
-const HEIGHT: usize = 100;
+const WIDTH: usize = 600;
+const HEIGHT: usize = 300;
+
+fn lerp_vector(t:f32, start: Vec3, end:Vec3) -> Vec3 {
+  return (start * (1.0 - t) )+ (end * t);
+}
+
+fn get_color(ray: Ray) -> Vec3 {
+  let lerp_start = Vec3::new(1.0, 1.0, 1.0);
+  let lerp_end = Vec3::new(0.5, 0.7, 1.0);
+  let unit_dir = ray.direction().to_unit();
+  let t = 0.5 * (unit_dir.y() + 1.0);
+  return lerp_vector(t, lerp_start, lerp_end);
+}
 
 fn main() {
   let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
@@ -19,12 +33,19 @@ fn main() {
 
   while window.is_open() && !window.is_key_down(Key::Escape) {
     let mut buffer_pos = 0;
-    for j in 0..HEIGHT {
-      for i in 0..WIDTH {
-        let col = Vec3::new(i as f32 / WIDTH as f32,
-                            j as f32 / HEIGHT as f32,
-                            0.2f32);
+    let lower_left = Vec3::new(-2.0, -1.0, -1.0);
+    let horizontal = Vec3::new(4.0, 0.0, 0.0);
+    let vertical = Vec3::new(0.0, 2.0, 0.0);
+    let origin = Vec3::new(0.0, 0.0, 0.0);
 
+
+    for j in (0..HEIGHT).rev() {
+      for i in 0..WIDTH {
+
+        let u = i as f32 / WIDTH as f32;
+        let v = j as f32 / HEIGHT as f32;
+        let ray = Ray::new(origin, lower_left + (horizontal * u )+ (vertical * u));
+        let col = get_color(ray);
         buffer[buffer_pos] = col.to_u32_col();
         buffer_pos += 1;
       }

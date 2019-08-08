@@ -91,9 +91,10 @@ impl Vec3 {
 
   #[inline]
   pub fn to_u32_col(&self) -> u32 {
-    let red: u32 = ((self.x * 255.0) as u8) as u32;
-    let green: u32 = ((self.y * 255.0) as u8) as u32;
-    let blue: u32 = ((self.z * 255.0) as u8) as u32;
+    let unit = self.to_unit();
+    let red: u32 = ((unit.x * 255.0) as u8) as u32;
+    let green: u32 = ((unit.y * 255.0) as u8) as u32;
+    let blue: u32 = ((unit.z * 255.0) as u8) as u32;
     let alpha: u32 = 255 as u32;
 
 
@@ -201,4 +202,6 @@ fn basic() {
   assert_eq!(crossed.x(), -0.2672612);
   assert_eq!(crossed.y(), 0.5345224);
   assert_eq!(crossed.z(), -0.26726124);
+  let col = Vec3::new(10.0, 5.0,5.0);
+  assert_eq!(col.to_u32_col(),4291848296);
 }
