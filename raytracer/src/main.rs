@@ -44,6 +44,8 @@ fn render( width: usize, height:usize) -> Vec<u32>{
   world.add(Box::new(Sphere::new(Vec3::new(0.0,0.0,-1.0),0.5 )));
   world.add(Box::new(Sphere::new(Vec3::new(0.0,-100.5,-1.0),100.0 )));
 
+  let start = std::time::Instant::now();
+
   for j in (0..height).rev() {
     for i in 0..width {
       let u = i as f32 / width as f32;
@@ -54,6 +56,9 @@ fn render( width: usize, height:usize) -> Vec<u32>{
       buffer_pos += 1;
     }
   }
+  let end = start.elapsed();
+  let end_time = (end.as_nanos() as f64) / (1000.0 * 1000.0);
+  println!("Time taken to render : {} milliseconds", end_time);
   return buffer;
 }
 
