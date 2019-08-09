@@ -5,7 +5,6 @@ mod camera;
 
 
 use minifb::{Key, Window, WindowOptions};
-use rand::Rng;
 use rand::distributions::{Uniform, Distribution};
 use rayon::prelude::*;
 use crate::ray::Ray;
@@ -13,23 +12,33 @@ use crate::vec3::Vec3;
 use crate::hitable::{HitableList, Sphere, Hitable};
 use crate::camera::Camera;
 
-const WIDTH: usize = 600;
-const HEIGHT: usize = 300;
+const WIDTH: usize = 400;
+const HEIGHT: usize = 200;
 const SAMPLES: usize = 200;
+
+fn random_in_unit_sphere() -> Vec3 {
+  let mut rng = rand::thread_rng();
+  let random = Uniform::from(0.0f32..1.0f32);
+
+  loop {
+    let p = Vec3::new(random.sample(&mut rng), random.sample(&mut rng), random.sample(&mut rng)) * 2.0 - Vec3::new(1.0, 1.0, 1.0);
+    if p.squared_length() < 1.0 {
+      return p;
+    }
+  }
+}
 
 fn lerp_vector(t: f32, start: Vec3, end: Vec3) -> Vec3 {
   return (start * (1.0 - t)) + (end * t);
 }
 
 fn get_color(ray: Ray, world: &dyn Hitable) -> Vec3 {
-  let hit = world.hit(&ray, 0.0, 100000.0);
-
-  match hit {
-    Some(hit_result) => {
-      return (hit_result.normal + 1.0) * 0.5;
-    }
-    None => {}
+  if let Some(rec) = world.hit(&ray, 0.001, std::f32::INFINITY) {
+    let target = rec.p + rec.normal + random_in_unit_sphere();
+    let c = get_color(Ray::new(rec.p,  target - rec.p ), world);
+    return c * 0.5;
   }
+
   let lerp_start = Vec3::new(1.0, 1.0, 1.0);
   let lerp_end = Vec3::new(0.5, 0.7, 1.0);
   let unit_dir = ray.direction().to_unit();
@@ -38,9 +47,7 @@ fn get_color(ray: Ray, world: &dyn Hitable) -> Vec3 {
 }
 
 fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
-  let mut buffer: Vec<u32> = vec![0; width * height];
-  let mut buffer_pos = 0;
-  let random = Uniform::from(-0.5f32..0.5f32);
+  let random = Uniform::from(0.0f32..1.0f32);
   let f32_samples = samples as f32;
   let f32_width = width as f32;
   let f32_height = height as f32;
@@ -69,6 +76,8 @@ fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
             color = color + col;
           }
           color = color / f32_samples;
+          // simple gamma correct
+          color = Vec3::new(color.x().sqrt(),color.y().sqrt(),color.z().sqrt());
           color.to_u32_col()
         })
         .collect::<Vec<u32>>()

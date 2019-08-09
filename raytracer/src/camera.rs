@@ -9,12 +9,13 @@ pub struct Camera {
 }
 
 impl Camera {
-  pub fn new(origin: Vec3, lower_left_corner: Vec3, horizontal: Vec3,             vertical: Vec3 ) -> Camera {
+  #[allow(dead_code)]
+  pub fn new(origin: Vec3, lower_left_corner: Vec3, horizontal: Vec3, vertical: Vec3) -> Camera {
     Camera {
       origin,
       lower_left_corner,
       horizontal,
-      vertical
+      vertical,
     }
   }
 
@@ -27,14 +28,12 @@ impl Camera {
       origin,
       lower_left_corner,
       horizontal,
-      vertical
+      vertical,
     }
   }
 
-  pub fn get_ray(&self, u:f32, v:f32)->Ray {
-     Ray::new(self.origin, self.lower_left_corner + (self.horizontal * u) + (self.vertical * v))
+  pub fn get_ray(&self, u: f32, v: f32) -> Ray {
+    Ray::new(self.origin, self.lower_left_corner + (self.horizontal * u) + (self.vertical * v))
   }
-
-
 }
 

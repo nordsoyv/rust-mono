@@ -1,9 +1,11 @@
 use std::ops;
 
+#[allow(dead_code)]
 pub fn dot(a: &Vec3, b:&Vec3) -> f32 {
   (a.x() * b.x()) + (a.y() * b.y()) + (a.z() * b.z())
 }
 
+#[allow(dead_code)]
 pub fn unit_vec( v : &Vec3) -> Vec3 {
   v.to_unit()
 }
@@ -40,16 +42,19 @@ impl Vec3 {
   }
 
   #[inline]
+  #[allow(dead_code)]
   pub fn r(&self) -> f32 {
     self.x
   }
 
   #[inline]
+  #[allow(dead_code)]
   pub fn g(&self) -> f32 {
     self.y
   }
 
   #[inline]
+  #[allow(dead_code)]
   pub fn b(&self) -> f32 {
     self.z
   }
@@ -65,6 +70,7 @@ impl Vec3 {
   }
 
   #[inline]
+  #[allow(dead_code)]
   pub fn make_unit(&mut self) -> &mut Vec3 {
     let l = self.length();
     self.x = self.x / l;
@@ -84,11 +90,13 @@ impl Vec3 {
   }
 
   #[inline]
+  #[allow(dead_code)]
   pub fn dot(&self, rhs: Vec3) -> f32 {
     (self.x * rhs.x()) + (self.y * rhs.y()) + (self.z * rhs.z())
   }
 
   #[inline]
+  #[allow(dead_code)]
   pub fn cross(&self, rhs: Vec3) -> Vec3 {
     Vec3 {
       x: self.y * rhs.z() - self.z * rhs.y(),
@@ -99,10 +107,9 @@ impl Vec3 {
 
   #[inline]
   pub fn to_u32_col(&self) -> u32 {
-    let unit = self.to_unit();
-    let red: u32 = ((unit.x * 255.0) as u8) as u32;
-    let green: u32 = ((unit.y * 255.0) as u8) as u32;
-    let blue: u32 = ((unit.z * 255.0) as u8) as u32;
+    let red: u32 = ((self.x * 255.0) as u8) as u32;
+    let green: u32 = ((self.y * 255.0) as u8) as u32;
+    let blue: u32 = ((self.z * 255.0) as u8) as u32;
     let alpha: u32 = 255 as u32;
 
 

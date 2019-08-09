@@ -7,7 +7,7 @@ pub struct HitResult {
   pub normal: Vec3,
 }
 
-pub trait Hitable : Sync {
+pub trait Hitable: Sync {
   fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitResult>;
 }
 
@@ -29,29 +29,29 @@ impl Hitable for Sphere {
   fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitResult> {
     let oc = ray.origin() - self.center;
     let a = dot(&ray.direction(), &ray.direction());
-    let b = 2.0 * dot(&oc, &ray.direction());
+    let b = dot(&oc, &ray.direction());
     let c = dot(&oc, &oc) - self.radius * self.radius;
-    let discriminant = b * b - 4.0 * a * c;
+    let discriminant = b * b - a * c;
     if discriminant > 0.0 {
-      let tmp = (-b - (b * b * -a * c).sqrt()) / a;
+      let tmp = (-b - discriminant.sqrt()) / a;
       if tmp < t_max && tmp > t_min {
         let p = ray.point_at_param(tmp);
-        let normal = ( self.center-p) / self.radius;
+        let normal = (p - self.center) / self.radius;
         let hit = HitResult {
           t: tmp,
           p,
-          normal: normal.to_unit(),
+          normal,
         };
         return Some(hit);
       }
-      let tmp = (-b + (b * b - a * c).sqrt()) / a;
+      let tmp = (-b + discriminant.sqrt()) / a;
       if tmp < t_max && tmp > t_min {
         let p = ray.point_at_param(tmp);
-        let normal = (self.center-p) / self.radius;
+        let normal = (p - self.center) / self.radius;
         let hit = HitResult {
           t: tmp,
           p,
-          normal: normal.to_unit(),
+          normal,
         };
         return Some(hit);
       }
