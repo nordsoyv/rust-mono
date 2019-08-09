@@ -7,12 +7,11 @@ mod camera;
 use minifb::{Key, Window, WindowOptions};
 use rand::Rng;
 use rand::distributions::{Uniform, Distribution};
-use rayon::prelude;
+use rayon::prelude::*;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::hitable::{HitableList, Sphere, Hitable};
 use crate::camera::Camera;
-//use rayon::prelude::IntoParallelIterator;
 
 const WIDTH: usize = 600;
 const HEIGHT: usize = 300;
@@ -38,12 +37,13 @@ fn get_color(ray: Ray, world: &dyn Hitable) -> Vec3 {
   return lerp_vector(t, lerp_start, lerp_end);
 }
 
-fn render(width: usize, height: usize) -> Vec<u32> {
+fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
   let mut buffer: Vec<u32> = vec![0; width * height];
   let mut buffer_pos = 0;
-  let mut rng = rand::thread_rng();
   let random = Uniform::from(-0.5f32..0.5f32);
-
+  let f32_samples = samples as f32;
+  let f32_width = width as f32;
+  let f32_height = height as f32;
   let camera = Camera::default();
   let mut world = HitableList::new();
   world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
@@ -52,22 +52,23 @@ fn render(width: usize, height: usize) -> Vec<u32> {
   let start = std::time::Instant::now();
 
   let buffer = (0..height)
-    .into_iter()
+    .into_par_iter()
     .rev()
     .map(|h| {
       (0..width)
-        .into_iter()
+        .into_par_iter()
         .map(|w| {
+          let mut rng = rand::thread_rng();
           let mut color = Vec3::new(0.0, 0.0, 0.0);
-          for _ in 0..SAMPLES {
-            let u = (w as f32 + random.sample(&mut rng)) / width as f32;
-            let v = (h as f32 + random.sample(&mut rng)) / height as f32;
+          for _ in 0..samples {
+            let u = (w as f32 + random.sample(&mut rng)) / f32_width;
+            let v = (h as f32 + random.sample(&mut rng)) / f32_height;
             let ray = camera.get_ray(u, v);
 
             let col = get_color(ray, &world);
             color = color + col;
           }
-          color = color / (SAMPLES as f32);
+          color = color / f32_samples;
           color.to_u32_col()
         })
         .collect::<Vec<u32>>()
@@ -89,7 +90,7 @@ fn main() {
     WindowOptions::default()).unwrap_or_else(|e| {
     panic!("{}", e);
   });
-  let buffer = render(WIDTH, HEIGHT);
+  let buffer = render(WIDTH, HEIGHT, SAMPLES);
   while window.is_open() && !window.is_key_down(Key::Escape) {
     // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
     window.update_with_buffer(&buffer).unwrap();
