@@ -2,7 +2,7 @@ mod vec3;
 mod ray;
 mod hitable;
 mod camera;
-
+mod material;
 
 use minifb::{Key, Window, WindowOptions};
 use rand::distributions::{Uniform, Distribution};
@@ -11,32 +11,27 @@ use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::hitable::{HitableList, Sphere, Hitable};
 use crate::camera::Camera;
+use crate::material::{Lambertian, Metal};
+use std::sync::Arc;
 
 const WIDTH: usize = 400;
 const HEIGHT: usize = 200;
 const SAMPLES: usize = 200;
 
-fn random_in_unit_sphere() -> Vec3 {
-  let mut rng = rand::thread_rng();
-  let random = Uniform::from(0.0f32..1.0f32);
-
-  loop {
-    let p = Vec3::new(random.sample(&mut rng), random.sample(&mut rng), random.sample(&mut rng)) * 2.0 - Vec3::new(1.0, 1.0, 1.0);
-    if p.squared_length() < 1.0 {
-      return p;
-    }
-  }
-}
-
 fn lerp_vector(t: f32, start: Vec3, end: Vec3) -> Vec3 {
   return (start * (1.0 - t)) + (end * t);
 }
 
-fn get_color(ray: Ray, world: &dyn Hitable) -> Vec3 {
+fn get_color(ray: Ray, world: &dyn Hitable, depth: u32) -> Vec3 {
+  if depth > 50 {
+    return Vec3::new(0.0, 0.0, 0.0);
+  }
   if let Some(rec) = world.hit(&ray, 0.001, std::f32::INFINITY) {
-    let target = rec.p + rec.normal + random_in_unit_sphere();
-    let c = get_color(Ray::new(rec.p,  target - rec.p ), world);
-    return c * 0.5;
+    if let Some(mat_res) =  rec.material.scatter(&ray, &rec) {
+      return mat_res.attenuation * get_color(mat_res.scattered, world, depth+1);
+    }
+
+
   }
 
   let lerp_start = Vec3::new(1.0, 1.0, 1.0);
@@ -46,16 +41,39 @@ fn get_color(ray: Ray, world: &dyn Hitable) -> Vec3 {
   return lerp_vector(t, lerp_start, lerp_end);
 }
 
+fn build_world() -> HitableList {
+  let mut world = HitableList::new();
+  world.add(
+    Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
+                         0.5,
+                         Arc::new(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))));
+  world.add(
+    Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
+                         100.0,
+                         Arc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0))))));
+
+  world.add(
+    Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0),
+                         0.5,
+                         Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.3)))));
+  world.add(
+    Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0),
+                         0.5,
+                         Arc::new(Metal::new(Vec3::new(0.8, 0.8, 0.8),1.0)))));
+
+
+
+  return world;
+}
+
+
 fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
   let random = Uniform::from(0.0f32..1.0f32);
   let f32_samples = samples as f32;
   let f32_width = width as f32;
   let f32_height = height as f32;
   let camera = Camera::default();
-  let mut world = HitableList::new();
-  world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
-  world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
-
+  let world = build_world();
   let start = std::time::Instant::now();
 
   let buffer = (0..height)
@@ -72,12 +90,12 @@ fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
             let v = (h as f32 + random.sample(&mut rng)) / f32_height;
             let ray = camera.get_ray(u, v);
 
-            let col = get_color(ray, &world);
+            let col = get_color(ray, &world, 0);
             color = color + col;
           }
           color = color / f32_samples;
           // simple gamma correct
-          color = Vec3::new(color.x().sqrt(),color.y().sqrt(),color.z().sqrt());
+          color = Vec3::new(color.x().sqrt(), color.y().sqrt(), color.z().sqrt());
           color.to_u32_col()
         })
         .collect::<Vec<u32>>()

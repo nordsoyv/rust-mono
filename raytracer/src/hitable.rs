@@ -1,10 +1,13 @@
 use crate::ray::Ray;
 use crate::vec3::{dot, Vec3};
+use crate::material::Material;
+use std::sync::Arc;
 
 pub struct HitResult {
   pub t: f32,
   pub p: Vec3,
   pub normal: Vec3,
+  pub material: Arc<dyn Material>,
 }
 
 pub trait Hitable: Sync {
@@ -14,14 +17,30 @@ pub trait Hitable: Sync {
 pub struct Sphere {
   center: Vec3,
   radius: f32,
+  material: Arc<dyn Material>,
 }
 
+unsafe impl Sync for Sphere {}
+
 impl Sphere {
-  pub fn new(center: Vec3, radius: f32) -> Sphere {
+  pub fn new(center: Vec3, radius: f32, material: Arc<dyn Material>) -> Sphere {
     Sphere {
       center,
       radius,
+      material,
     }
+  }
+
+  fn build_hit_result(&self, t: f32, ray: &Ray) -> HitResult {
+    let p = ray.point_at_param(t);
+    let normal = (p - self.center) / self.radius;
+    let hit = HitResult {
+      t,
+      p,
+      normal,
+      material: self.material.clone(),
+    };
+    return hit;
   }
 }
 
@@ -35,25 +54,11 @@ impl Hitable for Sphere {
     if discriminant > 0.0 {
       let tmp = (-b - discriminant.sqrt()) / a;
       if tmp < t_max && tmp > t_min {
-        let p = ray.point_at_param(tmp);
-        let normal = (p - self.center) / self.radius;
-        let hit = HitResult {
-          t: tmp,
-          p,
-          normal,
-        };
-        return Some(hit);
+        return Some(self.build_hit_result(tmp, ray));
       }
       let tmp = (-b + discriminant.sqrt()) / a;
       if tmp < t_max && tmp > t_min {
-        let p = ray.point_at_param(tmp);
-        let normal = (p - self.center) / self.radius;
-        let hit = HitResult {
-          t: tmp,
-          p,
-          normal,
-        };
-        return Some(hit);
+        return Some(self.build_hit_result(tmp, ray));
       }
     }
     None
