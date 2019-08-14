@@ -11,7 +11,7 @@ use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::hitable::{HitableList, Sphere, Hitable};
 use crate::camera::Camera;
-use crate::material::{Lambertian, Metal};
+use crate::material::{Lambertian, Metal, Dielectric};
 use std::sync::Arc;
 
 const WIDTH: usize = 400;
@@ -59,7 +59,7 @@ fn build_world() -> HitableList {
   world.add(
     Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0),
                          0.5,
-                         Arc::new(Metal::new(Vec3::new(0.8, 0.8, 0.8),1.0)))));
+                         Arc::new(Dielectric::new(1.5)))));
 
 
 
