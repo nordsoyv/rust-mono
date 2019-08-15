@@ -14,8 +14,20 @@ use crate::camera::Camera;
 use crate::material::{Lambertian, Metal, Dielectric};
 use std::sync::Arc;
 
+
+#[cfg(debug_assertions)]
+const WIDTH: usize = 200;
+#[cfg(not(debug_assertions))]
 const WIDTH: usize = 400;
+
+#[cfg(debug_assertions)]
+const HEIGHT: usize = 100;
+#[cfg(not(debug_assertions))]
 const HEIGHT: usize = 200;
+
+#[cfg(debug_assertions)]
+const SAMPLES: usize = 5;
+#[cfg(not(debug_assertions))]
 const SAMPLES: usize = 200;
 
 fn lerp_vector(t: f32, start: Vec3, end: Vec3) -> Vec3 {
@@ -63,8 +75,6 @@ fn build_world() -> HitableList {
     Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0),
                          -0.45,
                          Arc::new(Dielectric::new(1.5)))));
-
-
 
   return world;
 }
