@@ -114,28 +114,40 @@ impl Dielectric {
 
 impl Material for Dielectric {
   fn scatter(&self, r: &Ray, hit_result: &HitResult) -> Option<MaterialResult> {
+    let mut rng = rand::thread_rng();
+    let random = Uniform::from(0.0f32..1.0f32);
     let outward_normal;
     let reflected = reflect(&r.direction(), &hit_result.normal);
     let ni_over_nt;
     let attenuation = Vec3::new(1.0, 1.0, 1.0);
-//    let refracted;
+    let refracted;
     let scattered;
-    let reflect_prop : f32;
-    let cosine : f32;
+    let reflect_prop: f32;
+    let cosine: f32;
     if dot(&r.direction(), &hit_result.normal) > 0.0 {
       outward_normal = hit_result.normal * -1.0;
       ni_over_nt = self.ref_idx;
-      cosine = self.ref_idx* dot(&r.direction(), &hit_result.normal) /r.direction().length();
+      cosine = self.ref_idx * dot(&r.direction(), &hit_result.normal) / r.direction().length();
     } else {
       outward_normal = hit_result.normal;
       ni_over_nt = 1.0 / self.ref_idx;
-      cosine = -dot(&r.direction(), &hit_result.normal) /r.direction().length();
+      cosine = -dot(&r.direction(), &hit_result.normal) / r.direction().length();
     }
-    if let Some(refracted) = refract(&r.direction(), &outward_normal, ni_over_nt) {
-      scattered = Ray::new(hit_result.p, refracted);
+
+
+    if let Some(refracted_tmp) = refract(&r.direction(), &outward_normal, ni_over_nt) {
+      refracted = refracted_tmp;
+      reflect_prop = schlick(cosine, self.ref_idx);
     } else {
-      scattered = Ray::new(hit_result.p, reflected);
+      reflect_prop = 1.0;
+      refracted = Vec3::new(0.0, 0.0, 0.0); // not really needed
     }
+    if random.sample(&mut rng) < reflect_prop {
+      scattered = Ray::new(hit_result.p, reflected);
+    } else {
+      scattered = Ray::new(hit_result.p, refracted);
+    }
+
     Some(MaterialResult {
       attenuation,
       scattered,

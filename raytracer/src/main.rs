@@ -30,8 +30,6 @@ fn get_color(ray: Ray, world: &dyn Hitable, depth: u32) -> Vec3 {
     if let Some(mat_res) =  rec.material.scatter(&ray, &rec) {
       return mat_res.attenuation * get_color(mat_res.scattered, world, depth+1);
     }
-
-
   }
 
   let lerp_start = Vec3::new(1.0, 1.0, 1.0);
@@ -46,7 +44,7 @@ fn build_world() -> HitableList {
   world.add(
     Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0),
                          0.5,
-                         Arc::new(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))));
+                         Arc::new(Lambertian::new(Vec3::new(0.1, 0.2, 0.5))))));
   world.add(
     Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
                          100.0,
@@ -59,6 +57,11 @@ fn build_world() -> HitableList {
   world.add(
     Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0),
                          0.5,
+                         Arc::new(Dielectric::new(1.5)))));
+
+  world.add(
+    Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0),
+                         -0.45,
                          Arc::new(Dielectric::new(1.5)))));
 
 
