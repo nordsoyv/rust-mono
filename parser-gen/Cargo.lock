@@ -3,4 +3,3 @@
 [[package]]
 name = "parser-gen"
 version = "0.1.0"
-
