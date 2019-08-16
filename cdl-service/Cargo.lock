@@ -349,6 +349,13 @@ version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "cdl-bench"
+version = "0.1.0"
+dependencies = [
+ "cdl-core 0.1.0",
+]
+
+[[package]]
 name = "cdl-core"
 version = "0.1.0"
 dependencies = [

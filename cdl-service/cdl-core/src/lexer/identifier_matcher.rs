@@ -49,14 +49,11 @@ impl CommentsMatcher {
 
 impl Matcher for CommentsMatcher {
   fn check(&self, input: &str) -> Result<(usize, Option<String>), &str> {
-    let mut matched = String::new();
     let mut chars = input.chars();
 
     match chars.next() {
       Some(next) => {
-        if next == '/' {
-          matched.push(next)
-        } else {
+        if next != '/' {
           return Ok((0, None));
         }
       }
@@ -65,9 +62,7 @@ impl Matcher for CommentsMatcher {
 
     match chars.next() {
       Some(next) => {
-        if next == '/' {
-          matched.push(next)
-        } else {
+        if next != '/' {
           return Ok((0, None));
         }
       }
@@ -75,15 +70,14 @@ impl Matcher for CommentsMatcher {
     }
 
     while let Some(next) = chars.next() {
-      if next != '\n' {
-        matched.push(next);
-      } else {
+      if next == '\n' {
         break;
       }
     }
 
-    let next_index = matched.len();
-    Ok((next_index, None))
+    let comment : &str = &input[..input.len() - chars.as_str().len()];
+//    dbg!(comment);
+    Ok((comment.len()-1, None))
   }
 }
 
@@ -286,7 +280,7 @@ fn string_matcher() {
 #[test]
 fn comment_matcher() {
   let i_matcher = CommentsMatcher::new();
-  assert_eq!(Ok((8, None)), i_matcher.check("// hello"));
+  assert_eq!(Ok((8, None)), i_matcher.check("// hello\n"));
   assert_eq!(Ok((9, None)), i_matcher.check("// hello \n not a comment"));
 //  assert_eq!(Ok((6, Some("1234".to_string()))), i_matcher.check("\"1234\"        "));
 //  let i_matcher = StringMatcher::new('\'');

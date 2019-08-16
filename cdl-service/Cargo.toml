@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "service",
-    "cdl-core"
+    "cdl-core",
+    "cdl-bench"
 ]
