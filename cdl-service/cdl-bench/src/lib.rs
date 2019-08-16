@@ -6,11 +6,11 @@ extern crate cdl_core;
 
 #[cfg(test)]
 mod tests {
-    use test::{Bencher, black_box};
-    use cdl_core::lexer::Lexer;
+  use test::{Bencher};
+  use cdl_core::lexer::Lexer;
 
 
-    use _SCRIPT;
+  use _SCRIPT;
 
 //    #[bench]
 //    fn bench_lex(b: &mut Bencher) {
@@ -20,39 +20,15 @@ mod tests {
 //        });
 //    }
 
-    #[bench]
-    fn bench_select(b: &mut Bencher) {
-        let cdl = "
-   datatable kpi data1 {
-      type : nps
-      vpath : t1:q1
-    }
+  #[bench]
+  fn bench_lexer(b: &mut Bencher) {
+    let lexer = Lexer::new();
 
-    page #overview {
-      widget kpi kpi1{
-        type : nps
-        vpath : t1:q1
-        label : \"KPI\"
-      }
-      widget kpi kpi2{
-        type : nps
-        vpath : t1:q1
-        label : \"KPI\"
-      }
-
-      widget account {
-        type : nps
-        vpath : t1:q1
-        label : \"KPI\"
-      }
-    }
-";
-
-        b.iter(|| {
-            black_box( Lexer::new().lex(_SCRIPT.to_string()));
-
-        });
-    }
+    b.iter(|| {
+      let res = lexer.lex(_SCRIPT.to_string());
+      res.unwrap();
+    });
+  }
 }
 
 
