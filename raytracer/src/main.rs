@@ -39,8 +39,8 @@ fn get_color(ray: Ray, world: &dyn Hitable, depth: u32) -> Vec3 {
     return Vec3::new(0.0, 0.0, 0.0);
   }
   if let Some(rec) = world.hit(&ray, 0.001, std::f32::INFINITY) {
-    if let Some(mat_res) =  rec.material.scatter(&ray, &rec) {
-      return mat_res.attenuation * get_color(mat_res.scattered, world, depth+1);
+    if let Some(mat_res) = rec.material.scatter(&ray, &rec) {
+      return mat_res.attenuation * get_color(mat_res.scattered, world, depth + 1);
     }
   }
 
@@ -80,12 +80,32 @@ fn build_world() -> HitableList {
 }
 
 
+fn build_test_world() -> HitableList {
+  let r = (std::f32::consts::PI / 4.0).cos();
+  let mut world = HitableList::new();
+  world.add(
+    Box::new(Sphere::new(Vec3::new(-r, 0.0, -2.0),
+                         r,
+                         Arc::new(Lambertian::new(Vec3::new(0.0, 0.0, 1.0))))));
+  world.add(
+    Box::new(Sphere::new(Vec3::new(r, 0.0, -1.0),
+                         r,
+                         Arc::new(Lambertian::new(Vec3::new(1.0, 0.0, 0.0))))));
+
+  return world;
+}
+
 fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
   let random = Uniform::from(0.0f32..1.0f32);
   let f32_samples = samples as f32;
   let f32_width = width as f32;
   let f32_height = height as f32;
-  let camera = Camera::default();
+  let camera = Camera::new(
+    Vec3::new(-2.0, 2.0, 1.0),
+    Vec3::new(0.0, 0.0, -1.0),
+    Vec3::new(0.0, 1.0, 0.0),
+    90.0,
+    f32_width / f32_height);
   let world = build_world();
   let start = std::time::Instant::now();
 

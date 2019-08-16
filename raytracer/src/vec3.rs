@@ -1,13 +1,22 @@
 use std::ops;
 
 #[allow(dead_code)]
-pub fn dot(a: &Vec3, b:&Vec3) -> f32 {
+pub fn dot(a: &Vec3, b: &Vec3) -> f32 {
   (a.x() * b.x()) + (a.y() * b.y()) + (a.z() * b.z())
 }
 
 #[allow(dead_code)]
-pub fn unit_vec( v : &Vec3) -> Vec3 {
+pub fn unit_vec(v: Vec3) -> Vec3 {
   v.to_unit()
+}
+
+#[inline]
+pub fn cross(lhs: Vec3, rhs: Vec3) -> Vec3 {
+  Vec3 {
+    x: lhs.y() * rhs.z() - lhs.z() * rhs.y(),
+    y: lhs.z() * rhs.x() - lhs.x() * rhs.z(),
+    z: lhs.x() * rhs.y() - lhs.y() * rhs.x(),
+  }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -138,11 +147,19 @@ impl ops::Add<f32> for Vec3 {
   }
 }
 
+impl ops::Add<Vec3> for f32 {
+  type Output = Vec3;
+
+  fn add(self, rhs: Vec3) -> Vec3 {
+    Vec3::new(self + rhs.x(), self + rhs.y(), self + rhs.z())
+  }
+}
+
 impl ops::Sub<Vec3> for Vec3 {
   type Output = Vec3;
 
-  fn sub(self, rhs: Vec3) -> Vec3 {
-    Vec3::new(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
+  fn sub(self, v: Vec3) -> Vec3 {
+    Vec3::new(self.x() - v.x(), self.y() - v.y(), self.z() - v.z())
   }
 }
 
@@ -167,6 +184,14 @@ impl ops::Mul<f32> for Vec3 {
 
   fn mul(self, rhs: f32) -> Vec3 {
     Vec3::new(self.x() * rhs, self.y() * rhs, self.z() * rhs)
+  }
+}
+
+impl ops::Mul<Vec3> for f32 {
+  type Output = Vec3;
+
+  fn mul(self, rhs: Vec3) -> Vec3 {
+    Vec3::new(self * rhs.x(), self * rhs.y(), self * rhs.z())
   }
 }
 
@@ -210,6 +235,8 @@ fn basic() {
   assert_eq!((v - 10.0).x(), -9.0);
   assert_eq!((v - 10.0).y(), -8.0);
   assert_eq!((v - 10.0).z(), -7.0);
+  assert_eq!((2.0 * v).x(), 2.0);
+  assert_eq!((2.0 + v).x(), 3.0);
   assert_eq!(v.make_unit().x(), 0.26726124);
   assert_eq!(v.to_unit().x(), 0.26726127);
   assert_eq!(v.dot(v2), 1.6035674);
@@ -217,6 +244,6 @@ fn basic() {
   assert_eq!(crossed.x(), -0.2672612);
   assert_eq!(crossed.y(), 0.5345224);
   assert_eq!(crossed.z(), -0.26726124);
-  let col = Vec3::new(10.0, 5.0,5.0);
-  assert_eq!(col.to_u32_col(),4291848296);
+  let col = Vec3::new(10.0, 5.0, 5.0);
+  assert_eq!(col.to_u32_col(), 4294376443);
 }
