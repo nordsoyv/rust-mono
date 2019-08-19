@@ -26,7 +26,7 @@ const HEIGHT: usize = 100;
 const HEIGHT: usize = 200;
 
 #[cfg(debug_assertions)]
-const SAMPLES: usize = 5;
+const SAMPLES: usize = 100;
 #[cfg(not(debug_assertions))]
 const SAMPLES: usize = 200;
 
@@ -104,7 +104,7 @@ fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
     Vec3::new(-2.0, 2.0, 1.0),
     Vec3::new(0.0, 0.0, -1.0),
     Vec3::new(0.0, 1.0, 0.0),
-    90.0,
+    30.0,
     f32_width / f32_height);
   let world = build_world();
   let start = std::time::Instant::now();
@@ -119,10 +119,10 @@ fn render(width: usize, height: usize, samples: usize) -> Vec<u32> {
           let mut rng = rand::thread_rng();
           let mut color = Vec3::new(0.0, 0.0, 0.0);
           for _ in 0..samples {
-            let u = (w as f32 + random.sample(&mut rng)) / f32_width;
-            let v = (h as f32 + random.sample(&mut rng)) / f32_height;
+            let u = (w as f32 ) / f32_width;
+            let v = (h as f32 ) / f32_height;
             let ray = camera.get_ray(u, v);
-
+//            dbg!(&ray);
             let col = get_color(ray, &world, 0);
             color = color + col;
           }

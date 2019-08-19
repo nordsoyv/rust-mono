@@ -43,10 +43,11 @@ impl Camera {
     let half_height = (theta / 2.0).tan();
     let half_width = aspect * half_height;
     let origin = lookfrom;
-    let w = (lookfrom - lookat).to_unit();
-    let u = vup.cross(w).to_unit();
+    let dir = lookfrom- lookat;
+    let w = dir.to_unit() ;
+    let u = vup.cross(w).to_unit()  ;
     let v = w.cross(u);
-    let lower_left_corner = origin - u * half_width - v * half_height - w;
+    let lower_left_corner = origin - half_width* u -  half_height*v - w;
     let horizontal = u * half_width * 2.0;
     let vertical = v * half_height * 2.0;
     Camera {
@@ -76,7 +77,7 @@ impl Camera {
   }
 
   pub fn get_ray(&self, u: f32, v: f32) -> Ray {
-    Ray::new(self.origin, self.lower_left_corner + (self.horizontal * u) + (self.vertical * v))
+    Ray::new(self.origin, self.lower_left_corner + (self.horizontal * u) + (self.vertical * v) - self.origin)
   }
 }
 
