@@ -1,24 +1,13 @@
 use serde_derive::{Deserialize, Serialize};
 use rand::distributions::{Uniform, Distribution};
-use crate::vec3::Vec3;
+
+use crate::vec3::{Vec3, random_in_unit_disk};
 use crate::ray::Ray;
-
-fn random_in_unit_disk() -> Vec3 {
-  let mut rng = rand::thread_rng();
-  let random = Uniform::from(0.0f32..1.0f32);
-
-  loop {
-    let p = Vec3::new(random.sample(&mut rng), random.sample(&mut rng), 0.0) * 2.0 - Vec3::new(1.0, 1.0, 0.0);
-    if p.dot(p) < 1.0 {
-      return p;
-    }
-  }
-}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CameraBuilder {
-  pub lookfrom: Vec3,
-  pub lookat: Vec3,
+  pub look_from: Vec3,
+  pub look_at: Vec3,
   pub vup: Vec3,
   pub vfov: f32,
   pub aspect: f32,
@@ -27,7 +16,7 @@ pub struct CameraBuilder {
 
 impl CameraBuilder {
   pub fn build(&self) -> Camera {
-    Camera::new(self.lookfrom, self.lookat, self.vup, self.vfov, self.aspect, self.aperture)
+    Camera::new(self.look_from, self.look_at, self.vup, self.vfov, self.aspect, self.aperture)
   }
 }
 
@@ -44,21 +33,21 @@ pub struct Camera {
 
 impl Camera {
   pub fn new(
-    lookfrom: Vec3,
-    lookat: Vec3,
+    look_from: Vec3,
+    look_at: Vec3,
     vup: Vec3,
     vfov: f32,
     aspect: f32,
     aperture: f32,
   ) -> Camera {
 
-    let focus_dist = (lookfrom-lookat).length();
+    let focus_dist = (look_from-look_at).length();
     let lens_radius = aperture / 2.0;
     let theta = vfov * std::f32::consts::PI / 180.0;
     let half_height = (theta / 2.0).tan();
     let half_width = aspect * half_height;
-    let origin = lookfrom;
-    let dir = lookfrom - lookat;
+    let origin = look_from;
+    let dir = look_from - look_at;
     let w = dir.to_unit();
     let u = vup.cross(w).to_unit();
     let v = w.cross(u);
@@ -75,20 +64,6 @@ impl Camera {
       lens_radius,
     }
   }
-
-//  #[allow(dead_code)]
-//  pub fn default() -> Camera {
-//    let lower_left_corner = Vec3::new(-2.0, -1.0, -1.0);
-//    let horizontal = Vec3::new(4.0, 0.0, 0.0);
-//    let vertical = Vec3::new(0.0, 2.0, 0.0);
-//    let origin = Vec3::new(0.0, 0.0, 0.0);
-//    Camera {
-//      origin,
-//      lower_left_corner,
-//      horizontal,
-//      vertical,
-//    }
-//  }
 
   pub fn get_ray(&self, s: f32, t: f32) -> Ray {
     let rd = self.lens_radius * random_in_unit_disk();

@@ -1,6 +1,30 @@
 use std::ops;
 use serde_derive::{Deserialize, Serialize};
 
+pub fn random_in_unit_disk() -> Vec3 {
+  let mut rng = rand::thread_rng();
+  let random = Uniform::from(0.0f32..1.0f32);
+
+  loop {
+    let p = Vec3::new(random.sample(&mut rng), random.sample(&mut rng), 0.0) * 2.0 - Vec3::new(1.0, 1.0, 0.0);
+    if p.dot(p) < 1.0 {
+      return p;
+    }
+  }
+}
+
+pub fn random_in_unit_sphere() -> Vec3 {
+  let mut rng = rand::thread_rng();
+  let random = Uniform::from(0.0f32..1.0f32);
+
+  loop {
+    let p = Vec3::new(random.sample(&mut rng), random.sample(&mut rng), random.sample(&mut rng)) * 2.0 - Vec3::new(1.0, 1.0, 1.0);
+    if p.squared_length() < 1.0 {
+      return p;
+    }
+  }
+}
+
 #[allow(dead_code)]
 pub fn dot(a: &Vec3, b: &Vec3) -> f32 {
   (a.x() * b.x()) + (a.y() * b.y()) + (a.z() * b.z())
@@ -212,6 +236,8 @@ impl ops::Div<f32> for Vec3 {
     Vec3::new(self.x() / rhs, self.y() / rhs, self.z() / rhs)
   }
 }
+
+
 
 #[test]
 fn basic() {

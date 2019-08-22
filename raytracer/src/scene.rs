@@ -1,14 +1,14 @@
 mod world_builder;
 
 use serde_derive::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::BufReader;
 use std::error::Error;
 
 use crate::camera::{CameraBuilder, Camera};
 use crate::hitable::HitableList;
 use crate::scene::world_builder::build_world;
 use crate::canvas::Canvas;
-use std::fs::File;
-use std::io::BufReader;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SceneBuilder {
@@ -46,8 +46,6 @@ pub fn load_scene() -> Result<Scene, Box<dyn Error>> {
 
   let file = File::open(path)?;
   let reader = BufReader::new(file);
-
-
   let s: SceneBuilder = serde_json::from_reader(reader)?;
   Ok(s.build())
 }

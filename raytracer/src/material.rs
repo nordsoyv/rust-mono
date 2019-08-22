@@ -1,7 +1,8 @@
+use rand::distributions::{Uniform, Distribution};
+
 use crate::ray::Ray;
 use crate::hitable::HitResult;
-use crate::vec3::{Vec3, dot, unit_vec};
-use rand::distributions::{Uniform, Distribution};
+use crate::vec3::{Vec3, dot, unit_vec, random_in_unit_sphere};
 
 pub struct MaterialResult {
   pub attenuation: Vec3,
@@ -20,17 +21,6 @@ fn refract(v: &Vec3, n: &Vec3, ni_over_nt: f32) -> Option<Vec3> {
   }
 }
 
-fn random_in_unit_sphere() -> Vec3 {
-  let mut rng = rand::thread_rng();
-  let random = Uniform::from(0.0f32..1.0f32);
-
-  loop {
-    let p = Vec3::new(random.sample(&mut rng), random.sample(&mut rng), random.sample(&mut rng)) * 2.0 - Vec3::new(1.0, 1.0, 1.0);
-    if p.squared_length() < 1.0 {
-      return p;
-    }
-  }
-}
 
 fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
   return *v - *n * dot(v, n) * 2.0;

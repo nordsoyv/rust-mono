@@ -1,7 +1,8 @@
+use std::sync::Arc;
+
 use crate::ray::Ray;
 use crate::vec3::{dot, Vec3};
 use crate::material::Material;
-use std::sync::Arc;
 
 pub struct HitResult {
   pub t: f32,

@@ -5,12 +5,12 @@
     "samples": 200
   },
   "camera": {
-    "lookfrom": {
+    "look_from": {
       "x": -2.0,
       "y": 2.0,
       "z": 1.0
     },
-    "lookat": {
+    "look_at": {
       "x": 0.0,
       "y": 0.0,
       "z": -1.0

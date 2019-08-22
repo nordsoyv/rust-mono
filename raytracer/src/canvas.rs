@@ -1,9 +1,10 @@
 use serde_derive::{Deserialize, Serialize};
+use rayon::prelude::*;
+use rand::distributions::{Uniform, Distribution};
+
 use crate::camera::Camera;
 use crate::hitable::{HitableList, Hitable};
-use rayon::prelude::*;
 use crate::vec3::Vec3;
-use rand::distributions::{Uniform, Distribution};
 use crate::ray::Ray;
 
 #[derive(Deserialize, Serialize, Debug, Copy, Clone)]
@@ -33,7 +34,6 @@ impl Canvas {
               let u = (w as f32 + random.sample(&mut rng)) / f32_width;
               let v = (h as f32 + random.sample(&mut rng)) / f32_height;
               let ray = camera.get_ray(u, v);
-//            dbg!(&ray);
               let col = get_color(ray, world, 0);
               color = color + col;
             }
