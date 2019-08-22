@@ -1,5 +1,6 @@
 use std::ops;
 use serde_derive::{Deserialize, Serialize};
+use rand::distributions::{Uniform, Distribution};
 
 pub fn random_in_unit_disk() -> Vec3 {
   let mut rng = rand::thread_rng();

@@ -22,6 +22,6 @@
     },
     "vfov": 30.0,
     "aspect": 2.0,
-    "aperture" : 2.0
+    "aperture" : 0.1
   }
 }
