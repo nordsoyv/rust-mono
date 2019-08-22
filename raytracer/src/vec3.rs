@@ -1,4 +1,5 @@
 use std::ops;
+use serde_derive::{Deserialize, Serialize};
 
 #[allow(dead_code)]
 pub fn dot(a: &Vec3, b: &Vec3) -> f32 {
@@ -11,6 +12,7 @@ pub fn unit_vec(v: Vec3) -> Vec3 {
 }
 
 #[inline]
+#[allow(dead_code)]
 pub fn cross(lhs: Vec3, rhs: Vec3) -> Vec3 {
   Vec3 {
     x: lhs.y() * rhs.z() - lhs.z() * rhs.y(),
@@ -19,7 +21,7 @@ pub fn cross(lhs: Vec3, rhs: Vec3) -> Vec3 {
   }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Vec3 {
   x: f32,
   y: f32,

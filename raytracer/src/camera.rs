@@ -1,5 +1,21 @@
-use crate::vec3::{Vec3, unit_vec, cross};
+use crate::vec3::Vec3;
 use crate::ray::Ray;
+use serde_derive::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct CameraBuilder {
+  pub lookfrom: Vec3,
+  pub lookat: Vec3,
+  pub vup: Vec3,
+  pub vfov: f32,
+  pub aspect: f32,
+}
+
+impl CameraBuilder {
+  pub fn build(&self) -> Camera {
+    Camera::new(self.lookfrom, self.lookat, self.vup, self.vfov, self.aspect)
+  }
+}
 
 pub struct Camera {
   pub origin: Vec3,
@@ -9,26 +25,6 @@ pub struct Camera {
 }
 
 impl Camera {
-//  pub fn new(look_from: Vec3, look_at: Vec3, vup: Vec3, v_fov: f32, aspect: f32) -> Camera {
-//    let theta = (v_fov * std::f32::consts::PI) / 180.0;
-//    let half_height = (theta / 2.0).tan();
-//    let half_width = aspect * half_height;
-//    let origin = look_from;
-//    let w  = (look_from - look_at).to_unit();
-//    let u = unit_vec(cross(vup,w));
-//    let v = cross(w,u);
-////    let lower_left_corner =  Vec3::new(-half_width, -half_height, -1.0);
-//    let lower_left_corner =  origin - half_width*u - half_height*v - w;
-//
-//    Camera {
-//      origin,
-//      lower_left_corner,
-//      horizontal: u*half_width*2.0,
-//      vertical: v*half_height*2.0,
-//    }
-//  }
-
-
   pub fn new(
     lookfrom: Vec3,
     lookat: Vec3,
@@ -43,11 +39,11 @@ impl Camera {
     let half_height = (theta / 2.0).tan();
     let half_width = aspect * half_height;
     let origin = lookfrom;
-    let dir = lookfrom- lookat;
-    let w = dir.to_unit() ;
-    let u = vup.cross(w).to_unit()  ;
+    let dir = lookfrom - lookat;
+    let w = dir.to_unit();
+    let u = vup.cross(w).to_unit();
     let v = w.cross(u);
-    let lower_left_corner = origin - half_width* u -  half_height*v - w;
+    let lower_left_corner = origin - half_width * u - half_height * v - w;
     let horizontal = u * half_width * 2.0;
     let vertical = v * half_height * 2.0;
     Camera {
@@ -60,7 +56,6 @@ impl Camera {
 //      lens_radius,
     }
   }
-
 
   #[allow(dead_code)]
   pub fn default() -> Camera {
@@ -81,3 +76,17 @@ impl Camera {
   }
 }
 
+
+#[test]
+fn to_json() {
+  let camera = CameraBuilder {
+    lookfrom: Vec3::new(-2.0, 2.0, 1.0),
+    lookat: Vec3::new(0.0, 0.0, -1.0),
+    vup: Vec3::new(0.0, 1.0, 0.0),
+    vfov: 90.0,
+    aspect: 400.0 / 200.0,
+  };
+  let json = r#"{"lookfrom":{"x":-2.0,"y":2.0,"z":1.0},"lookat":{"x":0.0,"y":0.0,"z":-1.0},"vup":{"x":0.0,"y":1.0,"z":0.0},"vfov":90.0,"aspect":2.0}"#.to_string();
+  let s = serde_json::to_string(&camera).unwrap();
+  assert_eq!(s, json);
+}
