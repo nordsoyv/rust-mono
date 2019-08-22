@@ -7,6 +7,8 @@ use crate::camera::{CameraBuilder, Camera};
 use crate::hitable::HitableList;
 use crate::scene::world_builder::build_world;
 use crate::canvas::Canvas;
+use std::fs::File;
+use std::io::BufReader;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SceneBuilder {
@@ -37,35 +39,16 @@ impl Scene {
 }
 
 pub fn load_scene() -> Result<Scene, Box<dyn Error>> {
-  let data = r#"
-  {
-    "canvas": {
-      "width": 400,
-      "height": 200,
-      "samples" : 200
-    },
-    "camera": {
-      "lookfrom": {
-        "x":-2.0,
-        "y":2.0,
-        "z":1.0
-      },
-      "lookat": {
-        "x":0.0,
-        "y":0.0,
-        "z":-1.0
-      },
-      "vup": {
-        "x":0.0,
-        "y":1.0,
-        "z":0.0
-      },
-      "vfov": 90.0,
-      "aspect":2.0
-    }
-  }"#;
-  let s: SceneBuilder = serde_json::from_str(data)?;
+  #[cfg(debug_assertions)]
+    let path = std::path::Path::new("scene_debug.json");
+  #[cfg(not(debug_assertions))]
+    let path = std::path::Path::new("scene.json");
 
+  let file = File::open(path)?;
+  let reader = BufReader::new(file);
+
+
+  let s: SceneBuilder = serde_json::from_reader(reader)?;
   Ok(s.build())
 }
 
