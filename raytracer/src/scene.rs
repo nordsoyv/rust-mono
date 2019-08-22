@@ -7,7 +7,7 @@ use std::error::Error;
 
 use crate::camera::{CameraBuilder, Camera};
 use crate::hitable::HitableList;
-use crate::scene::world_builder::build_world;
+use crate::scene::world_builder::{build_world, build_random_world};
 use crate::canvas::Canvas;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -21,7 +21,7 @@ impl SceneBuilder {
     Scene {
       canvas: self.canvas,
       camera: self.camera.build(),
-      world: build_world(),
+      world: build_random_world(),
     }
   }
 }

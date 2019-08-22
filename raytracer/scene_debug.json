@@ -20,8 +20,8 @@
       "y": 1.0,
       "z": 0.0
     },
-    "vfov": 30.0,
+    "vfov": 90.0,
     "aspect": 2.0,
-    "aperture": 2.0
+    "aperture": 0.1
   }
 }

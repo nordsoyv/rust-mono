@@ -25,6 +25,7 @@ impl Canvas {
       .into_par_iter()
       .rev()
       .map(|h| {
+        println!("drawing line: {}",h);
         (0..self.width)
           .into_par_iter()
           .map(|w| {
