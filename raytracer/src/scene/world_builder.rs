@@ -1,6 +1,6 @@
 use rand::distributions::{Uniform, Distribution};
 use std::sync::Arc;
-use crate::hitable::{HitableList, Sphere, Hitable};
+use crate::hitable::{HitableList, Sphere};
 use crate::vec3::Vec3;
 use crate::material::{Lambertian, Metal, Dielectric};
 
@@ -21,6 +21,7 @@ pub fn build_test_world() -> HitableList {
 }
 
 
+#[allow(dead_code)]
 pub fn build_world() -> HitableList {
   let mut world = HitableList::new();
   world.add(
@@ -49,7 +50,7 @@ pub fn build_world() -> HitableList {
   return world;
 }
 
-
+#[allow(dead_code)]
 pub fn build_random_world() -> HitableList {
   let mut world = HitableList::new();
   let mut rng = rand::thread_rng();

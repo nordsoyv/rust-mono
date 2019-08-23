@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/raytracer/target/debug/raytracer.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/raytracer",
             "environment": [],
             "externalConsole": false
         }

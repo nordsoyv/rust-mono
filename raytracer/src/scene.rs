@@ -8,7 +8,7 @@ use std::path::Path;
 
 use crate::camera::{CameraBuilder, Camera};
 use crate::hitable::HitableList;
-use crate::scene::world_builder::{build_world, build_random_world};
+use crate::scene::world_builder::{ build_random_world};
 use crate::canvas::Canvas;
 
 

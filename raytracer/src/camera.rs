@@ -1,5 +1,4 @@
 use serde_derive::{Deserialize, Serialize};
-use rand::distributions::{Uniform, Distribution};
 
 use crate::vec3::{Vec3, random_in_unit_disk};
 use crate::ray::Ray;
