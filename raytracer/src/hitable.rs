@@ -8,7 +8,7 @@ pub struct HitResult {
   pub t: f32,
   pub p: Vec3,
   pub normal: Vec3,
-  pub material: Arc<dyn Material>,
+  pub material: usize,
 }
 
 pub trait Hitable: Sync {
@@ -18,13 +18,13 @@ pub trait Hitable: Sync {
 pub struct Sphere {
   center: Vec3,
   radius: f32,
-  material: Arc<dyn Material>,
+  material:usize,
 }
 
 unsafe impl Sync for Sphere {}
 
 impl Sphere {
-  pub fn new(center: Vec3, radius: f32, material: Arc<dyn Material>) -> Sphere {
+  pub fn new(center: Vec3, radius: f32, material: usize) -> Sphere {
     Sphere {
       center,
       radius,
@@ -39,7 +39,7 @@ impl Sphere {
       t,
       p,
       normal,
-      material: self.material.clone(),
+      material: self.material,
     };
     return hit;
   }
@@ -67,17 +67,30 @@ impl Hitable for Sphere {
 }
 
 pub struct HitableList {
-  hitables: Vec<Box<dyn Hitable>>
+  hitables: Vec<Box<dyn Hitable>>,
+  materials: Vec<Arc<Box<dyn Material>>>,
 }
+
+unsafe impl Sync for HitableList {}
 
 impl HitableList {
   pub fn new() -> HitableList {
     HitableList {
-      hitables: vec![]
+      hitables: vec![],
+      materials: vec![],
     }
   }
-  pub fn add(&mut self, h: Box<dyn Hitable>) {
+  pub fn add_hitable(&mut self, h: Box<dyn Hitable>) {
     self.hitables.push(h);
+  }
+  pub fn add_material(&mut self, h: Box<dyn Material>) -> usize {
+    let id = self.materials.len();
+    self.materials.push(Arc::new(h));
+    return id;
+  }
+
+  pub fn get_material(&self, id: usize) -> Arc<Box<dyn Material>>{
+    self.materials[id].clone()
   }
 }
 

@@ -55,12 +55,13 @@ fn lerp_vector(t: f32, start: Vec3, end: Vec3) -> Vec3 {
   return (start * (1.0 - t)) + (end * t);
 }
 
-fn get_color(ray: Ray, world: &dyn Hitable, depth: u32) -> Vec3 {
+fn get_color(ray: Ray, world: &HitableList, depth: u32) -> Vec3 {
   if depth > 50 {
     return Vec3::new(0.0, 0.0, 0.0);
   }
   if let Some(rec) = world.hit(&ray, 0.001, std::f32::INFINITY) {
-    if let Some(mat_res) = rec.material.scatter(&ray, &rec) {
+    let material = world.get_material(rec.material);
+    if let Some(mat_res) = material.scatter(&ray, &rec) {
       return mat_res.attenuation * get_color(mat_res.scattered, world, depth + 1);
     }
   }
