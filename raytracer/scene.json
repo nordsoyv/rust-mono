@@ -1,8 +1,8 @@
 {
   "canvas": {
-    "width": 400,
-    "height": 200,
-    "samples": 200
+    "width": 200,
+    "height": 100,
+    "samples": 10
   },
   "camera": {
     "look_from": {

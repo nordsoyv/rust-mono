@@ -4,11 +4,13 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
 use std::error::Error;
+use std::path::Path;
 
 use crate::camera::{CameraBuilder, Camera};
 use crate::hitable::HitableList;
 use crate::scene::world_builder::{build_world, build_random_world};
 use crate::canvas::Canvas;
+
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SceneBuilder {
@@ -38,11 +40,8 @@ impl Scene {
   }
 }
 
-pub fn load_scene() -> Result<Scene, Box<dyn Error>> {
-  #[cfg(debug_assertions)]
-    let path = std::path::Path::new("scene_debug.json");
-  #[cfg(not(debug_assertions))]
-    let path = std::path::Path::new("scene.json");
+pub fn load_scene(path: &Path ) -> Result<Scene, Box<dyn Error>> {
+
 
   let file = File::open(path)?;
   let reader = BufReader::new(file);
