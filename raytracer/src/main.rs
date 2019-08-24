@@ -1,3 +1,8 @@
+use std::sync::{Arc, Mutex};
+use hotwatch::{Event, Hotwatch};
+use minifb::{Key, Window, WindowOptions};
+use crate::scene::Scene;
+
 mod vec3;
 mod ray;
 mod hitable;
@@ -5,11 +10,6 @@ mod camera;
 mod material;
 mod scene;
 mod canvas;
-
-use minifb::{Key, Window, WindowOptions};
-use hotwatch::{Hotwatch, Event};
-use std::sync::{Arc, Mutex};
-use crate::scene::Scene;
 
 #[cfg(debug_assertions)]
 const PATH: &str = "scene_debug.json";
@@ -31,6 +31,9 @@ fn main() {
   let scene: Scene = scene::load_scene(std::path::Path::new(PATH)).unwrap_or_else(|e| {
     panic!("{}", e);
   });
+
+  let width = scene.canvas.width as u32;
+  let height = scene.canvas.height as u32;
 
   let mut window = Window::new(
     "Test - ESC to exit",
@@ -58,6 +61,21 @@ fn main() {
   while window.is_open() && !window.is_key_down(Key::Escape) {
     if window.is_key_down(Key::S) {
       println!("S is pressed");
+      let buffer = shared_buffer.lock().unwrap();
+      let mut img_buf: image::RgbImage = image::ImageBuffer::new(width, height);
+
+      let mut buffer_index = 0;
+      for (_x, _y, pixel) in img_buf.enumerate_pixels_mut() {
+        let color = buffer[buffer_index];
+        buffer_index += 1;
+        let red = ((color & 0x00ff0000) >> 16) as u8;
+        let green = ((color & 0x0000ff00) >> 8) as u8;
+        let blue = (color & 0x000000ff) as u8;
+
+        *pixel = image::Rgb([ red, green, blue]);
+      }
+      img_buf.save("image.png").unwrap();
+      println!("image is saved");
     }
     {
       let buffer = shared_buffer.lock().unwrap();
