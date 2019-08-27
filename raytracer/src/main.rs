@@ -16,6 +16,23 @@ const PATH: &str = "scene_debug.json";
 #[cfg(not(debug_assertions))]
 const PATH: &str = "scene.json";
 
+fn save_image(shared_buffer : Arc<Mutex<Vec<u32>>>, width: u32, height: u32){
+  let buffer = shared_buffer.lock().unwrap();
+  let mut img_buf: image::RgbImage = image::ImageBuffer::new(width, height);
+
+  let mut buffer_index = 0;
+  for (_x, _y, pixel) in img_buf.enumerate_pixels_mut() {
+    let color = buffer[buffer_index];
+    buffer_index += 1;
+    let red = ((color & 0x00ff0000) >> 16) as u8;
+    let green = ((color & 0x0000ff00) >> 8) as u8;
+    let blue = (color & 0x000000ff) as u8;
+
+    *pixel = image::Rgb([ red, green, blue]);
+  }
+  img_buf.save("image.png").unwrap();
+}
+
 fn render(scene: Scene, shared_buffer: Arc<Mutex<Vec<u32>>>) {
   let start = std::time::Instant::now();
   let mut buffer = scene.render();
@@ -60,21 +77,8 @@ fn main() {
 
   while window.is_open() && !window.is_key_down(Key::Escape) {
     if window.is_key_down(Key::S) {
-      println!("S is pressed");
-      let buffer = shared_buffer.lock().unwrap();
-      let mut img_buf: image::RgbImage = image::ImageBuffer::new(width, height);
-
-      let mut buffer_index = 0;
-      for (_x, _y, pixel) in img_buf.enumerate_pixels_mut() {
-        let color = buffer[buffer_index];
-        buffer_index += 1;
-        let red = ((color & 0x00ff0000) >> 16) as u8;
-        let green = ((color & 0x0000ff00) >> 8) as u8;
-        let blue = (color & 0x000000ff) as u8;
-
-        *pixel = image::Rgb([ red, green, blue]);
-      }
-      img_buf.save("image.png").unwrap();
+      println!("Saving image");
+      save_image(shared_buffer.clone(), width, height);
       println!("image is saved");
     }
     {

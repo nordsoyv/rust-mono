@@ -238,8 +238,6 @@ impl ops::Div<f32> for Vec3 {
   }
 }
 
-
-
 #[test]
 fn basic() {
   let mut v = Vec3::new(1.0, 2.0, 3.0);
