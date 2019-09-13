@@ -769,7 +769,6 @@ impl Parser {
 
   fn parse_vpath(&self, tokens: &[Token]) -> Result<(NodeRef, usize), String> {
     let mut curr_pos = 0;
-    ;
     let token = &tokens[curr_pos];
     let source = match token.kind {
       TokenType::Identifier => {

@@ -1,8 +1,11 @@
+
+
 mod identifier_matcher;
 mod literal_matcher;
 mod matcher;
 mod whitespace_matcher;
 
+use wasm_bindgen::prelude::*;
 use identifier_matcher::IdentifierMatcher;
 use identifier_matcher::NumberMatcher;
 use identifier_matcher::ReferenceMatcher;
@@ -13,6 +16,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::lexer::identifier_matcher::{StringMatcher, CommentsMatcher, ColorMatcher};
 
+//#[wasm_bindgen]
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum TokenType {
   Identifier,
