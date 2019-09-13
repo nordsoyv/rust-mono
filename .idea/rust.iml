@@ -64,6 +64,8 @@
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm\examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm\tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life\src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life\tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench\target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\target" />
@@ -81,6 +83,7 @@
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/target" />
       <excludeFolder url="file://$MODULE_DIR$/wasm-game-of-life/target" />
+      <excludeFolder url="file://$MODULE_DIR$/wasm-game-of-life\target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
