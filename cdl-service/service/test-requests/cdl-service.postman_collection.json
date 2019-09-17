@@ -388,7 +388,7 @@
 		{
 			"id": "2e4a4e1c-6bbb-42be-8062-17bbc5706049",
 			"key": "server",
-			"value": "localhost:8080",
+			"value": "localhost:8081",
 			"type": "string"
 		}
 	]

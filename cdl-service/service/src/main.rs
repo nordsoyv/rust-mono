@@ -1,4 +1,5 @@
 use actix_web::{App, HttpResponse, HttpServer, middleware, Responder, web};
+use actix_cors::Cors;
 use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 
@@ -6,7 +7,7 @@ use cdl_core::lexer;
 use cdl_core::lexer::Token;
 use cdl_core::parser;
 use cdl_core::parser::{Ast, parser_to_ast};
-use cdl_core::print::{print_ast};
+use cdl_core::print::print_ast;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Request {
@@ -115,7 +116,7 @@ fn parse(item: web::Json<Request>) -> HttpResponse {
           lex_time,
           parse_time,
         },
-        ast : parser_to_ast(parser),
+        ast: parser_to_ast(parser),
       });
     }
     Err(e) => return HttpResponse::BadRequest().body(e),
@@ -123,18 +124,19 @@ fn parse(item: web::Json<Request>) -> HttpResponse {
 }
 
 fn main() -> std::io::Result<()> {
-  std::env::set_var("RUST_LOG", "actix_web=info,service");
+  std::env::set_var("RUST_LOG", "actix_web=info,service=info");
   env_logger::init();
 
   HttpServer::new(||
     App::new()
       .wrap(middleware::Logger::default())
+      .wrap(Cors::new())
       .data(web::JsonConfig::default().limit(1024 * 500)) // <- limit size of the payload (global configuration)
       .service(web::resource("/lex").route(web::post().to(lex)))
       .service(web::resource("/parse").route(web::post().to(parse)))
       .service(web::resource("/print").route(web::post().to(print)))
       .service(web::resource("/{name}/{id}/index.html").to(index))
   )
-    .bind("127.0.0.1:8080")?
+    .bind("127.0.0.1:8081")?
     .run()
 }

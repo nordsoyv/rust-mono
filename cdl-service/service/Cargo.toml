@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 actix-web = "1.0.3"
+actix-cors = "0.1.0"
 log = "0.4.6"
 env_logger = "*"
 serde = "1.0"
