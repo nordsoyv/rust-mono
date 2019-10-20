@@ -1,13 +1,12 @@
 use actix_web::{App, HttpResponse, HttpServer, middleware, Responder, web};
-use actix_cors::Cors;
 use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 
 use cdl_core::lexer;
 use cdl_core::lexer::Token;
 use cdl_core::parser;
-use cdl_core::parser::{Ast, parser_to_ast};
-use cdl_core::print::print_ast;
+use cdl_core::parser::Parser;
+use cdl_core::print::print_cdl;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Request {
@@ -16,7 +15,18 @@ struct Request {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct PrintRequest {
-  ast: Ast
+  ast: Parser
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct PrintResponse {
+  cdl: String,
+  stats: PrintResponseStats,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct PrintResponseStats {
+  print_time: f64
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,12 +50,7 @@ struct LexResponse {
 #[derive(Debug, Serialize, Deserialize)]
 struct ParseResponse {
   stats: ParseResponseStats,
-  ast: Ast,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct PrintResponse {
-  cdl: String,
+  ast: Parser,
 }
 
 
@@ -74,14 +79,22 @@ fn lex(item: web::Json<Request>) -> HttpResponse {
   };
 }
 
-fn print(item: web::Json<PrintRequest>)-> HttpResponse {
+fn print(item: web::Json<PrintRequest>) -> HttpResponse {
+  let start = std::time::Instant::now();
+
   let ast = &item.ast;
-  let cdl = print_ast(ast);
+  let res = print_cdl(ast);
+
+  let end = start.elapsed();
+  let print_time = (end.as_nanos() as f64) / (1000.0 * 1000.0);
+  info!("Time taken to parse : {} milliseconds", print_time);
   return HttpResponse::Ok().json(PrintResponse {
-    cdl
+    cdl: res,
+    stats: PrintResponseStats {
+      print_time
+    },
   });
 }
-
 
 fn parse(item: web::Json<Request>) -> HttpResponse {
   let start_lex = std::time::Instant::now();
@@ -109,34 +122,30 @@ fn parse(item: web::Json<Request>) -> HttpResponse {
 
   info!("Time taken to lex + parse : {} milliseconds", total_time);
   match res {
-    Ok(()) => {
-      return HttpResponse::Ok().json(ParseResponse {
-        stats: ParseResponseStats {
-          total_time,
-          lex_time,
-          parse_time,
-        },
-        ast: parser_to_ast(parser),
-      });
-    }
+    Ok(()) => return HttpResponse::Ok().json(ParseResponse {
+      stats: ParseResponseStats {
+        total_time,
+        lex_time,
+        parse_time,
+      },
+      ast: parser,
+    }),
     Err(e) => return HttpResponse::BadRequest().body(e),
   }
 }
 
 fn main() -> std::io::Result<()> {
-  std::env::set_var("RUST_LOG", "actix_web=info,service=info");
+  std::env::set_var("RUST_LOG", "actix_web=info,service");
   env_logger::init();
 
   HttpServer::new(||
     App::new()
       .wrap(middleware::Logger::default())
-      .wrap(Cors::new())
-      .data(web::JsonConfig::default().limit(1024 * 500)) // <- limit size of the payload (global configuration)
+      .data(web::JsonConfig::default().limit(1024 * 100)) // <- limit size of the payload (global configuration)
       .service(web::resource("/lex").route(web::post().to(lex)))
       .service(web::resource("/parse").route(web::post().to(parse)))
-      .service(web::resource("/print").route(web::post().to(print)))
       .service(web::resource("/{name}/{id}/index.html").to(index))
   )
-    .bind("127.0.0.1:8081")?
+    .bind("127.0.0.1:8080")?
     .run()
 }

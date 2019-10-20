@@ -32,7 +32,7 @@ use crate::parser::utils::{is_config_hub_entity, parse_entity_header};
 pub mod ast_nodes;
 mod utils;
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 pub enum Node {
   Entity(AstEntity),
   Identifier(AstIdentifier),
@@ -76,6 +76,11 @@ impl Parser {
       nodes: RefCell::new(Vec::new()),
       script_entity: 0,
     }
+  }
+
+  pub fn get_node(&self,index: NodeRef)-> Node {
+    let n = &self.nodes.borrow()[index];
+    return n.clone();
   }
 
   pub fn parse(&mut self, tokens: Vec<Token>) -> Result<(), String> {
