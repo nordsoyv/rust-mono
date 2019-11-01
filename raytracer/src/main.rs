@@ -1,6 +1,8 @@
 use std::sync::{Arc, Mutex};
+
 use hotwatch::{Event, Hotwatch};
 use minifb::{Key, Window, WindowOptions};
+
 use crate::scene::Scene;
 
 mod vec3;
@@ -16,6 +18,13 @@ const PATH: &str = "scene_debug.json";
 #[cfg(not(debug_assertions))]
 const PATH: &str = "scene.json";
 
+type Buffer = Arc<Mutex<Vec<u32>>>;
+
+pub fn new_buffer() -> Buffer {
+  Arc::new(Mutex::new(Vec::new()))
+}
+
+fn render(scene: Scene, shared_buffer: Buffer) {
 fn save_image(shared_buffer : Arc<Mutex<Vec<u32>>>, width: u32, height: u32){
   let buffer = shared_buffer.lock().unwrap();
   let mut img_buf: image::RgbImage = image::ImageBuffer::new(width, height);
@@ -60,7 +69,7 @@ fn main() {
     panic!("{}", e);
   });
 
-  let shared_buffer = Arc::new(Mutex::new(Vec::new()));
+  let shared_buffer = new_buffer();
   let shared_buffer_clone = shared_buffer.clone(); // copy for the file wathcer closure
   render(scene, shared_buffer.clone());
 
