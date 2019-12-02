@@ -70,6 +70,11 @@
       <sourceFolder url="file://$MODULE_DIR$/roguelike\examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/roguelike\tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/roguelike\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/advent/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/advent\examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/advent\tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/advent\benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/advent/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench\target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\target" />
