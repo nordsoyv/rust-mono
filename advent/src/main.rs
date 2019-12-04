@@ -1,38 +1,46 @@
+use crate::task::Task;
 use crate::task01::{Task01A, Task01B};
 use crate::task02::{Task02A, Task02B};
 use crate::task03::{Task03A, Task03B};
-use crate::task::Task;
 
-mod util;
+mod empty_task;
 mod task;
 mod task01;
 mod task02;
 mod task03;
-mod empty_task;
+mod util;
 
-
-fn main() {
-  let task = std::env::args().nth(1).expect("no task given");
-  println!("Task given is: {}", task);
-  match task.as_str() {
+fn get_task(id: &str) -> Box<dyn Task> {
+  match id {
     "01a" => {
-      Task01A {}.run();
+      Box::new(Task01A {})
     }
     "01b" => {
-      Task01B {}.run();
+      Box::new(Task01B {})
     }
     "02a" => {
-      Task02A {}.run();
+      Box::new(Task02A {})
     }
     "02b" => {
-      Task02B {}.run();
+      Box::new(Task02B {})
     }
     "03a" => {
-      Task03A {}.run();
+      Box::new(Task03A {})
     }
     "03b" => {
-      Task03B {}.run();
+      Box::new(Task03B {})
     }
-    _ => println!("No task found")
+    _ => panic!("No task found"),
   }
+}
+
+fn main() {
+  let task_id = std::env::args().nth(1).expect("no task given");
+  println!("Task given is: {}", task_id);
+  let task = get_task(&task_id);
+  let start_run = std::time::Instant::now();
+  task.run();
+  let end_run = start_run.elapsed();
+  println!("Time taken: {} ms",(end_run.as_nanos() as f64) / (1000.0 * 1000.0))   ;
+
 }
