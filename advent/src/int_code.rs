@@ -41,7 +41,17 @@ impl IntCodeMachine {
   }
 
   fn decode_instruction(&self) -> Instruction {
-    let op = self.code[self.instruction_pointer];
+    let op_num = self.code[self.instruction_pointer];
+
+
+    let s = op_num.to_string();
+    let op_digits: Vec<_> = s.chars().map(|d| d.to_digit(10).unwrap()).collect();
+    let op = if op_digits.len() == 1 {
+      op_digits[op_digits.len()-1]
+    }else {
+      op_digits[op_digits.len()-1] +( 10 * op_digits[op_digits.len()-2])
+    };
+
     match op {
       1 => {
         let mut args = vec![];
@@ -73,7 +83,7 @@ impl IntCodeMachine {
           size: 1,
         }
       }
-      _ => panic!("Unknown code")
+      _ => panic!(format!("Unknown code {}", op) )
     }
   }
 
