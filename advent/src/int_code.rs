@@ -57,3 +57,27 @@ fn _print_int_code(code: &IntCode) {
     println!("{:02?}", chunk);
   }
 }
+
+#[test]
+fn task02a() {
+  let mut int_code = int_code_reader("./res/task02.txt");
+  let mut machine = IntCodeMachine::new();
+  int_code[1] = 12;
+  int_code[2] = 2;
+
+  machine.set_code(int_code);
+  machine.run();
+  assert_eq!(5866663, machine.get_memory(0));
+}
+
+#[test]
+fn task02b() {
+  let mut int_code = int_code_reader("./res/task02.txt");
+  let mut machine = IntCodeMachine::new();
+  int_code[1] = 42;
+  int_code[2] = 59;
+
+  machine.set_code(int_code);
+  machine.run();
+  assert_eq!(19690720, machine.get_memory(0));
+}
