@@ -284,6 +284,6 @@ fn intersect_short_test02() {
   w1.create(wire_string_1);
   let mut w2 = Wire { segments: vec![] };
   w2.create(wire_string_2);
-  let best = w1.intersect_shortest(w2);
+  let _best = w1.intersect_shortest(w2);
 //  assert_eq!(best, 410) WRONG, dont care :)
 }

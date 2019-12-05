@@ -4,36 +4,108 @@ pub type IntCode = Vec<i32>;
 
 pub struct IntCodeMachine {
   code: IntCode,
+  instruction_pointer: usize,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum InstructionCode {
+  Add = 1,
+  Multiply = 2,
+  Halt = 99,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum ParameterMode {
+  Position,
+  Immediate,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct Parameter {
+  mode: ParameterMode,
+  value: i32,
+}
+
+#[derive(Clone, Debug)]
+struct Instruction {
+  code: InstructionCode,
+  params: Vec<Parameter>,
+  size: i32,
 }
 
 impl IntCodeMachine {
-  pub fn new() -> IntCodeMachine { IntCodeMachine { code: vec![] } }
-
+  pub fn new() -> IntCodeMachine { IntCodeMachine { code: vec![], instruction_pointer: 0 } }
 
   pub fn set_code(&mut self, new_code: IntCode) {
     self.code = new_code.clone();
   }
 
+  fn decode_instruction(&self) -> Instruction {
+    let op = self.code[self.instruction_pointer];
+    match op {
+      1 => {
+        let mut args = vec![];
+        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 1] });
+        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 2] });
+        args.push(Parameter { mode: ParameterMode::Immediate, value: self.code[self.instruction_pointer + 3] });
+        Instruction {
+          code: InstructionCode::Add,
+          params: args,
+          size: 4,
+        }
+      }
+      2 => {
+        let mut args = vec![];
+        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 1] });
+        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 2] });
+        args.push(Parameter { mode: ParameterMode::Immediate, value: self.code[self.instruction_pointer + 3] });
+        Instruction {
+          code: InstructionCode::Multiply,
+          params: args,
+          size: 4,
+        }
+      }
+      99 => {
+        let args = vec![];
+        Instruction {
+          code: InstructionCode::Halt,
+          params: args,
+          size: 1,
+        }
+      }
+      _ => panic!("Unknown code")
+    }
+  }
+
+  fn get_value_for_parameter(&self, param: Parameter) -> i32 {
+    match param.mode {
+      ParameterMode::Immediate => param.value,
+      ParameterMode::Position => self.code[param.value as usize],
+    }
+  }
+
   pub fn run(&mut self) {
-    let mut instruction_pointer = 0;
     loop {
-      let op = self.code[instruction_pointer];
-      if op == 99 {
-        return;
-      }
-      let arg1 = self.code[instruction_pointer + 1] as usize;
-      let arg1_value = self.code[arg1];
-      let arg2 = self.code[instruction_pointer + 2] as usize;
-      let arg2_value = self.code[arg2];
-      let loc = self.code[instruction_pointer + 3] as usize;
+      let op = self.decode_instruction();
+      match op.code {
+        InstructionCode::Add => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          let loc = self.get_value_for_parameter(op.params[2]);
 
-      match op {
-        1 => self.code[loc] = arg1_value + arg2_value,
-        2 => self.code[loc] = arg1_value * arg2_value,
-        _ => panic!(format!("Unknown op code. pos: {}", instruction_pointer)),
+          self.code[loc as usize] = arg1_value + arg2_value
+        }
+        InstructionCode::Multiply => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          let loc = self.get_value_for_parameter(op.params[2]);
+          self.code[loc as usize] = arg1_value * arg2_value
+        }
+        InstructionCode::Halt => return,
+//        _ => panic!(format!("Unknown op code. pos: {}", self.instruction_pointer)),
       }
 
-      instruction_pointer += 4;
+      self.instruction_pointer += op.size as usize;
     }
   }
 
@@ -67,7 +139,7 @@ fn task02a() {
 
   machine.set_code(int_code);
   machine.run();
-  assert_eq!(5866663, machine.get_memory(0));
+  assert_eq!(machine.get_memory(0), 5866663);
 }
 
 #[test]
@@ -79,5 +151,5 @@ fn task02b() {
 
   machine.set_code(int_code);
   machine.run();
-  assert_eq!(19690720, machine.get_memory(0));
+  assert_eq!(machine.get_memory(0), 19690720);
 }
