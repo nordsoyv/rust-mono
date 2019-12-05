@@ -4,6 +4,7 @@ use crate::task02::{Task02A, Task02B};
 use crate::task03::{Task03A, Task03B};
 use crate::task04::{Task04A, Task04B};
 
+mod int_code;
 mod empty_task;
 mod task;
 mod task01;
