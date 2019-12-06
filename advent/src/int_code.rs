@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::{self, Read};
+use std::io::{self,  Write};
 
 pub type IntCode = Vec<i32>;
 
@@ -60,10 +60,9 @@ impl IntCodeMachine {
 
   fn decode_instruction(&self) -> Instruction {
     let op_num = self.code[self.instruction_pointer];
-
-
     let s = op_num.to_string();
     let op_digits: Vec<_> = s.chars().map(|d| d.to_digit(10).unwrap()).collect();
+
     let op = if op_digits.len() == 1 {
       op_digits[op_digits.len() - 1]
     } else {
@@ -159,9 +158,9 @@ impl IntCodeMachine {
         }
         InstructionCode::Read => {
           let mut buffer = String::new();
-          print!("Give input : ");
+          print!("Give input (end with EOL) : ");
+          io::stdout().flush().unwrap();
           io::stdin().read_line(&mut buffer).unwrap();
-          dbg!(&buffer);
           let value = buffer[..1].parse::<i32>().unwrap();
           self.set_value_for_parameter(op.params[0], value);
         }
