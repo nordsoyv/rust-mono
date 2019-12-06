@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::{self, Read};
 
 pub type IntCode = Vec<i32>;
 
@@ -11,6 +12,8 @@ pub struct IntCodeMachine {
 enum InstructionCode {
   Add = 1,
   Multiply = 2,
+  Read = 3,
+  Print = 4,
   Halt = 99,
 }
 
@@ -40,6 +43,21 @@ impl IntCodeMachine {
     self.code = new_code.clone();
   }
 
+  fn decode_param(&self, digits : &Vec<u32>, param_num: usize) -> Parameter {
+    let mode = if digits.len() > param_num + 1 {
+      match digits[digits.len() - 2- param_num ] {
+        0 => ParameterMode::Position,
+        1 => ParameterMode::Immediate,
+        _ => panic!( format!( "Unknown parameter mode {:?} , param {}", digits, param_num))
+      }
+    }else {
+      ParameterMode::Position
+    };
+
+    Parameter { mode, value: self.code[self.instruction_pointer + param_num] }
+
+  }
+
   fn decode_instruction(&self) -> Instruction {
     let op_num = self.code[self.instruction_pointer];
 
@@ -47,17 +65,17 @@ impl IntCodeMachine {
     let s = op_num.to_string();
     let op_digits: Vec<_> = s.chars().map(|d| d.to_digit(10).unwrap()).collect();
     let op = if op_digits.len() == 1 {
-      op_digits[op_digits.len()-1]
-    }else {
-      op_digits[op_digits.len()-1] +( 10 * op_digits[op_digits.len()-2])
+      op_digits[op_digits.len() - 1]
+    } else {
+      op_digits[op_digits.len() - 1] + (10 * op_digits[op_digits.len() - 2])
     };
 
     match op {
       1 => {
         let mut args = vec![];
-        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 1] });
-        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 2] });
-        args.push(Parameter { mode: ParameterMode::Immediate, value: self.code[self.instruction_pointer + 3] });
+        args.push(self.decode_param(&op_digits, 1));
+        args.push(self.decode_param(&op_digits, 2));
+        args.push(self.decode_param(&op_digits, 3));
         Instruction {
           code: InstructionCode::Add,
           params: args,
@@ -66,13 +84,31 @@ impl IntCodeMachine {
       }
       2 => {
         let mut args = vec![];
-        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 1] });
-        args.push(Parameter { mode: ParameterMode::Position, value: self.code[self.instruction_pointer + 2] });
-        args.push(Parameter { mode: ParameterMode::Immediate, value: self.code[self.instruction_pointer + 3] });
+        args.push(self.decode_param(&op_digits, 1));
+        args.push(self.decode_param(&op_digits, 2));
+        args.push(self.decode_param(&op_digits, 3));
         Instruction {
           code: InstructionCode::Multiply,
           params: args,
           size: 4,
+        }
+      }
+      3=> {
+        let mut args = vec![];
+        args.push(self.decode_param(&op_digits, 1));
+        Instruction {
+          code: InstructionCode::Read,
+          params: args,
+          size: 2,
+        }
+      }
+      4=> {
+        let mut args = vec![];
+        args.push(self.decode_param(&op_digits, 1));
+        Instruction {
+          code: InstructionCode::Print,
+          params: args,
+          size: 2,
         }
       }
       99 => {
@@ -83,7 +119,7 @@ impl IntCodeMachine {
           size: 1,
         }
       }
-      _ => panic!(format!("Unknown code {}", op) )
+      _ => panic!(format!("Unknown code {}", op))
     }
   }
 
@@ -94,6 +130,13 @@ impl IntCodeMachine {
     }
   }
 
+  fn set_value_for_parameter(&mut self, param: Parameter, value: i32){
+    match param.mode {
+      ParameterMode::Immediate => panic!("Trying to write in Immediate mode"),
+      ParameterMode::Position => self.code[param.value as usize] = value,
+    };
+  }
+
   pub fn run(&mut self) {
     loop {
       let op = self.decode_instruction();
@@ -101,15 +144,26 @@ impl IntCodeMachine {
         InstructionCode::Add => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           let arg2_value = self.get_value_for_parameter(op.params[1]);
-          let loc = self.get_value_for_parameter(op.params[2]);
-
-          self.code[loc as usize] = arg1_value + arg2_value
+          let result = arg1_value + arg2_value;
+          self.set_value_for_parameter(op.params[2], result )
         }
         InstructionCode::Multiply => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           let arg2_value = self.get_value_for_parameter(op.params[1]);
-          let loc = self.get_value_for_parameter(op.params[2]);
-          self.code[loc as usize] = arg1_value * arg2_value
+          let result = arg1_value * arg2_value;
+          self.set_value_for_parameter(op.params[2], result )
+        }
+        InstructionCode::Print => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          println!(">>>{}", arg1_value);
+        }
+        InstructionCode::Read => {
+          let mut buffer = String::new();
+          print!("Give input : ");
+          io::stdin().read_line(&mut buffer).unwrap();
+          dbg!(&buffer);
+          let value = buffer[..1].parse::<i32>().unwrap();
+          self.set_value_for_parameter(op.params[0], value);
         }
         InstructionCode::Halt => return,
 //        _ => panic!(format!("Unknown op code. pos: {}", self.instruction_pointer)),
@@ -163,3 +217,5 @@ fn task02b() {
   machine.run();
   assert_eq!(machine.get_memory(0), 19690720);
 }
+
+
