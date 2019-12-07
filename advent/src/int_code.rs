@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::{self,  Write};
+use std::io::{self, Write};
 
 pub type IntCode = Vec<i32>;
 
@@ -14,6 +14,10 @@ enum InstructionCode {
   Multiply = 2,
   Read = 3,
   Print = 4,
+  JmpIfTrue = 5,
+  JmpIfFalse = 6,
+  LessThan = 7,
+  Equals = 8,
   Halt = 99,
 }
 
@@ -43,19 +47,18 @@ impl IntCodeMachine {
     self.code = new_code.clone();
   }
 
-  fn decode_param(&self, digits : &Vec<u32>, param_num: usize) -> Parameter {
+  fn decode_param(&self, digits: &Vec<u32>, param_num: usize) -> Parameter {
     let mode = if digits.len() > param_num + 1 {
-      match digits[digits.len() - 2- param_num ] {
+      match digits[digits.len() - 2 - param_num] {
         0 => ParameterMode::Position,
         1 => ParameterMode::Immediate,
-        _ => panic!( format!( "Unknown parameter mode {:?} , param {}", digits, param_num))
+        _ => panic!(format!("Unknown parameter mode {:?} , param {}", digits, param_num))
       }
-    }else {
+    } else {
       ParameterMode::Position
     };
 
     Parameter { mode, value: self.code[self.instruction_pointer + param_num] }
-
   }
 
   fn decode_instruction(&self) -> Instruction {
@@ -92,7 +95,7 @@ impl IntCodeMachine {
           size: 4,
         }
       }
-      3=> {
+      3 => {
         let mut args = vec![];
         args.push(self.decode_param(&op_digits, 1));
         Instruction {
@@ -101,13 +104,55 @@ impl IntCodeMachine {
           size: 2,
         }
       }
-      4=> {
+      4 => {
         let mut args = vec![];
         args.push(self.decode_param(&op_digits, 1));
         Instruction {
           code: InstructionCode::Print,
           params: args,
           size: 2,
+        }
+      }
+      5 => {
+        let mut args = vec![];
+        args.push(self.decode_param(&op_digits, 1));
+        args.push(self.decode_param(&op_digits, 2));
+        Instruction {
+          code: InstructionCode::JmpIfTrue,
+          params: args,
+          size: 3,
+        }
+      }
+      6 => {
+        let mut args = vec![];
+        args.push(self.decode_param(&op_digits, 1));
+        args.push(self.decode_param(&op_digits, 2));
+        Instruction {
+          code: InstructionCode::JmpIfFalse,
+          params: args,
+          size: 3,
+        }
+      }
+      7 => {
+        let mut args = vec![];
+        args.push(self.decode_param(&op_digits, 1));
+        args.push(self.decode_param(&op_digits, 2));
+        args.push(self.decode_param(&op_digits, 3));
+        Instruction {
+          code: InstructionCode::LessThan,
+          params: args,
+          size: 4,
+        }
+      }
+      8 => {
+        let mut args = vec![];
+        args.push(self.decode_param(&op_digits, 1));
+        args.push(self.decode_param(&op_digits, 2));
+        args.push(self.decode_param(&op_digits, 3));
+        Instruction {
+          code: InstructionCode::Equals,
+          params: args,
+          size: 4,
         }
       }
       99 => {
@@ -129,7 +174,7 @@ impl IntCodeMachine {
     }
   }
 
-  fn set_value_for_parameter(&mut self, param: Parameter, value: i32){
+  fn set_value_for_parameter(&mut self, param: Parameter, value: i32) {
     match param.mode {
       ParameterMode::Immediate => panic!("Trying to write in Immediate mode"),
       ParameterMode::Position => self.code[param.value as usize] = value,
@@ -144,13 +189,13 @@ impl IntCodeMachine {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           let arg2_value = self.get_value_for_parameter(op.params[1]);
           let result = arg1_value + arg2_value;
-          self.set_value_for_parameter(op.params[2], result )
+          self.set_value_for_parameter(op.params[2], result)
         }
         InstructionCode::Multiply => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           let arg2_value = self.get_value_for_parameter(op.params[1]);
           let result = arg1_value * arg2_value;
-          self.set_value_for_parameter(op.params[2], result )
+          self.set_value_for_parameter(op.params[2], result)
         }
         InstructionCode::Print => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
