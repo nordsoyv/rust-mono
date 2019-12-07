@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::{self, Write};
+use std::io::{self, Write, Read, BufRead};
 
 pub type IntCode = Vec<i32>;
 
@@ -181,7 +181,10 @@ impl IntCodeMachine {
     };
   }
 
-  pub fn run(&mut self) {
+  pub fn run<R,W>(&mut self, mut input : R, mut out : W)
+  where
+  R: BufRead,
+  W: Write {
     loop {
       let op = self.decode_instruction();
       match op.code {
@@ -199,13 +202,16 @@ impl IntCodeMachine {
         }
         InstructionCode::Print => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
-          println!(">>>{}", arg1_value);
+          writeln!(out, ">>>{}", arg1_value);
+          //println!(">>>{}", arg1_value);
         }
         InstructionCode::Read => {
           let mut buffer = String::new();
-          print!("Give input (end with EOL) : ");
-          io::stdout().flush().unwrap();
-          io::stdin().read_line(&mut buffer).unwrap();
+          write!(out, "Give input (end with EOL) : ").unwrap();
+          out.flush().unwrap();
+         // io::stdout().flush().unwrap();
+          input.read_line(&mut buffer).unwrap();
+          //io::stdin().read_line(&mut buffer).unwrap();
           let value = buffer[..1].parse::<i32>().unwrap();
           self.set_value_for_parameter(op.params[0], value);
         }
@@ -279,8 +285,12 @@ fn task02a() {
   int_code[1] = 12;
   int_code[2] = 2;
 
+  let stdin  = io::stdin();
+  let input = stdin.lock();
+  let stdout  = io::stdout();
+  let out = stdout.lock();
   machine.set_code(int_code);
-  machine.run();
+  machine.run(input, out);
   assert_eq!(machine.get_memory(0), 5866663);
 }
 
@@ -291,9 +301,29 @@ fn task02b() {
   int_code[1] = 42;
   int_code[2] = 59;
 
+  let stdin  = io::stdin();
+  let input = stdin.lock();
+  let stdout  = io::stdout();
+  let out = stdout.lock();
+
   machine.set_code(int_code);
-  machine.run();
+  machine.run(input, out);
   assert_eq!(machine.get_memory(0), 19690720);
+}
+
+
+
+#[test]
+fn task05a() {
+  let mut int_code = int_code_reader("./res/task05.txt");
+  let mut machine = IntCodeMachine::new();
+  let input = b"1\n";
+  let mut output = Vec::new();
+
+  machine.set_code(int_code);
+  machine.run(&input[..], &mut output);
+  let a = String::from_utf8(output).unwrap();
+  println!("{}",a);
 }
 
 
