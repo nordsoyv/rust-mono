@@ -209,6 +209,40 @@ impl IntCodeMachine {
           let value = buffer[..1].parse::<i32>().unwrap();
           self.set_value_for_parameter(op.params[0], value);
         }
+        InstructionCode::JmpIfTrue => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          if arg1_value != 0 {
+           let jmp_target = self.get_value_for_parameter(op.params[1]);
+            self.instruction_pointer = jmp_target as usize;
+            continue;
+          }
+        }
+        InstructionCode::JmpIfFalse => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          if arg1_value == 0 {
+           let jmp_target = self.get_value_for_parameter(op.params[1]);
+            self.instruction_pointer = jmp_target as usize;
+            continue;
+          }
+        }
+        InstructionCode::LessThan => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          if arg1_value <arg2_value {
+            self.set_value_for_parameter(op.params[2],1);
+          }else {
+            self.set_value_for_parameter(op.params[2],0);
+          }
+        }
+        InstructionCode::Equals => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          if arg1_value  == arg2_value {
+            self.set_value_for_parameter(op.params[2],1);
+          }else {
+            self.set_value_for_parameter(op.params[2],0);
+          }
+        }
         InstructionCode::Halt => return,
 //        _ => panic!(format!("Unknown op code. pos: {}", self.instruction_pointer)),
       }
