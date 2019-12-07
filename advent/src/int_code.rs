@@ -324,6 +324,32 @@ fn task05a() {
   machine.run(&input[..], &mut output);
   let a = String::from_utf8(output).unwrap();
   println!("{}",a);
+  assert_eq!("Give input (end with EOL) : >>>0
+>>>0
+>>>0
+>>>0
+>>>0
+>>>0
+>>>0
+>>>0
+>>>0
+>>>16225258
+",a);
+
 }
 
+
+#[test]
+fn task05b() {
+  let mut int_code = int_code_reader("./res/task05.txt");
+  let mut machine = IntCodeMachine::new();
+  let input = b"5\n";
+  let mut output = Vec::new();
+
+  machine.set_code(int_code);
+  machine.run(&input[..], &mut output);
+  let a = String::from_utf8(output).unwrap();
+  println!("{}",a);
+  assert_eq!("Give input (end with EOL) : >>>2808771\n",a);
+}
 
