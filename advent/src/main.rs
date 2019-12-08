@@ -4,6 +4,7 @@ use crate::task02::{Task02A, Task02B};
 use crate::task03::{Task03A, Task03B};
 use crate::task04::{Task04A, Task04B};
 use crate::task05::{Task05A, Task05B};
+use crate::task06::{Task06A, Task06B};
 
 mod int_code;
 mod empty_task;
@@ -13,6 +14,7 @@ mod task02;
 mod task03;
 mod task04;
 mod task05;
+mod task06;
 mod util;
 
 fn get_task(id: &str) -> Box<dyn Task> {
@@ -46,6 +48,12 @@ fn get_task(id: &str) -> Box<dyn Task> {
     }
     "05b" => {
       Box::new(Task05B {})
+    }
+    "06a" => {
+      Box::new(Task06A {})
+    }
+    "06b" => {
+      Box::new(Task06B {})
     }
     _ => panic!("No task found"),
   }
