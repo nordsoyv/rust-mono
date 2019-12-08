@@ -1,10 +1,11 @@
-use crate::task::Task;
 use crate::task01::{Task01A, Task01B};
 use crate::task02::{Task02A, Task02B};
 use crate::task03::{Task03A, Task03B};
 use crate::task04::{Task04A, Task04B};
 use crate::task05::{Task05A, Task05B};
 use crate::task06::{Task06A, Task06B};
+use crate::task07::{Task07A, Task07B};
+use crate::task::Task;
 
 mod int_code;
 mod empty_task;
@@ -15,6 +16,7 @@ mod task03;
 mod task04;
 mod task05;
 mod task06;
+mod task07;
 mod util;
 
 fn get_task(id: &str) -> Box<dyn Task> {
@@ -55,6 +57,12 @@ fn get_task(id: &str) -> Box<dyn Task> {
     "06b" => {
       Box::new(Task06B {})
     }
+    "07a" => {
+      Box::new(Task07A {})
+    }
+    "07b" => {
+      Box::new(Task07B {})
+    }
     _ => panic!("No task found"),
   }
 }
@@ -66,6 +74,5 @@ fn main() {
   let start_run = std::time::Instant::now();
   task.run();
   let end_run = start_run.elapsed();
-  println!("Time taken: {} ms",(end_run.as_nanos() as f64) / (1000.0 * 1000.0))   ;
-
+  println!("Time taken: {} ms", (end_run.as_nanos() as f64) / (1000.0 * 1000.0));
 }

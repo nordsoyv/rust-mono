@@ -202,13 +202,13 @@ impl IntCodeMachine {
         }
         InstructionCode::Print => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
-          writeln!(out, ">>>{}", arg1_value).unwrap();
+          writeln!(out, "{}", arg1_value).unwrap();
           //println!(">>>{}", arg1_value);
         }
         InstructionCode::Read => {
           let mut buffer = String::new();
-          write!(out, "Give input (end with EOL) : ").unwrap();
-          out.flush().unwrap();
+//          write!(out, "Give input (end with EOL) : ").unwrap();
+//          out.flush().unwrap();
           // io::stdout().flush().unwrap();
           input.read_line(&mut buffer).unwrap();
           //io::stdin().read_line(&mut buffer).unwrap();
