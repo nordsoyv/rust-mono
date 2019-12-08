@@ -1,5 +1,5 @@
-use std::fs;
-use std::io::{self, Write, Read, BufRead};
+use std::{fs, io};
+use std::io::{BufRead, Write};
 
 pub type IntCode = Vec<i32>;
 
@@ -181,10 +181,10 @@ impl IntCodeMachine {
     };
   }
 
-  pub fn run<R,W>(&mut self, mut input : R, mut out : W)
-  where
-  R: BufRead,
-  W: Write {
+  pub fn run<R, W>(&mut self, mut input: R, mut out: W)
+    where
+      R: BufRead,
+      W: Write {
     loop {
       let op = self.decode_instruction();
       match op.code {
@@ -202,14 +202,14 @@ impl IntCodeMachine {
         }
         InstructionCode::Print => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
-          writeln!(out, ">>>{}", arg1_value);
+          writeln!(out, ">>>{}", arg1_value).unwrap();
           //println!(">>>{}", arg1_value);
         }
         InstructionCode::Read => {
           let mut buffer = String::new();
           write!(out, "Give input (end with EOL) : ").unwrap();
           out.flush().unwrap();
-         // io::stdout().flush().unwrap();
+          // io::stdout().flush().unwrap();
           input.read_line(&mut buffer).unwrap();
           //io::stdin().read_line(&mut buffer).unwrap();
           let value = buffer[..1].parse::<i32>().unwrap();
@@ -218,7 +218,7 @@ impl IntCodeMachine {
         InstructionCode::JmpIfTrue => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           if arg1_value != 0 {
-           let jmp_target = self.get_value_for_parameter(op.params[1]);
+            let jmp_target = self.get_value_for_parameter(op.params[1]);
             self.instruction_pointer = jmp_target as usize;
             continue;
           }
@@ -226,7 +226,7 @@ impl IntCodeMachine {
         InstructionCode::JmpIfFalse => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           if arg1_value == 0 {
-           let jmp_target = self.get_value_for_parameter(op.params[1]);
+            let jmp_target = self.get_value_for_parameter(op.params[1]);
             self.instruction_pointer = jmp_target as usize;
             continue;
           }
@@ -234,19 +234,19 @@ impl IntCodeMachine {
         InstructionCode::LessThan => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           let arg2_value = self.get_value_for_parameter(op.params[1]);
-          if arg1_value <arg2_value {
-            self.set_value_for_parameter(op.params[2],1);
-          }else {
-            self.set_value_for_parameter(op.params[2],0);
+          if arg1_value < arg2_value {
+            self.set_value_for_parameter(op.params[2], 1);
+          } else {
+            self.set_value_for_parameter(op.params[2], 0);
           }
         }
         InstructionCode::Equals => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
           let arg2_value = self.get_value_for_parameter(op.params[1]);
-          if arg1_value  == arg2_value {
-            self.set_value_for_parameter(op.params[2],1);
-          }else {
-            self.set_value_for_parameter(op.params[2],0);
+          if arg1_value == arg2_value {
+            self.set_value_for_parameter(op.params[2], 1);
+          } else {
+            self.set_value_for_parameter(op.params[2], 0);
           }
         }
         InstructionCode::Halt => return,
@@ -285,9 +285,9 @@ fn task02a() {
   int_code[1] = 12;
   int_code[2] = 2;
 
-  let stdin  = io::stdin();
+  let stdin = io::stdin();
   let input = stdin.lock();
-  let stdout  = io::stdout();
+  let stdout = io::stdout();
   let out = stdout.lock();
   machine.set_code(int_code);
   machine.run(input, out);
@@ -301,9 +301,9 @@ fn task02b() {
   int_code[1] = 42;
   int_code[2] = 59;
 
-  let stdin  = io::stdin();
+  let stdin = io::stdin();
   let input = stdin.lock();
-  let stdout  = io::stdout();
+  let stdout = io::stdout();
   let out = stdout.lock();
 
   machine.set_code(int_code);
@@ -312,10 +312,9 @@ fn task02b() {
 }
 
 
-
 #[test]
 fn task05a() {
-  let mut int_code = int_code_reader("./res/task05.txt");
+  let int_code = int_code_reader("./res/task05.txt");
   let mut machine = IntCodeMachine::new();
   let input = b"1\n";
   let mut output = Vec::new();
@@ -323,7 +322,7 @@ fn task05a() {
   machine.set_code(int_code);
   machine.run(&input[..], &mut output);
   let a = String::from_utf8(output).unwrap();
-  println!("{}",a);
+  println!("{}", a);
   assert_eq!("Give input (end with EOL) : >>>0
 >>>0
 >>>0
@@ -334,14 +333,13 @@ fn task05a() {
 >>>0
 >>>0
 >>>16225258
-",a);
-
+", a);
 }
 
 
 #[test]
 fn task05b() {
-  let mut int_code = int_code_reader("./res/task05.txt");
+  let int_code = int_code_reader("./res/task05.txt");
   let mut machine = IntCodeMachine::new();
   let input = b"5\n";
   let mut output = Vec::new();
@@ -349,7 +347,7 @@ fn task05b() {
   machine.set_code(int_code);
   machine.run(&input[..], &mut output);
   let a = String::from_utf8(output).unwrap();
-  println!("{}",a);
-  assert_eq!("Give input (end with EOL) : >>>2808771\n",a);
+  println!("{}", a);
+  assert_eq!("Give input (end with EOL) : >>>2808771\n", a);
 }
 

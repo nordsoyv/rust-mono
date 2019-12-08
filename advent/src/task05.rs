@@ -1,4 +1,3 @@
-use std::io;
 
 use crate::int_code::{int_code_reader, IntCodeMachine};
 use crate::task::Task;
