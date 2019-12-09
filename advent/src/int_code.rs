@@ -203,6 +203,16 @@ impl IntCodeMachine {
           output.push(arg1_value);
         }
         InstructionCode::Read => {
+          if input.len() ==0 {
+            println!("About to read more input than give");
+            dbg!(self.instruction_pointer);
+            dbg!(self.code[self.instruction_pointer-4]);
+            dbg!(self.code[self.instruction_pointer-3]);
+            dbg!(self.code[self.instruction_pointer-2]);
+            dbg!(self.code[self.instruction_pointer-1]);
+            dbg!(self.code[self.instruction_pointer-0]);
+            dbg!(self.code[self.instruction_pointer+1]);
+          }
           let value = input.remove(0);
           self.set_value_for_parameter(op.params[0], value);
         }
