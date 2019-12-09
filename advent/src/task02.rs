@@ -1,5 +1,3 @@
-use std::io;
-
 use crate::int_code::{int_code_reader, IntCodeMachine};
 use crate::task::Task;
 
@@ -16,12 +14,7 @@ impl Task for Task02A {
     int_code[2] = 2;
 
     machine.set_code(int_code);
-    let stdin = io::stdin();
-    let input = stdin.lock();
-    let stdout = io::stdout();
-    let out = stdout.lock();
-
-    machine.run(input, out);
+    machine.run(&mut vec![]);
     println!("Answer in slot 0 is: {}", machine.get_memory(0));
   }
 }
@@ -37,12 +30,7 @@ impl Task for Task02B {
         int_code[1] = noun;
         int_code[2] = verb;
         machine.set_code(int_code);
-        let stdin = io::stdin();
-        let input = stdin.lock();
-        let stdout = io::stdout();
-        let out = stdout.lock();
-
-        machine.run(input, out);
+        machine.run(&mut vec![]);
         let answer = machine.get_memory(0);
         if answer == 19690720 {
           println!("Noun {} Verb {} ", noun, verb);

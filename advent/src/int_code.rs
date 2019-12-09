@@ -1,5 +1,4 @@
-use std::{fs, io};
-use std::io::{BufRead, Write};
+use std::{fs};
 
 pub type IntCode = Vec<i32>;
 
@@ -181,10 +180,9 @@ impl IntCodeMachine {
     };
   }
 
-  pub fn run<R, W>(&mut self, mut input: R, mut out: W)
-    where
-      R: BufRead,
-      W: Write {
+  pub fn run(&mut self, input: &mut Vec<i32>) -> Vec<i32>
+  {
+    let mut output = vec![];
     loop {
       let op = self.decode_instruction();
       match op.code {
@@ -202,17 +200,10 @@ impl IntCodeMachine {
         }
         InstructionCode::Print => {
           let arg1_value = self.get_value_for_parameter(op.params[0]);
-          writeln!(out, "{}", arg1_value).unwrap();
-          //println!(">>>{}", arg1_value);
+          output.push(arg1_value);
         }
         InstructionCode::Read => {
-          let mut buffer = String::new();
-//          write!(out, "Give input (end with EOL) : ").unwrap();
-//          out.flush().unwrap();
-          // io::stdout().flush().unwrap();
-          input.read_line(&mut buffer).unwrap();
-          //io::stdin().read_line(&mut buffer).unwrap();
-          let value = buffer[..1].parse::<i32>().unwrap();
+          let value = input.remove(0);
           self.set_value_for_parameter(op.params[0], value);
         }
         InstructionCode::JmpIfTrue => {
@@ -249,7 +240,7 @@ impl IntCodeMachine {
             self.set_value_for_parameter(op.params[2], 0);
           }
         }
-        InstructionCode::Halt => return,
+        InstructionCode::Halt => return output,
 //        _ => panic!(format!("Unknown op code. pos: {}", self.instruction_pointer)),
       }
 
@@ -285,12 +276,8 @@ fn task02a() {
   int_code[1] = 12;
   int_code[2] = 2;
 
-  let stdin = io::stdin();
-  let input = stdin.lock();
-  let stdout = io::stdout();
-  let out = stdout.lock();
   machine.set_code(int_code);
-  machine.run(input, out);
+  machine.run(&mut vec![]);
   assert_eq!(machine.get_memory(0), 5866663);
 }
 
@@ -301,13 +288,8 @@ fn task02b() {
   int_code[1] = 42;
   int_code[2] = 59;
 
-  let stdin = io::stdin();
-  let input = stdin.lock();
-  let stdout = io::stdout();
-  let out = stdout.lock();
-
   machine.set_code(int_code);
-  machine.run(input, out);
+  machine.run(&mut vec![]);
   assert_eq!(machine.get_memory(0), 19690720);
 }
 
@@ -316,24 +298,10 @@ fn task02b() {
 fn task05a() {
   let int_code = int_code_reader("./res/task05.txt");
   let mut machine = IntCodeMachine::new();
-  let input = b"1\n";
-  let mut output = Vec::new();
-
   machine.set_code(int_code);
-  machine.run(&input[..], &mut output);
-  let a = String::from_utf8(output).unwrap();
-  println!("{}", a);
-  assert_eq!("Give input (end with EOL) : >>>0
->>>0
->>>0
->>>0
->>>0
->>>0
->>>0
->>>0
->>>0
->>>16225258
-", a);
+  let output = machine.run( &mut vec![1]);
+  println!("{}", output[0]);
+  assert_eq!(16225258, output[9])
 }
 
 
@@ -341,13 +309,9 @@ fn task05a() {
 fn task05b() {
   let int_code = int_code_reader("./res/task05.txt");
   let mut machine = IntCodeMachine::new();
-  let input = b"5\n";
-  let mut output = Vec::new();
-
   machine.set_code(int_code);
-  machine.run(&input[..], &mut output);
-  let a = String::from_utf8(output).unwrap();
-  println!("{}", a);
-  assert_eq!("Give input (end with EOL) : >>>2808771\n", a);
+  let output = machine.run(&mut vec![5]);
+  println!("{}", output[0]);
+  assert_eq!(2808771, output[0]);
 }
 

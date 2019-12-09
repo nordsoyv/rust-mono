@@ -7,7 +7,7 @@ pub struct Task07B {}
 
 impl Task for Task07A {
   fn run(&self) {
-    unimplemented!()
+
   }
 }
 
@@ -27,30 +27,25 @@ fn test_01() {
     .map(|n| n.parse::<i32>().unwrap())
     .collect::<Vec<i32>>();
 
-  println!("{:?}", code);
-
-    let mut machine1 = IntCodeMachine::new();
-    let input1 = b"4\n0\n";
-    let mut output1 = Vec::new();
-    machine1.set_code(code.clone());
-    machine1.run( &input1[..], &mut output1);
-
-    let res1_string = String::from_utf8(output1[..output1.len()-2)]).unwrap();
-
-//    let res1_num = res1_string.parse::<i32>().unwrap();
-
-    println!("{}", res1_string);
+  let mut machine1 = IntCodeMachine::new();
+  machine1.set_code(code.clone());
+  let output1 = machine1.run(&mut vec![4, 0]);
 
 
+  let mut machine2 = IntCodeMachine::new();
+  machine2.set_code(code.clone());
+  let output2 = machine2.run(&mut vec![3, output1[0]]);
 
-//    let mut machine2 = IntCodeMachine::new();
-//    let input2 = b"3\n" + output1[0] + "\n";
-//    let mut output2 = Vec::new();
-//    machine2.set_code(code.clone());
-//    machine2.run( &input2[..], &mut output2);
-//
-//    println!("{}", String::from_utf8(output2).unwrap());
+  let mut machine3 = IntCodeMachine::new();
+  machine3.set_code(code.clone());
+  let output3 = machine3.run(&mut vec![2, output2[0]]);
+
+  let mut machine4 = IntCodeMachine::new();
+  machine4.set_code(code.clone());
+  let output4 = machine4.run(&mut vec![1, output3[0]]);
 
 
-
-}
+  let mut machine5 = IntCodeMachine::new();
+  machine5.set_code(code.clone());
+  let output5 = machine5.run(&mut vec![0, output4[0]]);
+  assert_eq!(output5[0], 43210);

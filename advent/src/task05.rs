@@ -11,10 +11,8 @@ impl Task for Task05A {
     let int_code = int_code_reader("./res/task05.txt");
     let mut machine = IntCodeMachine::new();
     machine.set_code(int_code);
-    let input = b"1\n";
-    let mut output = Vec::new();
-    machine.run(&input[..], &mut output);
-    println!("{}", String::from_utf8(output).unwrap());
+    let output = machine.run(&mut vec![1]);
+    println!("{}", output[0]);
   }
 }
 
@@ -23,9 +21,7 @@ impl Task for Task05B {
     let int_code = int_code_reader("./res/task05.txt");
     let mut machine = IntCodeMachine::new();
     machine.set_code(int_code);
-    let input = b"5\n";
-    let mut output = Vec::new();
-    machine.run(&input[..], &mut output);
-    println!("{}", String::from_utf8(output).unwrap());
+    let output =machine.run(&mut vec![5]);
+    println!("{}", output[0]);
   }
 }
