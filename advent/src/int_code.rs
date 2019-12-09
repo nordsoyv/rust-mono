@@ -203,16 +203,6 @@ impl IntCodeMachine {
           output.push(arg1_value);
         }
         InstructionCode::Read => {
-          if input.len() ==0 {
-            println!("About to read more input than give");
-            dbg!(self.instruction_pointer);
-            dbg!(self.code[self.instruction_pointer-4]);
-            dbg!(self.code[self.instruction_pointer-3]);
-            dbg!(self.code[self.instruction_pointer-2]);
-            dbg!(self.code[self.instruction_pointer-1]);
-            dbg!(self.code[self.instruction_pointer-0]);
-            dbg!(self.code[self.instruction_pointer+1]);
-          }
           let value = input.remove(0);
           self.set_value_for_parameter(op.params[0], value);
         }
@@ -257,6 +247,77 @@ impl IntCodeMachine {
       self.instruction_pointer += op.size as usize;
     }
   }
+
+  pub fn run_until_output(&mut self, input: &mut Vec<i32>) -> Vec<i32>
+  {
+    let mut output = vec![];
+    loop {
+      let op = self.decode_instruction();
+      match op.code {
+        InstructionCode::Add => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          let result = arg1_value + arg2_value;
+          self.set_value_for_parameter(op.params[2], result)
+        }
+        InstructionCode::Multiply => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          let result = arg1_value * arg2_value;
+          self.set_value_for_parameter(op.params[2], result)
+        }
+        InstructionCode::Print => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          output.push(arg1_value);
+          self.instruction_pointer += op.size as usize;
+          return output;
+        }
+        InstructionCode::Read => {
+          let value = input.remove(0);
+          self.set_value_for_parameter(op.params[0], value);
+        }
+        InstructionCode::JmpIfTrue => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          if arg1_value != 0 {
+            let jmp_target = self.get_value_for_parameter(op.params[1]);
+            self.instruction_pointer = jmp_target as usize;
+            continue;
+          }
+        }
+        InstructionCode::JmpIfFalse => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          if arg1_value == 0 {
+            let jmp_target = self.get_value_for_parameter(op.params[1]);
+            self.instruction_pointer = jmp_target as usize;
+            continue;
+          }
+        }
+        InstructionCode::LessThan => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          if arg1_value < arg2_value {
+            self.set_value_for_parameter(op.params[2], 1);
+          } else {
+            self.set_value_for_parameter(op.params[2], 0);
+          }
+        }
+        InstructionCode::Equals => {
+          let arg1_value = self.get_value_for_parameter(op.params[0]);
+          let arg2_value = self.get_value_for_parameter(op.params[1]);
+          if arg1_value == arg2_value {
+            self.set_value_for_parameter(op.params[2], 1);
+          } else {
+            self.set_value_for_parameter(op.params[2], 0);
+          }
+        }
+        InstructionCode::Halt => return vec![],
+//        _ => panic!(format!("Unknown op code. pos: {}", self.instruction_pointer)),
+      }
+
+      self.instruction_pointer += op.size as usize;
+    }
+  }
+
 
   pub fn get_memory(&self, index: usize) -> i32 {
     self.code[index]
