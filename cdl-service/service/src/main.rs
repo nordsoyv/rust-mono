@@ -5,8 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 use cdl_core::lexer;
 use cdl_core::lexer::Token;
 use cdl_core::parser;
-use cdl_core::parser::Parser;
-use cdl_core::print::print_cdl;
+use cdl_core::parser::{Parser};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Request {
@@ -79,17 +78,19 @@ fn lex(item: web::Json<Request>) -> HttpResponse {
   };
 }
 
-fn print(item: web::Json<PrintRequest>) -> HttpResponse {
+fn _print(_item: web::Json<PrintRequest>) -> HttpResponse {
   let start = std::time::Instant::now();
 
-  let ast = &item.ast;
-  let res = print_cdl(ast);
-
+//  let parser = item.ast;
+//  let parser = parser;
+//  let ast = parser_to_ast(parser);
+//  let res = print_ast(&ast);
+//
   let end = start.elapsed();
   let print_time = (end.as_nanos() as f64) / (1000.0 * 1000.0);
   info!("Time taken to parse : {} milliseconds", print_time);
   return HttpResponse::Ok().json(PrintResponse {
-    cdl: res,
+    cdl: "".to_string(),
     stats: PrintResponseStats {
       print_time
     },
@@ -141,7 +142,7 @@ fn main() -> std::io::Result<()> {
   HttpServer::new(||
     App::new()
       .wrap(middleware::Logger::default())
-      .data(web::JsonConfig::default().limit(1024 * 100)) // <- limit size of the payload (global configuration)
+      .data(web::JsonConfig::default().limit(1024 * 200)) // <- limit size of the payload (global configuration)
       .service(web::resource("/lex").route(web::post().to(lex)))
       .service(web::resource("/parse").route(web::post().to(parse)))
       .service(web::resource("/{name}/{id}/index.html").to(index))

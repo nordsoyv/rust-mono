@@ -1,5 +1,4 @@
 use serde_derive::{Deserialize, Serialize};
-use crate::parser::Parser;
 
 pub type NodeRef = usize;
 
@@ -142,14 +141,14 @@ pub struct AstTableDecl{
   pub end_pos: usize,
 }
 
-impl AstEntity {
-  pub fn print(&self, parser: &Parser) -> &str {
-    let mut res = String::new();
-    res.push_str(&self.terms.join(" "));
-    for child in self.children {
-      let n = parser.get_node(child);
-
-    }
-    return &res;
-  }
-}
+//impl AstEntity {
+//  pub fn print(&self, parser: &Parser) -> &str {
+//    let mut res = String::new();
+//    res.push_str(&self.terms.join(" "));
+//    for child in &self.children {
+//      let n = parser.get_node(*child);
+//    }
+//    let r = res.as_str();
+//    return r;
+//  }
+//}

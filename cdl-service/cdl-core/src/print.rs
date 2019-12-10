@@ -1,6 +1,5 @@
-use crate::parser::{Node, Parser, parser_to_ast, Ast};
+use crate::parser::{Node, Ast};
 use crate::parser::ast_nodes::{NodeRef, Operator};
-use crate::lexer::Lexer;
 
 pub fn print_ast(ast: &Ast) -> String {
   let start = ast.script_entity;
@@ -32,8 +31,8 @@ fn print_node(ast: &Ast, node_ref: NodeRef, indent: u32) -> String {
       let mut header = String::new();
       header.push_str(&padding);
       header.push_str(&node.terms.join(" "));
-      if node.refs.len()>0 {
-        let ref_str :Vec<String> = (&node.refs).into_iter().map(|r| format!("@{}",r)).collect();
+      if node.refs.len() > 0 {
+        let ref_str: Vec<String> = (&node.refs).into_iter().map(|r| format!("@{}", r)).collect();
         header.push_str(" ");
         header.push_str(&ref_str.join(" "));
       }
