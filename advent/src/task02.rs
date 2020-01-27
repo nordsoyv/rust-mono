@@ -8,12 +8,11 @@ pub struct Task02B {}
 
 impl Task for Task02A {
   fn run(&self) {
-    let mut int_code = int_code_reader("./res/task02.txt");
-    let mut machine = IntCodeMachine::new();
+    let mut int_code  = int_code_reader("./res/task02.txt");
     int_code[1] = 12;
     int_code[2] = 2;
+    let mut machine = IntCodeMachine::new(int_code);
 
-    machine.set_code(int_code);
     machine.run(&mut vec![]);
     println!("Answer in slot 0 is: {}", machine.get_memory(0));
   }
@@ -25,11 +24,10 @@ impl Task for Task02B {
 
     for noun in 0..99 {
       for verb in 0..99 {
-        let mut machine = IntCodeMachine::new();
         let mut int_code = org_code.clone();
         int_code[1] = noun;
         int_code[2] = verb;
-        machine.set_code(int_code);
+        let mut machine = IntCodeMachine::new(int_code);
         machine.run(&mut vec![]);
         let answer = machine.get_memory(0);
         if answer == 19690720 {
