@@ -24,8 +24,7 @@ pub fn new_buffer() -> Buffer {
   Arc::new(Mutex::new(Vec::new()))
 }
 
-fn render(scene: Scene, shared_buffer: Buffer) {
-fn save_image(shared_buffer : Arc<Mutex<Vec<u32>>>, width: u32, height: u32){
+fn save_image(shared_buffer: Arc<Mutex<Vec<u32>>>, width: u32, height: u32) {
   let buffer = shared_buffer.lock().unwrap();
   let mut img_buf: image::RgbImage = image::ImageBuffer::new(width, height);
 
@@ -37,7 +36,7 @@ fn save_image(shared_buffer : Arc<Mutex<Vec<u32>>>, width: u32, height: u32){
     let green = ((color & 0x0000ff00) >> 8) as u8;
     let blue = (color & 0x000000ff) as u8;
 
-    *pixel = image::Rgb([ red, green, blue]);
+    *pixel = image::Rgb([red, green, blue]);
   }
   img_buf.save("image.png").unwrap();
 }
