@@ -31,69 +31,49 @@
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/parser-gen\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/parser-gen\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/parser-gen\benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/service\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/service\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/service\benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core\benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/raytracer/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/raytracer\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/raytracer\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/raytracer\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/raytracer/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/raytracer/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/raytracer/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life\examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm\benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life\src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/wasm-game-of-life\tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/roguelike/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/roguelike\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/roguelike\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/roguelike\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/roguelike/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/roguelike/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/roguelike/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/advent/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/advent\examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/advent\tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/advent\benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/advent/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/advent/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/advent/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/maze/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/maze/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/maze/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/maze/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/advent/target" />
-      <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench\target" />
+      <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
-      <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core\target" />
-      <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm\target" />
+      <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/service/target" />
-      <excludeFolder url="file://$MODULE_DIR$/cdl-service/service\target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/target" />
+      <excludeFolder url="file://$MODULE_DIR$/maze/target" />
       <excludeFolder url="file://$MODULE_DIR$/parser-gen/target" />
       <excludeFolder url="file://$MODULE_DIR$/raytracer/target" />
       <excludeFolder url="file://$MODULE_DIR$/roguelike/target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench/target" />
-      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-bench\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli/target" />
-      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-cli\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core/target" />
-      <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/cdl-core\target" />
       <excludeFolder url="file://$MODULE_DIR$/rust-cdl-compiler/target" />
       <excludeFolder url="file://$MODULE_DIR$/wasm-game-of-life/target" />
-      <excludeFolder url="file://$MODULE_DIR$/wasm-game-of-life\target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

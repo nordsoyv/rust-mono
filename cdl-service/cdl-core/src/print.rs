@@ -105,9 +105,15 @@ fn get_padding(indent: u32) -> String {
   return s;
 }
 
-#[test]
-fn print_test() {
-  let script = "title \"my title\"
+#[cfg(test)]
+mod tests {
+  use crate::lexer::Lexer;
+  use crate::parser::{Parser, parser_to_ast};
+  use crate::print::print_ast;
+
+  #[test]
+  fn print_test() {
+    let script = "title \"my title\"
 
 config hub {
   hub: 12
@@ -130,11 +136,13 @@ page {
 
 }
 ".to_string();
-  let l = Lexer::new();
-  let tokens = l.lex(script.clone()).unwrap();
-  let mut p = Parser::new();
-  p.parse(tokens).unwrap();
-  let ast = parser_to_ast(p);
-  let res = print_ast(&ast);
-  assert_eq!(res, script);
+    let l = Lexer::new();
+    let tokens = l.lex(script.clone()).unwrap();
+    let mut p = Parser::new();
+    p.parse(tokens).unwrap();
+    let ast = parser_to_ast(p);
+    let res = print_ast(&ast);
+    assert_eq!(res, script);
+  }
 }
+
