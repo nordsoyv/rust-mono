@@ -123,8 +123,7 @@ impl Maze {
     };
 
 
-    assert!((x_start - x_end).abs() == 1 || (x_start - x_end).abs() == 0 );
-    assert!((y_start - y_end).abs() == 1 || (y_start -y_end).abs() == 0 );
+    assert_eq!((x_start - x_end).abs() + (y_start - y_end).abs(), 1);
 
     if x_start < 0 || x_end < 0
       || y_start < 0 || y_end < 0
@@ -132,7 +131,6 @@ impl Maze {
       || y_start > NUM_CELLS || y_end > NUM_CELLS {
       return;
     }
-    dbg!(x_start,x_end,y_start,y_end);
     {
       let start_cell = self.get_mut_cell(x_start, y_start);
       match dir {
