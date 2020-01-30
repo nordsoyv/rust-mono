@@ -8,38 +8,46 @@ enum Wall {
   Wall,
 }
 
-const WIDTH: usize = 810;
-const HEIGHT: usize = 810;
-const CELL_HEIGHT: usize = 10;
-const CELL_WIDTH: usize = 10;
-const NUM_CELLS: usize = 80;
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Direction {
+  North,
+  East,
+  South,
+  West,
+}
+
+const WIDTH: i32 = 810;
+const HEIGHT: i32 = 810;
+const CELL_HEIGHT: i32 = 10;
+const CELL_WIDTH: i32 = 10;
+const NUM_CELLS: i32 = 80;
 const BACKGROUND_COLOR: u32 = 0x00ffffff;
 const FOREGROUND_COLOR: u32 = 0xff000000;
 
 struct Canvas {
-  width: usize,
-  height: usize,
+  width: i32,
+  height: i32,
   buffer: Vec<u32>,
 }
 
 impl Canvas {
   fn clear(&mut self) {
     self.buffer = Vec::new();
-    self.buffer.resize(self.width * self.height, BACKGROUND_COLOR);
+    self.buffer.resize((self.width * self.height) as usize, BACKGROUND_COLOR);
   }
 
-  fn draw_vertical_line(&mut self, start_x: usize, start_y: usize, length: usize) {
+  fn draw_vertical_line(&mut self, start_x: i32, start_y: i32, length: i32) {
     let margin = 5 * self.width + 5;
     let top_left = (start_y * self.width) + (start_x) + margin;
     for pos in 0..length {
-      self.buffer[top_left + (pos * self.width)] = FOREGROUND_COLOR;
+      self.buffer[(top_left + (pos * self.width))as usize ] = FOREGROUND_COLOR;
     }
   }
-  fn draw_horizontal_line(&mut self, start_x: usize, start_y: usize, length: usize) {
+  fn draw_horizontal_line(&mut self, start_x: i32, start_y: i32, length: i32) {
     let margin = 5 * self.width + 5;
     let top_left = (start_y * self.width) + (start_x) + margin;
     for pos in 0..length {
-      self.buffer[top_left + pos] = FOREGROUND_COLOR;
+      self.buffer[(top_left + pos)as usize] = FOREGROUND_COLOR;
     }
   }
 }
@@ -54,8 +62,8 @@ struct Cell {
   pub right: Wall,
   pub top: Wall,
   pub bottom: Wall,
-  pub x_pos: usize,
-  pub y_pos: usize,
+  pub x_pos: i32,
+  pub y_pos: i32,
 }
 
 impl Cell {
@@ -92,14 +100,73 @@ impl Maze {
     }
   }
 
-  fn get_cell(&self, x: usize, y: usize) -> &Cell {
+  fn get_cell(&self, x: i32, y: i32) -> &Cell {
     let index = y * NUM_CELLS + x;
-    return &self.cells[index];
+    return &self.cells[index as usize];
   }
 
-  fn get_mut_cell(&mut self, x: usize, y: usize) -> &mut Cell {
+  fn get_mut_cell(&mut self, x: i32, y: i32) -> &mut Cell {
     let index = y * NUM_CELLS + x;
-    return &mut self.cells[index];
+    return &mut self.cells[index as usize];
+  }
+
+  fn carve(&mut self, x_start: i32, y_start: i32, dir: Direction) {
+    let x_end = match dir {
+      Direction::North => x_start - 1,
+      Direction::South => x_start + 1,
+      _ => x_start
+    };
+    let y_end = match dir {
+      Direction::East => y_start + 1,
+      Direction::West => y_start - 1,
+      _ => y_start
+    };
+
+
+    assert!((x_start - x_end).abs() == 1 || (x_start - x_end).abs() == 0 );
+    assert!((y_start - y_end).abs() == 1 || (y_start -y_end).abs() == 0 );
+
+    if x_start < 0 || x_end < 0
+      || y_start < 0 || y_end < 0
+      || x_start > NUM_CELLS || x_end > NUM_CELLS
+      || y_start > NUM_CELLS || y_end > NUM_CELLS {
+      return;
+    }
+
+    {
+      let start_cell = self.get_mut_cell(x_start, y_start);
+      match dir {
+        Direction::North => {
+          start_cell.top = Wall::None;
+        }
+        Direction::South => {
+          start_cell.bottom = Wall::None;
+        }
+        Direction::East => {
+          start_cell.right = Wall::None;
+        }
+        Direction::West => {
+          start_cell.left = Wall::None;
+        }
+      }
+    }
+    {
+      let end_cell = self.get_mut_cell(x_end, y_end);
+      match dir {
+        Direction::North => {
+          end_cell.bottom = Wall::None;
+        }
+        Direction::South => {
+          end_cell.top = Wall::None;
+        }
+        Direction::East => {
+          end_cell.left = Wall::None;
+        }
+        Direction::West => {
+          end_cell.right = Wall::None;
+        }
+      }
+    }
   }
 
   fn generate(&mut self) {
@@ -116,9 +183,9 @@ impl Maze {
       }
     }
 
-    let mut start = self.get_mut_cell(5,0);
+    let mut start = self.get_mut_cell(5, 0);
     start.top = Wall::None;
-    let mut end = self.get_mut_cell(5,79);
+    let mut end = self.get_mut_cell(5, 79);
     end.bottom = Wall::None;
   }
 
@@ -137,8 +204,8 @@ impl Maze {
 fn main() {
   let mut window = Window::new(
     "Test - ESC to exit",
-    WIDTH,
-    HEIGHT,
+    WIDTH as usize,
+    HEIGHT as usize,
     WindowOptions::default()).unwrap_or_else(|e| {
     panic!("{}", e);
   });
@@ -146,6 +213,7 @@ fn main() {
 
   let mut maze = Maze::new();
   maze.generate();
+  maze.carve(10,1,Direction::South);
 
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
