@@ -112,13 +112,13 @@ impl Maze {
 
   fn carve(&mut self, x_start: i32, y_start: i32, dir: Direction) {
     let x_end = match dir {
-      Direction::North => x_start - 1,
-      Direction::South => x_start + 1,
+      Direction::West => x_start - 1,
+      Direction::East => x_start + 1,
       _ => x_start
     };
     let y_end = match dir {
-      Direction::East => y_start + 1,
-      Direction::West => y_start - 1,
+      Direction::South => y_start + 1,
+      Direction::North => y_start - 1,
       _ => y_start
     };
 
@@ -132,7 +132,7 @@ impl Maze {
       || y_start > NUM_CELLS || y_end > NUM_CELLS {
       return;
     }
-
+    dbg!(x_start,x_end,y_start,y_end);
     {
       let start_cell = self.get_mut_cell(x_start, y_start);
       match dir {
