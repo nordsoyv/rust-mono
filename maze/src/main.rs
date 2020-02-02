@@ -110,6 +110,39 @@ impl Maze {
     return &mut self.cells[index as usize];
   }
 
+  fn can_carve(&self, x:i32, y:i32, dir: Direction)-> bool {
+    let target_x = match dir {
+      Direction::West => x - 1,
+      Direction::East => x + 1,
+      _ => x
+    };
+    let target_y = match dir {
+      Direction::South => y + 1,
+      Direction::North => y - 1,
+      _ => y
+    };
+
+    if target_x < 0 || target_x > NUM_CELLS || target_y < 0 || target_y > NUM_CELLS {
+      return false;
+    }
+
+
+    let current_cell =self.get_cell(x,y);
+    let wall_in_direction = match dir {
+      Direction::East => current_cell.left == Wall::Wall,
+      Direction::North => current_cell.top   == Wall::Wall,
+      Direction::West => current_cell.right == Wall::Wall,
+      Direction::South => current_cell.bottom == Wall::Wall,
+    };
+    if wall_in_direction {
+      return true;
+    }
+
+
+    return true;
+
+  }
+
   fn carve(&mut self, x_start: i32, y_start: i32, dir: Direction) {
     let x_end = match dir {
       Direction::West => x_start - 1,
@@ -123,8 +156,8 @@ impl Maze {
     };
 
 
-    assert!((x_start - x_end).abs() == 1 || (x_start - x_end).abs() == 0 );
-    assert!((y_start - y_end).abs() == 1 || (y_start -y_end).abs() == 0 );
+//    assert!((x_start - x_end).abs() == 1 || (x_start - x_end).abs() == 0 );
+//    assert!((y_start - y_end).abs() == 1 || (y_start -y_end).abs() == 0 );
 
     if x_start < 0 || x_end < 0
       || y_start < 0 || y_end < 0
@@ -132,7 +165,7 @@ impl Maze {
       || y_start > NUM_CELLS || y_end > NUM_CELLS {
       return;
     }
-    dbg!(x_start,x_end,y_start,y_end);
+//    dbg!(x_start,x_end,y_start,y_end);
     {
       let start_cell = self.get_mut_cell(x_start, y_start);
       match dir {
@@ -183,10 +216,12 @@ impl Maze {
       }
     }
 
-    let mut start = self.get_mut_cell(5, 0);
-    start.top = Wall::None;
-    let mut end = self.get_mut_cell(5, 79);
-    end.bottom = Wall::None;
+
+
+//    let mut start = self.get_mut_cell(5, 0);
+//    start.top = Wall::None;
+//    let mut end = self.get_mut_cell(5, 79);
+//    end.bottom = Wall::None;
   }
 
   fn draw(&self, canvas: &mut Canvas) {
@@ -213,7 +248,9 @@ fn main() {
 
   let mut maze = Maze::new();
   maze.generate();
-  maze.carve(10,1,Direction::South);
+//  maze.carve(10,1,Direction::South);
+  dbg!(maze.can_carve(20,20,Direction::South));
+  dbg!(maze.can_carve(20,0,Direction::North));
 
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
