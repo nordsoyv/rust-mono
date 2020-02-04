@@ -446,6 +446,21 @@ impl Parser {
           self.set_parent(term_index, expr_ref);
           curr_rhs_index = expr_ref;
         }
+        TokenType::NotEqual => {
+          let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
+          curr_pos += tokens_consumed + 1; //  +1 for the equal token
+          let expr_ref = self.add_node(Node::Operator(AstOperator {
+            parent: 0,
+            left: curr_rhs_index,
+            right: term_index,
+            op: Operator::NotEqual,
+            start_pos: tokens[0].start,
+            end_pos: tokens[curr_pos - 1].end,
+          }));
+          self.set_parent(curr_rhs_index, expr_ref);
+          self.set_parent(term_index, expr_ref);
+          curr_rhs_index = expr_ref;
+        }
         TokenType::MoreThanOrEqual => {
           let (term_index, tokens_consumed) = self.parse_term(&tokens[(curr_pos + 1)..])?;
           curr_pos += tokens_consumed + 1; //  +1 for the equal token

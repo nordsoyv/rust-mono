@@ -94,6 +94,8 @@ fn op_to_str(op: &Operator) -> &str {
     Operator::Mul => "*",
     Operator::Or => "OR",
     Operator::Plus => "+",
+    Operator::NotEqual => "!=",
+
   }
 }
 

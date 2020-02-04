@@ -33,6 +33,7 @@ pub enum Operator {
   Equal,
   And,
   Or,
+  NotEqual,
   LessThan,LessThanOrEqual,
   MoreThan,MoreThanOrEqual,
 }
