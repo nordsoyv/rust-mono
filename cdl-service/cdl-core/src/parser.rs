@@ -879,8 +879,8 @@ impl Parser {
 #[cfg(test)]
 mod test {
   use crate::lexer::Lexer;
-  use crate::parser::{AstEntity, AstIdentifier, AstProperty, Node, Parser};
-  use crate::parser::ast_nodes::{AstList, AstNumber, AstString, AstTitle, AstVPath, AstEntity, AstIdentifier, AstProperty};
+  use crate::parser::{ Node, Parser};
+  use crate::parser::ast_nodes::{AstList, AstNumber, AstString, AstTitle, AstVPath,AstEntity, AstIdentifier, AstProperty,};
 
   #[test]
   fn can_parse() {
