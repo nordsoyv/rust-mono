@@ -16,7 +16,7 @@ impl Matcher for IdentifierMatcher {
 
     match chars.next() {
       Some(next) => {
-        if next.is_alphabetic() {
+        if next.is_alphabetic() || next == '_' {
           matched.push(next)
         } else {
           return Ok((0, None));
@@ -175,7 +175,7 @@ impl Matcher for NumberMatcher {
     let mut chars = input.chars();
     match chars.next() {
       Some(next) => {
-        if next.is_numeric() {
+        if next.is_numeric() || next == '.' {
           matched.push(next)
         } else {
           return Ok((0, None));
@@ -263,6 +263,7 @@ fn number_matcher() {
   assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234 entirely an identifier"));
   assert_eq!(Ok((4, Some("1234".to_string()))), i_matcher.check("1234qerf"));
   assert_eq!(Ok((5, Some("1234%".to_string()))), i_matcher.check("1234%"));
+  assert_eq!(Ok((3, Some(".05".to_string()))), i_matcher.check(".05"));
   assert_eq!(Ok((0, None)), i_matcher.check("qerf"));
 }
 

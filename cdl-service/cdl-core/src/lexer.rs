@@ -23,6 +23,7 @@ pub enum TokenType {
   Colon,
   Comma,
   Equal,
+  NotEqual,
   LessThan,
   LessThanOrEqual,
   MoreThan,
@@ -74,6 +75,7 @@ impl Lexer {
         (Box::new(LiteralMatcher::new("<")), TokenType::LessThan),
         (Box::new(LiteralMatcher::new(">=")), TokenType::MoreThanOrEqual),
         (Box::new(LiteralMatcher::new(">")), TokenType::MoreThan),
+        (Box::new(LiteralMatcher::new("!=")), TokenType::NotEqual),
         (Box::new(LiteralMatcher::new("%")), TokenType::Percent),
         (Box::new(LiteralMatcher::new("{")), TokenType::OpenBracket),
         (Box::new(LiteralMatcher::new("}")), TokenType::CloseBracket),
@@ -125,7 +127,7 @@ impl Lexer {
         }
       }
       // char we could not lex - skip to next
-      errors.push(format!("Unknown char at pos {} , {}", current_pos, &input[current_pos..current_pos + 1]));
+      errors.push(build_error(&input, current_pos));
       current_pos += 1;
     }
     if errors.len() > 0 {
@@ -133,6 +135,20 @@ impl Lexer {
     }
     return Ok(result);
   }
+}
+
+fn build_error(input: &String, pos: usize) -> String {
+  let start_pos = if pos > 20 {
+    pos - 20
+  } else {
+    0
+  };
+  let end_pos = if pos + 20 > input.len() {
+    input.len()
+  } else {
+    pos + 20
+  };
+  format!("Unknown char at pos {} , {} ctx: {}", pos, &input[pos..pos + 1], &input[start_pos..end_pos])
 }
 
 #[test]
@@ -365,7 +381,7 @@ fn lexer_unknown_char() {
   let lexer = Lexer::new();
   assert_eq!(
     Err((
-      vec!["Unknown char at pos 9 , !".to_string()],
+      vec!["Unknown char at pos 9 , ! ctx:    hello ! hello".to_string()],
       vec![
         Token {
           start: 3,
