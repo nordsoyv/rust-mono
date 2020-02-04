@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{App, HttpResponse, HttpServer, middleware, Responder, web};
 use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
@@ -136,17 +137,18 @@ fn parse(item: web::Json<Request>) -> HttpResponse {
 }
 
 fn main() -> std::io::Result<()> {
-  std::env::set_var("RUST_LOG", "actix_web=info,service");
+  std::env::set_var("RUST_LOG", "actix_web=debug,service");
   env_logger::init();
 
   HttpServer::new(||
     App::new()
       .wrap(middleware::Logger::default())
+      .wrap(Cors::new())
       .data(web::JsonConfig::default().limit(1024 * 200)) // <- limit size of the payload (global configuration)
       .service(web::resource("/lex").route(web::post().to(lex)))
       .service(web::resource("/parse").route(web::post().to(parse)))
       .service(web::resource("/{name}/{id}/index.html").to(index))
   )
-    .bind("127.0.0.1:8080")?
+    .bind("127.0.0.1:8081")?
     .run()
 }
