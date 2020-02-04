@@ -144,7 +144,7 @@ fn main() -> std::io::Result<()> {
     App::new()
       .wrap(middleware::Logger::default())
       .wrap(Cors::new())
-      .data(web::JsonConfig::default().limit(1024 * 200)) // <- limit size of the payload (global configuration)
+      .data(web::JsonConfig::default().limit(1024 * 400)) // <- limit size of the payload (global configuration)
       .service(web::resource("/lex").route(web::post().to(lex)))
       .service(web::resource("/parse").route(web::post().to(parse)))
       .service(web::resource("/{name}/{id}/index.html").to(index))
