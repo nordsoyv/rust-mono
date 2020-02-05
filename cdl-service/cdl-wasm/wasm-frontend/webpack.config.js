@@ -19,6 +19,21 @@ module.exports = {
         loader: 'babel-loader',
         // options: babelConfig,
       },
+      // (s)css non-module files
+      {
+        test: /^((?!\.module).)*\.s?css$/,
+        use: [
+          {
+            loader: 'style-loader',
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: true,
+            },
+          },
+        ],
+      },
    ]
   },
   plugins: [

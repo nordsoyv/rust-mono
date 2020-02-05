@@ -2099,8 +2099,8 @@ page contact #ContactOverview {
 
     infobox {
       label: "Feedback History"
-      info: "The Feedback History widget lists all feedback responses captured for this contact from {what time frame?}. This is valuable in understanding how/if a specific contact's perception has shifted over time. The blue "
-      Resend #linkprovidestheAccountManagerwiththeabilitytoresendasurveyiftheoriginalsurveywasntreceivedbythecustomerorifanadditionalreminderisrequired
+      info: "The Feedback History widget lists all feedback responses captured for this contact from {what time frame?}. This is valuable in understanding how/if a specific contact's perception has shifted over time. The blue
+      Resend #linkprovidestheAccountManagerwiththeabilitytoresendasurveyiftheoriginalsurveywasntreceivedbythecustomerorifanadditionalreminderisrequired"
     }
 
     label: "Feedback History"
@@ -2801,8 +2801,8 @@ page #BusinessOverview {
 
     infobox {
       label: "Research"
-      info: "The Research widget highlights key metrics that inform on performance with our customers and prospects as they are researching and evaluating our offerings. *Does marketing have text describing their engagement score and the "
-      Easy Score #thatwecouldincludeMetricsingreenareinlinewithgoalsMetricsinyellowareoutsidetherangeofbeingacceptableandshouldbemonitoredbutnoactionisrequiredMetricsinredareoutofrangeoftheexpectedgoalandshouldbeaddressed
+      info: "The Research widget highlights key metrics that inform on performance with our customers and prospects as they are researching and evaluating our offerings. *Does marketing have text describing their engagement score and the
+      Easy Score #thatwecouldincludeMetricsingreenareinlinewithgoalsMetricsinyellowareoutsidetherangeofbeingacceptableandshouldbemonitoredbutnoactionisrequiredMetricsinredareoutofrangeoftheexpectedgoalandshouldbeaddressed"
     }
 
     view metricWithBar #metric {
@@ -4253,7 +4253,3 @@ page #DrillDown {
 
   }
 }
-
-
-
-
