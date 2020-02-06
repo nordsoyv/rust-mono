@@ -34,4 +34,22 @@ impl Canvas {
       self.buffer[(top_left + pos) as usize] = FOREGROUND_COLOR;
     }
   }
+
+  pub fn fill_square(&mut self, start_x: i32, start_y: i32, width : i32, height : i32, color: u32) {
+    assert!(start_x >= 0);
+    assert!(start_y >= 0);
+    assert!(width >=0);
+    assert!(height >=0);
+
+    let margin = 5 * self.width + 5;
+    let top_left = (start_y * self.width) + (start_x) + margin;
+
+    for x_pos in 0..width {
+      for y_pos in 0..height {
+        let pos = top_left + (y_pos * self.width) + x_pos ;
+        self.buffer[pos as usize] = color;
+      }
+    }
+
+  }
 }

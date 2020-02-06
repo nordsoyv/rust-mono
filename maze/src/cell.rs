@@ -9,11 +9,20 @@ pub struct Cell {
   pub bottom: Wall,
   pub x_pos: i32,
   pub y_pos: i32,
-  pub part_of_maze : bool,
+  pub part_of_maze: bool,
+  pub active_cell : bool,
 }
 
 impl Cell {
   pub fn draw(&self, canvas: &mut Canvas) {
+    if self.active_cell {
+      canvas.fill_square(
+        self.x_pos * CELL_WIDTH,
+        self.y_pos * CELL_HEIGHT,
+        CELL_WIDTH,
+        CELL_HEIGHT,
+        0xffffff00);
+    }
     if self.top == Wall::Wall {
       canvas.draw_horizontal_line(self.x_pos * CELL_WIDTH, self.y_pos * CELL_HEIGHT, CELL_WIDTH);
     }

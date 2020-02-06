@@ -10,6 +10,7 @@ pub struct Maze {
   rng: ThreadRng,
   random: Uniform<f32>,
   stack: Vec<(i32, i32)>,
+  pub done : bool,
 }
 
 impl Maze {
@@ -19,6 +20,7 @@ impl Maze {
       random: Uniform::from(0f32..1f32),
       cells: vec![],
       stack: vec![],
+      done : false,
     }
   }
 
@@ -55,8 +57,8 @@ impl Maze {
       return false;
     }
 
-    let target_cell = self.get_cell(target_x,target_y);
-    if !target_cell.part_of_maze{
+    let target_cell = self.get_cell(target_x, target_y);
+    if !target_cell.part_of_maze {
       return true;
     }
     return false;
@@ -126,7 +128,7 @@ impl Maze {
     }
   }
 
-pub  fn init(&mut self) {
+  pub fn init(&mut self) {
     for y in 0..NUM_CELLS {
       for x in 0..NUM_CELLS {
         self.cells.push(Cell {
@@ -136,35 +138,40 @@ pub  fn init(&mut self) {
           right: Wall::Wall,
           x_pos: x,
           y_pos: y,
-          part_of_maze : false,
+          part_of_maze: false,
+          active_cell : false,
         });
       }
     }
-
+    self.get_mut_cell(NUM_CELLS / 2, 0).top = Wall::None;
+    self.get_mut_cell(NUM_CELLS / 2, NUM_CELLS - 1).bottom = Wall::None;
     self.stack.push((5, 5));
-    self.get_mut_cell(5,5).part_of_maze = true;
+    self.get_mut_cell(5, 5).part_of_maze = true;
   }
 
- pub fn generate(&mut self) {
-    loop {
-      if self.stack.len() == 0 {
-        break;
-      }
-      let (x, y) = *self.stack.last().unwrap();
-      let available_dirs = self.get_allowed_directions(x, y);
-      if available_dirs.len() == 0 {
-        self.stack.pop();
-        continue;
-      }
-      let random_dir = self.get_random(available_dirs.len());
-      self.carve(x, y, available_dirs[random_dir]);
-      let next_cell = self.get_cell_in_dir(x, y, available_dirs[random_dir]);
-      self.stack.push(next_cell);
+  pub fn generate(&mut self) {
+    while self.done == false {
+      self.generate_step();
     }
+  }
 
-    self.get_mut_cell(NUM_CELLS/2,0).top = Wall::None;
-    self.get_mut_cell(NUM_CELLS/2,NUM_CELLS -1).bottom = Wall::None;
-
+  pub fn generate_step(&mut self){
+    if self.stack.len() == 0 {
+      self.done = true;
+      return
+    }
+    let (x, y) = *self.stack.last().unwrap();
+    self.get_mut_cell(x,y).active_cell = true;
+    let available_dirs = self.get_allowed_directions(x, y);
+    if available_dirs.len() == 0 {
+      self.get_mut_cell(x,y).active_cell = false;
+      self.stack.pop();
+      return
+    }
+    let random_dir = self.get_random(available_dirs.len());
+    self.carve(x, y, available_dirs[random_dir]);
+    let next_cell = self.get_cell_in_dir(x, y, available_dirs[random_dir]);
+    self.stack.push(next_cell);
   }
 
   fn get_allowed_directions(&self, x: i32, y: i32) -> Vec<Direction> {
@@ -184,7 +191,7 @@ pub  fn init(&mut self) {
     return dirs;
   }
 
- pub fn draw(&self, canvas: &mut Canvas) {
+  pub fn draw(&self, canvas: &mut Canvas) {
     for cell in &self.cells {
       self.draw_cell(canvas, *cell);
     }

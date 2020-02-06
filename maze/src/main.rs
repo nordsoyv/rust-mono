@@ -6,7 +6,7 @@ mod maze;
 use std::convert::TryFrom;
 use minifb::{Key, Window, WindowOptions};
 use crate::canvas::Canvas;
-use crate::common::{  WIDTH, HEIGHT, };
+use crate::common::{WIDTH, HEIGHT};
 use crate::maze::Maze;
 
 
@@ -19,10 +19,9 @@ fn main() {
     panic!("{}", e);
   });
 
-
   let mut maze = Maze::new();
   maze.init();
-  maze.generate();
+//  maze.generate();
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
       let mut canvas = Canvas {
@@ -31,6 +30,9 @@ fn main() {
         buffer: vec![],
       };
       canvas.clear();
+      if !maze.done {
+        maze.generate_step();
+      }
       maze.draw(&mut canvas);
       // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
       window.update_with_buffer(&canvas.buffer).unwrap();
