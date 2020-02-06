@@ -7,7 +7,8 @@ use std::convert::TryFrom;
 use minifb::{Key, Window, WindowOptions};
 use crate::canvas::Canvas;
 use crate::common::{WIDTH, HEIGHT};
-use crate::maze::Maze;
+use crate::maze::recursive_backtracker::RecursiveBacktrackerMaze;
+use crate::maze::growing_tree::{GrowingTreeMaze, Strategy};
 
 
 fn main() {
@@ -19,7 +20,8 @@ fn main() {
     panic!("{}", e);
   });
 
-  let mut maze = Maze::new();
+//  let mut maze = RecursiveBacktrackerMaze::new();
+  let mut maze = GrowingTreeMaze::new(Strategy::LastN(1));
   maze.init();
 //  maze.generate();
   while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -31,6 +33,10 @@ fn main() {
       };
       canvas.clear();
       if !maze.done {
+        maze.generate_step();
+        maze.generate_step();
+        maze.generate_step();
+        maze.generate_step();
         maze.generate_step();
       }
       maze.draw(&mut canvas);
