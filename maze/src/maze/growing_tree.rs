@@ -11,6 +11,7 @@ pub enum Strategy {
   FirstN(i32),
   Random,
   LastN(i32),
+  LastAndRandom(i32),
 }
 
 pub struct GrowingTreeMaze {
@@ -176,6 +177,14 @@ impl GrowingTreeMaze {
           0
         }else {
           index as usize
+        }
+      }
+      Strategy::LastAndRandom(num) => {
+        let n = self.get_random(num as usize);
+        if n == 0 { // pick a random
+          self.get_random(self.stack.len())
+        }else {
+          self.stack.len() - 1
         }
       }
     }

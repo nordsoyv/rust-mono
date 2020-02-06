@@ -21,9 +21,9 @@ fn main() {
   });
 
 //  let mut maze = RecursiveBacktrackerMaze::new();
-  let mut maze = GrowingTreeMaze::new(Strategy::LastN(1));
+  let mut maze = GrowingTreeMaze::new(Strategy::LastAndRandom(50));
   maze.init();
-//  maze.generate();
+  maze.generate();
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
       let mut canvas = Canvas {
