@@ -14,6 +14,19 @@ pub struct Cell {
 }
 
 impl Cell {
+  pub fn default(x:i32, y:i32)-> Cell {
+    Cell {
+      bottom: Wall::Wall,
+      left: Wall::Wall,
+      top: Wall::Wall,
+      right: Wall::Wall,
+      x_pos: x,
+      y_pos: y,
+      part_of_maze: false,
+      active_cell : false,
+    }
+  }
+
   pub fn draw(&self, canvas: &mut Canvas) {
     if self.active_cell {
       canvas.fill_square(

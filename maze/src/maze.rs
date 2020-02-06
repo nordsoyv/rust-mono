@@ -131,16 +131,7 @@ impl Maze {
   pub fn init(&mut self) {
     for y in 0..NUM_CELLS {
       for x in 0..NUM_CELLS {
-        self.cells.push(Cell {
-          bottom: Wall::Wall,
-          left: Wall::Wall,
-          top: Wall::Wall,
-          right: Wall::Wall,
-          x_pos: x,
-          y_pos: y,
-          part_of_maze: false,
-          active_cell : false,
-        });
+        self.cells.push(Cell::default(x,y));
       }
     }
     self.get_mut_cell(NUM_CELLS / 2, 0).top = Wall::None;
