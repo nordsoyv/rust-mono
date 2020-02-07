@@ -2,13 +2,15 @@ mod canvas;
 mod cell;
 mod common;
 mod maze;
+mod generators;
 
 use std::convert::TryFrom;
 use minifb::{Key, Window, WindowOptions};
 use crate::canvas::Canvas;
-use crate::common::{WIDTH, HEIGHT};
-use crate::maze::recursive_backtracker::RecursiveBacktrackerMaze;
-use crate::maze::growing_tree::{GrowingTreeMaze, Strategy};
+use crate::common::{WIDTH, HEIGHT };
+use crate::maze::Maze;
+use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
+use crate::generators::Generator;
 
 
 fn main() {
@@ -20,10 +22,9 @@ fn main() {
     panic!("{}", e);
   });
 
-//  let mut maze = RecursiveBacktrackerMaze::new();
-  let mut maze = GrowingTreeMaze::new(Strategy::LastAndRandom(50));
-  maze.init();
-  maze.generate();
+  let mut maze = Maze::new(50,50);
+  let mut generator: Box<Generator>  = Box::new(GrowingTreeGenerator::new(Strategy::Last)) ;
+  generator.init(&mut maze);
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
       let mut canvas = Canvas {
@@ -32,12 +33,12 @@ fn main() {
         buffer: vec![],
       };
       canvas.clear();
-      if !maze.done {
-        maze.generate_step();
-        maze.generate_step();
-        maze.generate_step();
-        maze.generate_step();
-        maze.generate_step();
+      if !generator.done() {
+        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
       }
       maze.draw(&mut canvas);
       // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
