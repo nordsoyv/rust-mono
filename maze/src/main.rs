@@ -38,9 +38,10 @@ fn main() {
     panic!("{}", e);
   });
 
-  let mut maze = Maze::new(NUM_CELLS,NUM_CELLS);
-  let mut generator: Box<Generator>  = Box::new(GrowingTreeGenerator::new(Strategy::LastN(10))) ;
+  let mut maze = Maze::new(40, 40);
+  let mut generator: Box<Generator> = Box::new(GrowingTreeGenerator::new(Strategy::FirstN(50)));
   generator.init(&mut maze);
+  let mut saved = false;
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
       let mut canvas = Canvas {
@@ -51,16 +52,23 @@ fn main() {
       canvas.clear();
       if !generator.done() {
         generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
+        generator.generate_step(&mut maze);
       }
       maze.draw(&mut canvas);
       if generator.done() {
-        if window.is_key_down(Key::S) {
+        if window.is_key_down(Key::R) {
+          println!("Creating new maze");
+          generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(10)));
+          maze = Maze::new(40, 40);
+          generator.init(&mut maze);
+        }
+        if window.is_key_down(Key::S) && !saved {
           println!("Saving image");
           save_image(&canvas.buffer, WIDTH, HEIGHT);
+          saved = true;
           println!("image is saved");
         }
       }

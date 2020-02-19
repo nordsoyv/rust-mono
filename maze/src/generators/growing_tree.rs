@@ -41,9 +41,7 @@ impl Generator for GrowingTreeGenerator {
       return;
     }
     let next_cell_index = self.get_next_index();
-
     let (x, y) = self.stack[next_cell_index];
-
     maze.get_mut_cell(x, y).active_cell = true;
 
     let available_dirs = maze.get_allowed_directions(x, y);
@@ -61,7 +59,6 @@ impl Generator for GrowingTreeGenerator {
   fn done(&self) -> bool {
     return self.done;
   }
-
 }
 
 impl GrowingTreeGenerator {
@@ -74,6 +71,7 @@ impl GrowingTreeGenerator {
       strategy,
     }
   }
+
   fn get_next_index(&mut self) -> usize {
     match self.strategy {
       Strategy::Random => self.get_random(self.stack.len()),

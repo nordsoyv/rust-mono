@@ -1,18 +1,15 @@
-//pub mod recursive_backtracker;
-//pub mod growing_tree;
-
 use crate::canvas::Canvas;
 use crate::cell::Cell;
 use crate::common::{Direction, Wall};
 
 pub struct Maze {
   cells: Vec<Cell>,
-  pub width : i32,
-  pub height : i32
+  pub width: i32,
+  pub height: i32,
 }
 
 impl Maze {
-  pub fn new(width : i32,height : i32) -> Maze {
+  pub fn new(width: i32, height: i32) -> Maze {
     let mut cells = vec![];
     for y in 0..height {
       for x in 0..width {
@@ -22,7 +19,7 @@ impl Maze {
     Maze {
       cells,
       width,
-      height
+      height,
     }
   }
 
