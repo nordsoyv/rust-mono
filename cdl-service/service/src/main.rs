@@ -31,12 +31,14 @@ struct PrintResponseStats {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LexResponseStats {
-  lex_time: f64
+  lex_time: f64,
+  lex_mb_sec: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ParseResponseStats {
   lex_time: f64,
+  lex_mb_sec: f64,
   parse_time: f64,
   total_time: f64,
 }
@@ -64,12 +66,16 @@ fn lex(item: web::Json<Request>) -> HttpResponse {
   let res = lexer.lex(item.cdl.clone());
   let end = start.elapsed();
   let lex_time = (end.as_nanos() as f64) / (1000.0 * 1000.0);
+  let cdl_len = item.cdl.len() as f64;
+  let bytes_per_second = (cdl_len / lex_time ) * 1000.0;
   info!("Time taken to lex : {} milliseconds", lex_time);
+  info!("Bytes per second lexed : {} ", bytes_per_second);
   return match res {
     Ok(tokens) => HttpResponse::Ok().json(LexResponse {
       tokens,
       stats: LexResponseStats {
-        lex_time: lex_time
+        lex_time,
+        lex_mb_sec : bytes_per_second
       },
     }),
     Err(e) => {
@@ -122,6 +128,10 @@ fn parse(item: web::Json<Request>) -> HttpResponse {
   let parse_time = (end_parse.as_nanos() as f64) / (1000.0 * 1000.0);
   let total_time = (end_total.as_nanos() as f64) / (1000.0 * 1000.0);
 
+  let cdl_len = item.cdl.len() as f64;
+  let bytes_per_second = (cdl_len / lex_time ) * 1000.0;
+
+
   info!("Time taken to lex + parse : {} milliseconds", total_time);
   match res {
     Ok(()) => return HttpResponse::Ok().json(ParseResponse {
@@ -129,6 +139,7 @@ fn parse(item: web::Json<Request>) -> HttpResponse {
         total_time,
         lex_time,
         parse_time,
+        lex_mb_sec : bytes_per_second,
       },
       ast: parser,
     }),
