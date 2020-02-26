@@ -10,11 +10,11 @@ pub struct Cell {
   pub x_pos: i32,
   pub y_pos: i32,
   pub part_of_maze: bool,
-  pub active_cell : bool,
+  pub active_cell: bool,
 }
 
 impl Cell {
-  pub fn default(x:i32, y:i32)-> Cell {
+  pub fn default(x: i32, y: i32) -> Cell {
     Cell {
       bottom: Wall::Wall,
       left: Wall::Wall,
@@ -23,7 +23,7 @@ impl Cell {
       x_pos: x,
       y_pos: y,
       part_of_maze: false,
-      active_cell : false,
+      active_cell: false,
     }
   }
 
@@ -37,16 +37,29 @@ impl Cell {
         0xffffff00);
     }
     if self.top == Wall::Wall {
-      canvas.draw_horizontal_line(self.x_pos * CELL_WIDTH, self.y_pos * CELL_HEIGHT, CELL_WIDTH);
+      canvas.draw_horizontal_line(self.x_pos * CELL_WIDTH,
+                                  (self.y_pos + 1) * CELL_HEIGHT,
+                                  (self.x_pos + 1) * CELL_WIDTH,
+                                  (self.y_pos + 1) * CELL_HEIGHT);
     }
     if self.bottom == Wall::Wall {
-      canvas.draw_horizontal_line(self.x_pos * CELL_WIDTH, (self.y_pos + 1) * CELL_HEIGHT, CELL_WIDTH);
+      canvas.draw_horizontal_line(self.x_pos * CELL_WIDTH,
+                                  (self.y_pos) * CELL_HEIGHT,
+                                  (self.x_pos + 1) * CELL_WIDTH,
+                                  (self.y_pos) * CELL_HEIGHT);
     }
     if self.left == Wall::Wall {
-      canvas.draw_vertical_line(self.x_pos * CELL_WIDTH, self.y_pos * CELL_HEIGHT, CELL_HEIGHT);
+      canvas.draw_vertical_line(self.x_pos * CELL_WIDTH,
+                                self.y_pos * CELL_HEIGHT,
+                                self.x_pos * CELL_WIDTH,
+                                (self.y_pos + 1) * CELL_HEIGHT);
     }
     if self.right == Wall::Wall {
-      canvas.draw_vertical_line((self.x_pos + 1) * CELL_WIDTH, self.y_pos * CELL_HEIGHT, CELL_HEIGHT);
+      canvas.draw_vertical_line((self.x_pos + 1) * CELL_WIDTH,
+                                self.y_pos * CELL_HEIGHT,
+                                (self.x_pos + 1) * CELL_WIDTH,
+                                (self.y_pos + 1) * CELL_HEIGHT,
+      );
     }
   }
 }

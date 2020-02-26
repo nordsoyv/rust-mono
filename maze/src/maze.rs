@@ -40,8 +40,8 @@ impl Maze {
       _ => x
     };
     let target_y = match dir {
-      Direction::South => y + 1,
-      Direction::North => y - 1,
+      Direction::South => y - 1,
+      Direction::North => y + 1,
       _ => y
     };
 
@@ -58,8 +58,8 @@ impl Maze {
 
   pub fn get_cell_in_dir(&self, x: i32, y: i32, dir: Direction) -> (i32, i32) {
     match dir {
-      Direction::North => (x, y - 1),
-      Direction::South => (x, y + 1),
+      Direction::North => (x, y + 1),
+      Direction::South => (x, y - 1),
       Direction::East => (x + 1, y),
       Direction::West => (x - 1, y),
     }
@@ -72,8 +72,8 @@ impl Maze {
       _ => x_start
     };
     let y_end = match dir {
-      Direction::South => y_start + 1,
-      Direction::North => y_start - 1,
+      Direction::South => y_start - 1,
+      Direction::North => y_start + 1,
       _ => y_start
     };
     if x_start < 0 || x_end < 0
