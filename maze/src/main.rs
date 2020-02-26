@@ -50,11 +50,6 @@ fn main() {
         buffer: vec![],
       };
       canvas.clear();
-      //canvas.draw_vertical_line( 0,0,0,10 );
-      //canvas.draw_horizontal_line(0,0,20,0);
-    //  canvas.fill_square(100,100,10,100,0xffffff00);
-
-
       if !generator.done() {
         generator.generate_step(&mut maze);
         generator.generate_step(&mut maze);

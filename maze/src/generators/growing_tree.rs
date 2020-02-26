@@ -23,8 +23,8 @@ pub struct GrowingTreeGenerator {
 
 impl Generator for GrowingTreeGenerator {
    fn init(&mut self, maze: &mut Maze) {
-    maze.get_mut_cell(maze.width / 2, 0).top = Wall::None;
-    maze.get_mut_cell(maze.width / 2, maze.height - 1).bottom = Wall::None;
+    maze.get_mut_cell(maze.width / 2, 0).bottom = Wall::None;
+    maze.get_mut_cell(maze.width / 2, maze.height - 1).top = Wall::None;
     self.stack.push((maze.width / 2, maze.height / 2));
     maze.get_mut_cell(maze.width / 2, maze.height / 2).part_of_maze = true;
   }
