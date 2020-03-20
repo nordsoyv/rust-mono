@@ -30,10 +30,10 @@ impl Cell {
   pub fn draw(&self, canvas: &mut Canvas) {
     if self.active_cell {
       canvas.fill_square(
-        self.x_pos * CELL_WIDTH,
-        self.y_pos * CELL_HEIGHT,
-        CELL_WIDTH,
-        CELL_HEIGHT,
+        self.x_pos * CELL_WIDTH + CELL_INSET,
+        self.y_pos * CELL_HEIGHT + CELL_INSET,
+        CELL_WIDTH - CELL_INSET - CELL_INSET,
+        CELL_HEIGHT - CELL_INSET - CELL_INSET,
         0xffffff00);
     }
     if self.top == Wall::Wall {
