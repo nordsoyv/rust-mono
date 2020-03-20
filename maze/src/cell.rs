@@ -1,4 +1,4 @@
-use crate::common::{Wall, CELL_WIDTH, CELL_HEIGHT};
+use crate::common::{Wall, CELL_WIDTH, CELL_HEIGHT, CELL_INSET};
 use crate::canvas::Canvas;
 
 #[derive(Clone, Copy, Debug)]
@@ -37,29 +37,76 @@ impl Cell {
         0xffffff00);
     }
     if self.top == Wall::Wall {
-      canvas.draw_horizontal_line(self.x_pos * CELL_WIDTH,
-                                  (self.y_pos + 1) * CELL_HEIGHT,
-                                  (self.x_pos + 1) * CELL_WIDTH,
-                                  (self.y_pos + 1) * CELL_HEIGHT);
+      let y_pos = (self.y_pos + 1) * CELL_HEIGHT;
+      canvas.draw_horizontal_line((self.x_pos * CELL_WIDTH) + CELL_INSET,
+                                  (y_pos) - CELL_INSET,
+                                  ((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+                                  (y_pos) - CELL_INSET);
+    } else {
+      let y_pos = (self.y_pos + 1) * CELL_HEIGHT;
+      canvas.draw_vertical_line((self.x_pos * CELL_WIDTH) + CELL_INSET,
+                                y_pos,
+                                (self.x_pos * CELL_WIDTH) + CELL_INSET,
+                                (y_pos) - CELL_INSET);
+
+      canvas.draw_vertical_line(((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+                                y_pos,
+                                ((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+                                (y_pos) - CELL_INSET);
     }
     if self.bottom == Wall::Wall {
-      canvas.draw_horizontal_line(self.x_pos * CELL_WIDTH,
-                                  (self.y_pos) * CELL_HEIGHT,
-                                  (self.x_pos + 1) * CELL_WIDTH,
-                                  (self.y_pos) * CELL_HEIGHT);
+      let y_pos = ((self.y_pos) * CELL_HEIGHT);
+      canvas.draw_horizontal_line((self.x_pos * CELL_WIDTH) + CELL_INSET,
+                                  y_pos + CELL_INSET,
+                                  ((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+                                  y_pos + CELL_INSET);
+    } else {
+      let y_pos = (self.y_pos) * CELL_HEIGHT;
+      canvas.draw_vertical_line((self.x_pos * CELL_WIDTH) + CELL_INSET,
+                                y_pos,
+                                (self.x_pos * CELL_WIDTH) + CELL_INSET,
+                                (y_pos) + CELL_INSET);
+
+      canvas.draw_vertical_line(((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+                                y_pos,
+                                ((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+                                (y_pos) + CELL_INSET);
     }
     if self.left == Wall::Wall {
-      canvas.draw_vertical_line(self.x_pos * CELL_WIDTH,
-                                self.y_pos * CELL_HEIGHT,
-                                self.x_pos * CELL_WIDTH,
-                                (self.y_pos + 1) * CELL_HEIGHT);
+      let x_pos = (self.x_pos * CELL_WIDTH);
+      canvas.draw_vertical_line(x_pos + CELL_INSET,
+                                (self.y_pos * CELL_HEIGHT) + CELL_INSET,
+                                x_pos + CELL_INSET,
+                                ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET)
+    } else {
+      let x_pos = (self.x_pos * CELL_WIDTH);
+      canvas.draw_horizontal_line(x_pos,
+                                  (self.y_pos * CELL_HEIGHT) + CELL_INSET,
+                                  x_pos + CELL_INSET,
+                                  (self.y_pos * CELL_HEIGHT) + CELL_INSET);
+      canvas.draw_horizontal_line(x_pos,
+                                  ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
+                                  x_pos + CELL_INSET,
+                                  ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET);
     }
     if self.right == Wall::Wall {
-      canvas.draw_vertical_line((self.x_pos + 1) * CELL_WIDTH,
-                                self.y_pos * CELL_HEIGHT,
-                                (self.x_pos + 1) * CELL_WIDTH,
-                                (self.y_pos + 1) * CELL_HEIGHT,
+      let x_pos = ((self.x_pos + 1) * CELL_WIDTH);
+      canvas.draw_vertical_line(x_pos - CELL_INSET,
+                                (self.y_pos * CELL_HEIGHT) + CELL_INSET,
+                                x_pos - CELL_INSET,
+                                ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
       );
+    } else {
+      let x_pos = (self.x_pos + 1) * CELL_WIDTH;
+      canvas.draw_horizontal_line(x_pos,
+                                  (self.y_pos * CELL_HEIGHT) + CELL_INSET,
+                                  x_pos - CELL_INSET,
+                                  (self.y_pos * CELL_HEIGHT) + CELL_INSET);
+
+      canvas.draw_horizontal_line(x_pos,
+                                  ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
+                                  x_pos - CELL_INSET,
+                                  ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET);
     }
   }
 }
