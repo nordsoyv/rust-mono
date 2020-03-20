@@ -5,9 +5,9 @@ mod maze;
 mod generators;
 
 use std::convert::TryFrom;
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, Window, WindowOptions, MouseMode};
 use crate::canvas::Canvas;
-use crate::common::{WIDTH, HEIGHT, NUM_CELLS};
+use crate::common::{WIDTH, HEIGHT, NUM_CELLS, CELL_WIDTH, CELL_HEIGHT, MARGIN};
 use crate::maze::Maze;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
@@ -44,6 +44,11 @@ fn main() {
   let mut saved = false;
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
+      let (x_cell, y_cell) = window.get_mouse_pos(MouseMode::Discard).map(|(x, y)| {
+        let x_cell = ((x - MARGIN as f32) / CELL_WIDTH as f32) as i32;
+        let y_cell = ((y - MARGIN as f32) / CELL_HEIGHT as f32) as i32;
+        (x_cell, NUM_CELLS - y_cell -1)
+      }).unwrap_or((-1, -1));
       let mut canvas = Canvas {
         width: WIDTH,
         height: HEIGHT,
@@ -57,8 +62,17 @@ fn main() {
         generator.generate_step(&mut maze);
         generator.generate_step(&mut maze);
       }
-      maze.draw(&mut canvas);
       if generator.done() {
+        if x_cell != -1 && y_cell != -1 {
+          let cell = maze.get_mut_cell(x_cell,y_cell);
+          cell.active_cell = true;
+        }
+        maze.draw(&mut canvas);
+        if x_cell != -1 && y_cell != -1 {
+          let cell = maze.get_mut_cell(x_cell,y_cell);
+          cell.active_cell = false;
+        }
+
         if window.is_key_down(Key::R) {
           println!("Creating new maze");
           generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(10)));
@@ -71,6 +85,8 @@ fn main() {
           saved = true;
           println!("image is saved");
         }
+      }else {
+        maze.draw(&mut canvas);
       }
 
       // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
