@@ -8,6 +8,7 @@ pub struct CellCoord {
 }
 
 impl CellCoord {
+  #[allow(dead_code)]
   pub fn new(x: i32, y: i32) -> CellCoord {
     CellCoord {
       x_pos: x,
