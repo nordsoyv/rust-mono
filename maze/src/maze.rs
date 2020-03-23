@@ -1,6 +1,6 @@
 use crate::canvas::Canvas;
 use crate::cell::{Cell, CellCoord};
-use crate::common::{Direction, Wall};
+use crate::common::{Direction, };
 
 pub struct SquareGrid2D {
   cells: Vec<Cell>,
@@ -88,16 +88,16 @@ impl SquareGrid2D {
       start_cell.part_of_maze = true;
       match dir {
         Direction::North => {
-          start_cell.top = Wall::None;
+          start_cell.top = Some(coord_end);
         }
         Direction::South => {
-          start_cell.bottom = Wall::None;
+          start_cell.bottom = Some(coord_end);
         }
         Direction::East => {
-          start_cell.right = Wall::None;
+          start_cell.right = Some(coord_end);
         }
         Direction::West => {
-          start_cell.left = Wall::None;
+          start_cell.left = Some(coord_end);
         }
       }
     }
@@ -106,16 +106,16 @@ impl SquareGrid2D {
       end_cell.part_of_maze = true;
       match dir {
         Direction::North => {
-          end_cell.bottom = Wall::None;
+          end_cell.bottom = Some(coord_start);
         }
         Direction::South => {
-          end_cell.top = Wall::None;
+          end_cell.top = Some(coord_start);
         }
         Direction::East => {
-          end_cell.left = Wall::None;
+          end_cell.left = Some(coord_start);
         }
         Direction::West => {
-          end_cell.right = Wall::None;
+          end_cell.right = Some(coord_start);
         }
       }
     }

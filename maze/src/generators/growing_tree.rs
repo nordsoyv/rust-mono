@@ -1,7 +1,7 @@
 use crate::maze::SquareGrid2D;
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::ThreadRng;
-use crate::common::{Wall, CELL_ACTIVE_COLOR};
+use crate::common::{ CELL_ACTIVE_COLOR};
 use crate::generators::Generator;
 use crate::cell::CellCoord;
 
@@ -25,8 +25,8 @@ pub struct GrowingTreeGenerator {
 
 impl Generator for GrowingTreeGenerator {
   fn init(&mut self, maze: &mut SquareGrid2D) {
-    maze.get_mut_cell( CellCoord {x_pos: maze.width / 2 , y_pos: 0}).bottom = Wall::None;
-    maze.get_mut_cell(  CellCoord {x_pos:maze.width / 2 , y_pos: maze.height - 1}).top = Wall::None;
+    maze.get_mut_cell( CellCoord {x_pos: maze.width / 2 , y_pos: 0}).bottom = Some(CellCoord{x_pos:-1,y_pos:-1});
+    maze.get_mut_cell(  CellCoord {x_pos:maze.width / 2 , y_pos: maze.height - 1}).top = Some(CellCoord{x_pos:-1,y_pos:-1});
     self.stack.push(  CellCoord {x_pos:maze.width / 2 , y_pos: maze.height / 2});
     maze.get_mut_cell(CellCoord {x_pos:maze.width / 2 , y_pos: maze.height / 2}).part_of_maze = true;
   }

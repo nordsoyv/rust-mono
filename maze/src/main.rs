@@ -100,10 +100,10 @@ fn main() {
       canvas.clear();
       if !generator.done() {
         generator.generate_step(&mut maze);
-        generator.generate_step(&mut maze);
-        generator.generate_step(&mut maze);
-        generator.generate_step(&mut maze);
-        generator.generate_step(&mut maze);
+//        generator.generate_step(&mut maze);
+//        generator.generate_step(&mut maze);
+//        generator.generate_step(&mut maze);
+//        generator.generate_step(&mut maze);
       }
       if generator.done() {
         // window.set_cursor_style(CursorStyle::Arrow);

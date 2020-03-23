@@ -1,10 +1,4 @@
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Wall {
-  None,
-  Wall,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Direction {
   North,
   East,
