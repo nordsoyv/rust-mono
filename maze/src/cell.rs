@@ -1,11 +1,19 @@
-use crate::common::{ CELL_WIDTH, CELL_HEIGHT, CELL_INSET};
 use crate::canvas::Canvas;
-
+use crate::common::{CELL_HEIGHT, CELL_INSET, CELL_WIDTH};
 
 #[derive(Clone, Copy, Debug)]
 pub struct CellCoord {
   pub x_pos: i32,
   pub y_pos: i32,
+}
+
+impl CellCoord {
+  pub fn new(x: i32, y: i32) -> CellCoord {
+    CellCoord {
+      x_pos: x,
+      y_pos: y,
+    }
+  }
 }
 
 #[derive(Clone, Copy, Debug)]
