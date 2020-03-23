@@ -1,19 +1,30 @@
+use std::convert::TryFrom;
+
+use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
+
+use crate::canvas::Canvas;
+use crate::cell::CellCoord;
+use crate::common::{CELL_ACTIVE_COLOR, CELL_HEIGHT, CELL_WIDTH, HEIGHT, MARGIN, NUM_CELLS, WIDTH};
+use crate::generators::Generator;
+use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
+use crate::maze::SquareGrid2D;
+
 mod canvas;
 mod cell;
 mod common;
 mod maze;
 mod generators;
 
-use std::convert::TryFrom;
-use minifb::{Key, Window, WindowOptions, MouseMode, Menu};
-use crate::canvas::Canvas;
-use crate::common::{WIDTH, HEIGHT, NUM_CELLS, CELL_WIDTH, CELL_HEIGHT, MARGIN, CELL_ACTIVE_COLOR};
-use crate::maze::SquareGrid2D;
-use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
-use crate::generators::Generator;
-use crate::cell::CellCoord;
-
 const MENU_NEW_MAZE: usize = 1;
+const MENU_FASTER: usize = 2;
+const MENU_SLOWER: usize = 3;
+
+struct AppState {
+  generator: Box<dyn Generator>,
+  saved: bool,
+  grid: SquareGrid2D,
+  generate_steps : i32,
+}
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
 //  let buffer = shared_buffer.lock().unwrap();
@@ -67,25 +78,35 @@ fn main() {
     panic!("{}", e);
   });
 
-  let mut maze = SquareGrid2D::new(NUM_CELLS, NUM_CELLS);
-  let mut generator: Box<dyn Generator> = Box::new(GrowingTreeGenerator::new(Strategy::Last));
-  generator.init(&mut maze);
-  let mut saved = false;
+  let mut app_state = AppState {
+    generator: Box::new(GrowingTreeGenerator::new(Strategy::Last)),
+    saved: false,
+    grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS),
+    generate_steps: 1
+  };
+  app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
-  // let new_maze = MenuItem::new("")
   menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).build();
+  menu.add_item("Faster", MENU_FASTER).enabled(true).build();
+  menu.add_item("Slower", MENU_SLOWER).enabled(true).build();
   window.add_menu(&menu);
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
       let menu_status = window.is_menu_pressed();
       match menu_status {
         None => {}
-        Some(v) => {
-          match v {
+        Some(cmd) => {
+          match cmd {
             MENU_NEW_MAZE => {
-              generator = Box::new(GrowingTreeGenerator::new(Strategy::Last));
-              maze = SquareGrid2D::new(NUM_CELLS, NUM_CELLS);
-              generator.init(&mut maze);
+              app_state.grid = SquareGrid2D::new(NUM_CELLS, NUM_CELLS);
+              app_state.generator = Box::new(GrowingTreeGenerator::new(Strategy::Last));
+              app_state.generator.init(&mut app_state.grid);
+            }
+            MENU_FASTER => {
+              app_state.generate_steps = app_state.generate_steps +1;
+            }
+            MENU_SLOWER => {
+              app_state.generate_steps = app_state.generate_steps -1;
             }
             _ => println!("Unhandled menu command")
           }
@@ -98,39 +119,31 @@ fn main() {
         buffer: vec![],
       };
       canvas.clear();
-      if !generator.done() {
-        generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
-//        generator.generate_step(&mut maze);
+      if !app_state.generator.done() {
+        for _ in 0 .. app_state.generate_steps {
+          app_state.generator.generate_step(&mut app_state.grid);
+        }
       }
-      if generator.done() {
+      if app_state.generator.done() {
         // window.set_cursor_style(CursorStyle::Arrow);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-          let cell = maze.get_mut_cell(mouse_coord);
+          let cell = app_state.grid.get_mut_cell(mouse_coord);
           cell.color = Some(CELL_ACTIVE_COLOR);
         }
-        maze.draw(&mut canvas);
+        app_state.grid.draw(&mut canvas);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-          let cell = maze.get_mut_cell(mouse_coord);
+          let cell = app_state.grid.get_mut_cell(mouse_coord);
           cell.color = None;
         }
 
-        if window.is_key_down(Key::R) {
-          println!("Creating new maze");
-          generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(10)));
-          maze = SquareGrid2D::new(40, 40);
-          generator.init(&mut maze);
-        }
-        if window.is_key_down(Key::S) && !saved {
+        if window.is_key_down(Key::S) && !app_state.saved {
           println!("Saving image");
           save_image(&canvas.buffer, WIDTH, HEIGHT);
-          saved = true;
+          app_state.saved = true;
           println!("image is saved");
         }
       } else {
-        maze.draw(&mut canvas);
+        app_state.grid.draw(&mut canvas);
       }
 
       // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
