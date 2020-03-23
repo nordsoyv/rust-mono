@@ -8,7 +8,7 @@ use std::convert::TryFrom;
 use minifb::{Key, Window, WindowOptions, MouseMode, CursorStyle, Menu, MenuItem};
 use crate::canvas::Canvas;
 use crate::common::{WIDTH, HEIGHT, NUM_CELLS, CELL_WIDTH, CELL_HEIGHT, MARGIN, CELL_ACTIVE_COLOR};
-use crate::maze::Maze;
+use crate::maze::SquareGrid2D;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
 
@@ -60,7 +60,7 @@ fn main() {
     panic!("{}", e);
   });
 
-  let mut maze = Maze::new(NUM_CELLS, NUM_CELLS);
+  let mut maze = SquareGrid2D::new(NUM_CELLS, NUM_CELLS);
   let mut generator: Box<dyn Generator> = Box::new(GrowingTreeGenerator::new(Strategy::Last));
   generator.init(&mut maze);
   let mut saved = false;
@@ -77,7 +77,7 @@ fn main() {
           match v {
             MENU_NEW_MAZE => {
               generator = Box::new(GrowingTreeGenerator::new(Strategy::Last));
-              maze = Maze::new(NUM_CELLS, NUM_CELLS);
+              maze = SquareGrid2D::new(NUM_CELLS, NUM_CELLS);
               generator.init(&mut maze);
             }
             _ => println!("Unhandled menu command")
@@ -113,7 +113,7 @@ fn main() {
         if window.is_key_down(Key::R) {
           println!("Creating new maze");
           generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(10)));
-          maze = Maze::new(40, 40);
+          maze = SquareGrid2D::new(40, 40);
           generator.init(&mut maze);
         }
         if window.is_key_down(Key::S) && !saved {

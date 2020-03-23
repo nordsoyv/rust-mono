@@ -2,21 +2,21 @@ use crate::canvas::Canvas;
 use crate::cell::Cell;
 use crate::common::{Direction, Wall};
 
-pub struct Maze {
+pub struct SquareGrid2D {
   cells: Vec<Cell>,
   pub width: i32,
   pub height: i32,
 }
 
-impl Maze {
-  pub fn new(width: i32, height: i32) -> Maze {
+impl SquareGrid2D {
+  pub fn new(width: i32, height: i32) -> SquareGrid2D {
     let mut cells = vec![];
     for y in 0..height {
       for x in 0..width {
         cells.push(Cell::default(x, y));
       }
     }
-    Maze {
+    SquareGrid2D {
       cells,
       width,
       height,

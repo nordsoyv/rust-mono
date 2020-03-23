@@ -1,4 +1,4 @@
-use crate::maze::Maze;
+use crate::maze::SquareGrid2D;
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::ThreadRng;
 use crate::common::{Wall, CELL_ACTIVE_COLOR};
@@ -23,20 +23,20 @@ pub struct GrowingTreeGenerator {
 }
 
 impl Generator for GrowingTreeGenerator {
-  fn init(&mut self, maze: &mut Maze) {
+  fn init(&mut self, maze: &mut SquareGrid2D) {
     maze.get_mut_cell(maze.width / 2, 0).bottom = Wall::None;
     maze.get_mut_cell(maze.width / 2, maze.height - 1).top = Wall::None;
     self.stack.push((maze.width / 2, maze.height / 2));
     maze.get_mut_cell(maze.width / 2, maze.height / 2).part_of_maze = true;
   }
 
-  fn generate(&mut self, maze: &mut Maze) {
+  fn generate(&mut self, maze: &mut SquareGrid2D) {
     while self.done == false {
       self.generate_step(maze);
     }
   }
 
-  fn generate_step(&mut self, maze: &mut Maze) {
+  fn generate_step(&mut self, maze: &mut SquareGrid2D) {
     if self.stack.len() == 0 {
       self.done = true;
       return;
