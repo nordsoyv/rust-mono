@@ -5,12 +5,13 @@ mod maze;
 mod generators;
 
 use std::convert::TryFrom;
-use minifb::{Key, Window, WindowOptions, MouseMode, CursorStyle, Menu, MenuItem};
+use minifb::{Key, Window, WindowOptions, MouseMode, Menu};
 use crate::canvas::Canvas;
 use crate::common::{WIDTH, HEIGHT, NUM_CELLS, CELL_WIDTH, CELL_HEIGHT, MARGIN, CELL_ACTIVE_COLOR};
 use crate::maze::SquareGrid2D;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
+use crate::cell::CellCoord;
 
 const MENU_NEW_MAZE: usize = 1;
 
@@ -31,7 +32,7 @@ fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
   img_buf.save("image.png").unwrap();
 }
 
-fn get_mouse_pos(window: &Window) -> (i32, i32) {
+fn get_mouse_pos(window: &Window) -> CellCoord {
   return window.get_mouse_pos(MouseMode::Discard).map(|(x, y)| {
     let mut x_cell = ((x - MARGIN as f32) / CELL_WIDTH as f32) as i32;
     let mut y_cell = ((y - MARGIN as f32) / CELL_HEIGHT as f32) as i32;
@@ -47,8 +48,14 @@ fn get_mouse_pos(window: &Window) -> (i32, i32) {
     if y_cell < 0 {
       y_cell = 0;
     }
-    (x_cell, NUM_CELLS - y_cell - 1)
-  }).unwrap_or((-1, -1));
+    CellCoord {
+      x_pos: x_cell,
+      y_pos: NUM_CELLS - y_cell - 1,
+    }
+  }).unwrap_or(CellCoord {
+    x_pos: -1,
+    y_pos: -1,
+  });
 }
 
 fn main() {
@@ -84,7 +91,7 @@ fn main() {
           }
         }
       }
-      let (x_cell, y_cell) = get_mouse_pos(&window);
+      let mouse_coord = get_mouse_pos(&window);
       let mut canvas = Canvas {
         width: WIDTH,
         height: HEIGHT,
@@ -100,13 +107,13 @@ fn main() {
       }
       if generator.done() {
         // window.set_cursor_style(CursorStyle::Arrow);
-        if x_cell != -1 && y_cell != -1 {
-          let cell = maze.get_mut_cell(x_cell, y_cell);
+        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
+          let cell = maze.get_mut_cell(mouse_coord);
           cell.color = Some(CELL_ACTIVE_COLOR);
         }
         maze.draw(&mut canvas);
-        if x_cell != -1 && y_cell != -1 {
-          let cell = maze.get_mut_cell(x_cell, y_cell);
+        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
+          let cell = maze.get_mut_cell(mouse_coord);
           cell.color = None;
         }
 

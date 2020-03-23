@@ -1,5 +1,5 @@
 use crate::canvas::Canvas;
-use crate::cell::Cell;
+use crate::cell::{Cell, CellCoord};
 use crate::common::{Direction, Wall};
 
 pub struct SquareGrid2D {
@@ -23,67 +23,68 @@ impl SquareGrid2D {
     }
   }
 
-  fn get_cell(&self, x: i32, y: i32) -> &Cell {
-    let index = (y * self.height) + x;
+  fn get_cell(&self, coord: CellCoord) -> &Cell {
+    let index = coord.y_pos * self.height + coord.x_pos;
     return &self.cells[index as usize];
   }
 
-  pub fn get_mut_cell(&mut self, x: i32, y: i32) -> &mut Cell {
-    let index = y * self.height + x;
+  pub fn get_mut_cell(&mut self, coord: CellCoord) -> &mut Cell {
+    let index = coord.y_pos * self.height + coord.x_pos;
     return &mut self.cells[index as usize];
   }
 
-  pub fn can_carve(&self, x: i32, y: i32, dir: Direction) -> bool {
+  pub fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
     let target_x = match dir {
-      Direction::West => x - 1,
-      Direction::East => x + 1,
-      _ => x
+      Direction::West => coord.x_pos - 1,
+      Direction::East => coord.x_pos + 1,
+      _ => coord.x_pos
     };
     let target_y = match dir {
-      Direction::South => y - 1,
-      Direction::North => y + 1,
-      _ => y
+      Direction::South => coord.y_pos - 1,
+      Direction::North => coord.y_pos + 1,
+      _ => coord.y_pos
     };
 
     if target_x < 0 || target_x >= self.width || target_y < 0 || target_y >= self.height {
       return false;
     }
 
-    let target_cell = self.get_cell(target_x, target_y);
+    let target_cell = self.get_cell(CellCoord { x_pos: target_x, y_pos: target_y });
     if !target_cell.part_of_maze {
       return true;
     }
     return false;
   }
 
-  pub fn get_cell_in_dir(&self, x: i32, y: i32, dir: Direction) -> (i32, i32) {
+  pub fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord {
     match dir {
-      Direction::North => (x, y + 1),
-      Direction::South => (x, y - 1),
-      Direction::East => (x + 1, y),
-      Direction::West => (x - 1, y),
+      Direction::North => CellCoord { x_pos: coord.x_pos, y_pos: coord.y_pos + 1 },
+      Direction::South => CellCoord { x_pos: coord.x_pos, y_pos: coord.y_pos - 1 },
+      Direction::East => CellCoord { x_pos: coord.x_pos + 1, y_pos: coord.y_pos },
+      Direction::West => CellCoord { x_pos: coord.x_pos - 1, y_pos: coord.y_pos },
     }
   }
 
-  pub fn carve(&mut self, x_start: i32, y_start: i32, dir: Direction) {
+  pub fn carve(&mut self, coord_start: CellCoord, dir: Direction) {
     let x_end = match dir {
-      Direction::West => x_start - 1,
-      Direction::East => x_start + 1,
-      _ => x_start
+      Direction::West => coord_start.x_pos - 1,
+      Direction::East => coord_start.x_pos + 1,
+      _ => coord_start.x_pos
     };
     let y_end = match dir {
-      Direction::South => y_start - 1,
-      Direction::North => y_start + 1,
-      _ => y_start
+      Direction::South => coord_start.y_pos - 1,
+      Direction::North => coord_start.y_pos + 1,
+      _ => coord_start.y_pos
     };
-    if x_start < 0 || x_end < 0
-      || y_start < 0 || y_end < 0
-      || x_start > self.width || x_end > self.width
-      || y_start > self.height || y_end > self.height {
+    let coord_end = CellCoord { x_pos: x_end, y_pos: y_end };
+    if coord_start.x_pos < 0 || coord_end.x_pos < 0
+      || coord_start.y_pos < 0 || coord_end.y_pos < 0
+      || coord_start.x_pos > self.width || coord_end.x_pos > self.width
+      || coord_start.y_pos > self.height || coord_end.y_pos > self.height {
       return;
     }
     {
-      let start_cell = self.get_mut_cell(x_start, y_start);
+      let start_cell = self.get_mut_cell(coord_start);
       start_cell.part_of_maze = true;
       match dir {
         Direction::North => {
@@ -101,7 +102,7 @@ impl SquareGrid2D {
       }
     }
     {
-      let end_cell = self.get_mut_cell(x_end, y_end);
+      let end_cell = self.get_mut_cell(coord_end);
       end_cell.part_of_maze = true;
       match dir {
         Direction::North => {
@@ -121,18 +122,18 @@ impl SquareGrid2D {
   }
 
 
-  pub fn get_allowed_directions(&self, x: i32, y: i32) -> Vec<Direction> {
+  pub fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction> {
     let mut dirs = vec![];
-    if self.can_carve(x, y, Direction::North) {
+    if self.can_carve(coord, Direction::North) {
       dirs.push(Direction::North);
     }
-    if self.can_carve(x, y, Direction::South) {
+    if self.can_carve(coord, Direction::South) {
       dirs.push(Direction::South);
     }
-    if self.can_carve(x, y, Direction::East) {
+    if self.can_carve(coord, Direction::East) {
       dirs.push(Direction::East);
     }
-    if self.can_carve(x, y, Direction::West) {
+    if self.can_carve(coord, Direction::West) {
       dirs.push(Direction::West);
     }
     return dirs;

@@ -3,6 +3,7 @@ use rand::distributions::{Distribution, Uniform};
 use rand::prelude::ThreadRng;
 use crate::common::{Wall, CELL_ACTIVE_COLOR};
 use crate::generators::Generator;
+use crate::cell::CellCoord;
 
 #[allow(dead_code)]
 pub enum Strategy {
@@ -16,7 +17,7 @@ pub enum Strategy {
 
 pub struct GrowingTreeGenerator {
   pub done: bool,
-  stack: Vec<(i32, i32)>,
+  stack: Vec<CellCoord>,
   rng: ThreadRng,
   random: Uniform<f32>,
   strategy: Strategy,
@@ -24,10 +25,10 @@ pub struct GrowingTreeGenerator {
 
 impl Generator for GrowingTreeGenerator {
   fn init(&mut self, maze: &mut SquareGrid2D) {
-    maze.get_mut_cell(maze.width / 2, 0).bottom = Wall::None;
-    maze.get_mut_cell(maze.width / 2, maze.height - 1).top = Wall::None;
-    self.stack.push((maze.width / 2, maze.height / 2));
-    maze.get_mut_cell(maze.width / 2, maze.height / 2).part_of_maze = true;
+    maze.get_mut_cell( CellCoord {x_pos: maze.width / 2 , y_pos: 0}).bottom = Wall::None;
+    maze.get_mut_cell(  CellCoord {x_pos:maze.width / 2 , y_pos: maze.height - 1}).top = Wall::None;
+    self.stack.push(  CellCoord {x_pos:maze.width / 2 , y_pos: maze.height / 2});
+    maze.get_mut_cell(CellCoord {x_pos:maze.width / 2 , y_pos: maze.height / 2}).part_of_maze = true;
   }
 
   fn generate(&mut self, maze: &mut SquareGrid2D) {
@@ -42,18 +43,18 @@ impl Generator for GrowingTreeGenerator {
       return;
     }
     let next_cell_index = self.get_next_index();
-    let (x, y) = self.stack[next_cell_index];
-    maze.get_mut_cell(x, y).color = Some(CELL_ACTIVE_COLOR);
+    let coord = self.stack[next_cell_index];
+    maze.get_mut_cell(coord).color = Some(CELL_ACTIVE_COLOR);
 
-    let available_dirs = maze.get_allowed_directions(x, y);
+    let available_dirs = maze.get_allowed_directions(coord);
     if available_dirs.len() == 0 {
-      maze.get_mut_cell(x, y).color = None;
+      maze.get_mut_cell(coord).color = None;
       self.stack.remove(next_cell_index);
       return;
     }
     let random_dir = self.get_random(available_dirs.len());
-    maze.carve(x, y, available_dirs[random_dir]);
-    let next_cell = maze.get_cell_in_dir(x, y, available_dirs[random_dir]);
+    maze.carve(coord ,available_dirs[random_dir]);
+    let next_cell = maze.get_cell_in_dir(coord, available_dirs[random_dir]);
     self.stack.push(next_cell);
   }
 
