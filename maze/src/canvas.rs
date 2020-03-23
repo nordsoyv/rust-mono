@@ -47,7 +47,7 @@ impl Canvas {
 
   pub fn draw_vertical_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     assert_eq!(start_x, end_x);
-    let (start_x, start_y, end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
+    let (start_x, start_y, _end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
 
     let length = start_y - end_y;
     let start_point = ((start_y - MARGIN) * self.width) + (start_x + MARGIN);
@@ -58,7 +58,7 @@ impl Canvas {
 
   pub fn draw_horizontal_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     assert_eq!(start_y, end_y);
-    let (start_x, start_y, end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
+    let (start_x, start_y, end_x, _end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
 
     let length = end_x - start_x;
     let start_point = ((start_y - MARGIN) * self.width) + (start_x + MARGIN);

@@ -1,9 +1,10 @@
 use crate::maze::Maze;
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::ThreadRng;
-use crate::common::{Wall};
+use crate::common::{Wall, CELL_ACTIVE_COLOR};
 use crate::generators::Generator;
 
+#[allow(dead_code)]
 pub enum Strategy {
   Last,
   First,
@@ -22,14 +23,14 @@ pub struct GrowingTreeGenerator {
 }
 
 impl Generator for GrowingTreeGenerator {
-   fn init(&mut self, maze: &mut Maze) {
+  fn init(&mut self, maze: &mut Maze) {
     maze.get_mut_cell(maze.width / 2, 0).bottom = Wall::None;
     maze.get_mut_cell(maze.width / 2, maze.height - 1).top = Wall::None;
     self.stack.push((maze.width / 2, maze.height / 2));
     maze.get_mut_cell(maze.width / 2, maze.height / 2).part_of_maze = true;
   }
 
-   fn generate(&mut self,  maze: &mut Maze) {
+  fn generate(&mut self, maze: &mut Maze) {
     while self.done == false {
       self.generate_step(maze);
     }
@@ -42,11 +43,11 @@ impl Generator for GrowingTreeGenerator {
     }
     let next_cell_index = self.get_next_index();
     let (x, y) = self.stack[next_cell_index];
-    maze.get_mut_cell(x, y).active_cell = true;
+    maze.get_mut_cell(x, y).color = Some(CELL_ACTIVE_COLOR);
 
     let available_dirs = maze.get_allowed_directions(x, y);
     if available_dirs.len() == 0 {
-      maze.get_mut_cell(x, y).active_cell = false;
+      maze.get_mut_cell(x, y).color = None;
       self.stack.remove(next_cell_index);
       return;
     }
