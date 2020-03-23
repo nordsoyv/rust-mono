@@ -10,7 +10,7 @@ pub struct Cell {
   pub x_pos: i32,
   pub y_pos: i32,
   pub part_of_maze: bool,
-  pub active_cell: bool,
+  pub color: Option<u32>,
 }
 
 impl Cell {
@@ -23,19 +23,58 @@ impl Cell {
       x_pos: x,
       y_pos: y,
       part_of_maze: false,
-      active_cell: false,
+      color: None,
+    }
+  }
+
+
+  fn draw_background(&self,canvas: &mut Canvas) {
+    let color = self.color.unwrap();
+    canvas.fill_square(
+      self.x_pos * CELL_WIDTH + CELL_INSET,
+      self.y_pos * CELL_HEIGHT + CELL_INSET,
+      CELL_WIDTH - CELL_INSET - CELL_INSET,
+      CELL_HEIGHT - CELL_INSET - CELL_INSET,
+      color);
+    if self.top != Wall::Wall {
+      canvas.fill_square(
+        ((self.x_pos) * CELL_WIDTH) + CELL_INSET,
+        ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
+        CELL_WIDTH - CELL_INSET - CELL_INSET,
+        CELL_INSET,
+        color);
+    }
+    if self.bottom != Wall::Wall {
+      canvas.fill_square(
+        ((self.x_pos) * CELL_WIDTH) + CELL_INSET,
+        self.y_pos * CELL_HEIGHT,
+        CELL_WIDTH - CELL_INSET - CELL_INSET,
+        CELL_INSET,
+        color);
+    }
+    if self.left != Wall::Wall {
+      canvas.fill_square(
+        self.x_pos * CELL_WIDTH,
+        ((self.y_pos) * CELL_HEIGHT) + CELL_INSET,
+        CELL_INSET,
+        CELL_HEIGHT - CELL_INSET - CELL_INSET,
+        color);
+    }
+    if self.right != Wall::Wall {
+      canvas.fill_square(
+        ((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+        ((self.y_pos) * CELL_HEIGHT) + CELL_INSET,
+        CELL_INSET,
+        CELL_HEIGHT - CELL_INSET - CELL_INSET,
+        color);
     }
   }
 
   pub fn draw(&self, canvas: &mut Canvas) {
-    if self.active_cell {
-      canvas.fill_square(
-        self.x_pos * CELL_WIDTH + CELL_INSET,
-        self.y_pos * CELL_HEIGHT + CELL_INSET,
-        CELL_WIDTH - CELL_INSET - CELL_INSET,
-        CELL_HEIGHT - CELL_INSET - CELL_INSET,
-        0xffffff00);
+    if self.color.is_some() {
+      self.draw_background(canvas);
     }
+
     if self.top == Wall::Wall {
       let y_pos = (self.y_pos + 1) * CELL_HEIGHT;
       canvas.draw_horizontal_line((self.x_pos * CELL_WIDTH) + CELL_INSET,
@@ -55,7 +94,7 @@ impl Cell {
                                 (y_pos) - CELL_INSET);
     }
     if self.bottom == Wall::Wall {
-      let y_pos = ((self.y_pos) * CELL_HEIGHT);
+      let y_pos = self.y_pos * CELL_HEIGHT;
       canvas.draw_horizontal_line((self.x_pos * CELL_WIDTH) + CELL_INSET,
                                   y_pos + CELL_INSET,
                                   ((self.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
@@ -73,13 +112,13 @@ impl Cell {
                                 (y_pos) + CELL_INSET);
     }
     if self.left == Wall::Wall {
-      let x_pos = (self.x_pos * CELL_WIDTH);
+      let x_pos = self.x_pos * CELL_WIDTH;
       canvas.draw_vertical_line(x_pos + CELL_INSET,
                                 (self.y_pos * CELL_HEIGHT) + CELL_INSET,
                                 x_pos + CELL_INSET,
                                 ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET)
     } else {
-      let x_pos = (self.x_pos * CELL_WIDTH);
+      let x_pos = self.x_pos * CELL_WIDTH;
       canvas.draw_horizontal_line(x_pos,
                                   (self.y_pos * CELL_HEIGHT) + CELL_INSET,
                                   x_pos + CELL_INSET,
@@ -90,7 +129,7 @@ impl Cell {
                                   ((self.y_pos + 1) * CELL_HEIGHT) - CELL_INSET);
     }
     if self.right == Wall::Wall {
-      let x_pos = ((self.x_pos + 1) * CELL_WIDTH);
+      let x_pos = (self.x_pos + 1) * CELL_WIDTH;
       canvas.draw_vertical_line(x_pos - CELL_INSET,
                                 (self.y_pos * CELL_HEIGHT) + CELL_INSET,
                                 x_pos - CELL_INSET,

@@ -7,7 +7,7 @@ mod generators;
 use std::convert::TryFrom;
 use minifb::{Key, Window, WindowOptions, MouseMode};
 use crate::canvas::Canvas;
-use crate::common::{WIDTH, HEIGHT, NUM_CELLS, CELL_WIDTH, CELL_HEIGHT, MARGIN};
+use crate::common::{WIDTH, HEIGHT, NUM_CELLS, CELL_WIDTH, CELL_HEIGHT, MARGIN, CELL_ACTIVE_COLOR};
 use crate::maze::Maze;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
@@ -39,7 +39,7 @@ fn main() {
   });
 
   let mut maze = Maze::new(NUM_CELLS, NUM_CELLS);
-  let mut generator: Box<Generator> = Box::new(GrowingTreeGenerator::new(Strategy::Last));
+  let mut generator: Box<dyn Generator> = Box::new(GrowingTreeGenerator::new(Strategy::Last));
   generator.init(&mut maze);
   let mut saved = false;
   while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -65,12 +65,12 @@ fn main() {
       if generator.done() {
         if x_cell != -1 && y_cell != -1 {
           let cell = maze.get_mut_cell(x_cell,y_cell);
-          cell.active_cell = true;
+          cell.color = Some(CELL_ACTIVE_COLOR);
         }
         maze.draw(&mut canvas);
         if x_cell != -1 && y_cell != -1 {
           let cell = maze.get_mut_cell(x_cell,y_cell);
-          cell.active_cell = false;
+          cell.color = None;
         }
 
         if window.is_key_down(Key::R) {
