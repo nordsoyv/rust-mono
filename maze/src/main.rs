@@ -5,12 +5,14 @@ mod maze;
 mod generators;
 
 use std::convert::TryFrom;
-use minifb::{Key, Window, WindowOptions, MouseMode};
+use minifb::{Key, Window, WindowOptions, MouseMode, CursorStyle, Menu, MenuItem};
 use crate::canvas::Canvas;
 use crate::common::{WIDTH, HEIGHT, NUM_CELLS, CELL_WIDTH, CELL_HEIGHT, MARGIN, CELL_ACTIVE_COLOR};
 use crate::maze::Maze;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
+
+const MENU_NEW_MAZE: usize = 1;
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
 //  let buffer = shared_buffer.lock().unwrap();
@@ -29,6 +31,26 @@ fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
   img_buf.save("image.png").unwrap();
 }
 
+fn get_mouse_pos(window: &Window) -> (i32, i32) {
+  return window.get_mouse_pos(MouseMode::Discard).map(|(x, y)| {
+    let mut x_cell = ((x - MARGIN as f32) / CELL_WIDTH as f32) as i32;
+    let mut y_cell = ((y - MARGIN as f32) / CELL_HEIGHT as f32) as i32;
+    if x_cell >= NUM_CELLS {
+      x_cell = NUM_CELLS - 1;
+    }
+    if y_cell >= NUM_CELLS {
+      y_cell = NUM_CELLS - 1;
+    }
+    if x_cell < 0 {
+      x_cell = 0;
+    }
+    if y_cell < 0 {
+      y_cell = 0;
+    }
+    (x_cell, NUM_CELLS - y_cell - 1)
+  }).unwrap_or((-1, -1));
+}
+
 fn main() {
   let mut window = Window::new(
     "Test - ESC to exit",
@@ -42,13 +64,27 @@ fn main() {
   let mut generator: Box<dyn Generator> = Box::new(GrowingTreeGenerator::new(Strategy::Last));
   generator.init(&mut maze);
   let mut saved = false;
+  let mut menu = Menu::new("Main").unwrap();
+  // let new_maze = MenuItem::new("")
+  menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).build();
+  window.add_menu(&menu);
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
-      let (x_cell, y_cell) = window.get_mouse_pos(MouseMode::Discard).map(|(x, y)| {
-        let x_cell = ((x - MARGIN as f32) / CELL_WIDTH as f32) as i32;
-        let y_cell = ((y - MARGIN as f32) / CELL_HEIGHT as f32) as i32;
-        (x_cell, NUM_CELLS - y_cell -1)
-      }).unwrap_or((-1, -1));
+      let menu_status = window.is_menu_pressed();
+      match menu_status {
+        None => {}
+        Some(v) => {
+          match v {
+            MENU_NEW_MAZE => {
+              generator = Box::new(GrowingTreeGenerator::new(Strategy::Last));
+              maze = Maze::new(NUM_CELLS, NUM_CELLS);
+              generator.init(&mut maze);
+            }
+            _ => println!("Unhandled menu command")
+          }
+        }
+      }
+      let (x_cell, y_cell) = get_mouse_pos(&window);
       let mut canvas = Canvas {
         width: WIDTH,
         height: HEIGHT,
@@ -63,13 +99,14 @@ fn main() {
         generator.generate_step(&mut maze);
       }
       if generator.done() {
+        // window.set_cursor_style(CursorStyle::Arrow);
         if x_cell != -1 && y_cell != -1 {
-          let cell = maze.get_mut_cell(x_cell,y_cell);
+          let cell = maze.get_mut_cell(x_cell, y_cell);
           cell.color = Some(CELL_ACTIVE_COLOR);
         }
         maze.draw(&mut canvas);
         if x_cell != -1 && y_cell != -1 {
-          let cell = maze.get_mut_cell(x_cell,y_cell);
+          let cell = maze.get_mut_cell(x_cell, y_cell);
           cell.color = None;
         }
 
@@ -85,7 +122,7 @@ fn main() {
           saved = true;
           println!("image is saved");
         }
-      }else {
+      } else {
         maze.draw(&mut canvas);
       }
 
