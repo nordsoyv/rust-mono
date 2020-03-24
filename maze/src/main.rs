@@ -23,7 +23,7 @@ struct AppState {
   generator: Box<dyn Generator>,
   saved: bool,
   grid: SquareGrid2D,
-  generate_steps : i32,
+  generate_steps: i32,
 }
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
@@ -69,6 +69,10 @@ fn get_mouse_pos(window: &Window) -> CellCoord {
   });
 }
 
+fn get_title(app_state : &AppState)-> String {
+  return format!("Maze type: {} -- Generation speed: {}",app_state.generator.name(),  app_state.generate_steps);
+}
+
 fn main() {
   let mut window = Window::new(
     "Test - ESC to exit",
@@ -82,14 +86,15 @@ fn main() {
     generator: Box::new(GrowingTreeGenerator::new(Strategy::Last)),
     saved: false,
     grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS),
-    generate_steps: 1
+    generate_steps: 1,
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
-  menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).build();
-  menu.add_item("Faster", MENU_FASTER).enabled(true).build();
-  menu.add_item("Slower", MENU_SLOWER).enabled(true).build();
+  menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).shortcut(Key::N, 0).build();
+  menu.add_item("Faster", MENU_FASTER).enabled(true).shortcut(Key::F, 0).build();
+  menu.add_item("Slower", MENU_SLOWER).enabled(true).shortcut(Key::S, 0).build();
   window.add_menu(&menu);
+  window.set_title(get_title(&app_state).as_str());
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
       let menu_status = window.is_menu_pressed();
@@ -103,10 +108,12 @@ fn main() {
               app_state.generator.init(&mut app_state.grid);
             }
             MENU_FASTER => {
-              app_state.generate_steps = app_state.generate_steps +1;
+              app_state.generate_steps = app_state.generate_steps + 1;
+              window.set_title(get_title(&app_state).as_str());
             }
             MENU_SLOWER => {
-              app_state.generate_steps = app_state.generate_steps -1;
+              app_state.generate_steps = app_state.generate_steps - 1;
+              window.set_title(get_title(&app_state).as_str());
             }
             _ => println!("Unhandled menu command")
           }
@@ -120,7 +127,7 @@ fn main() {
       };
       canvas.clear();
       if !app_state.generator.done() {
-        for _ in 0 .. app_state.generate_steps {
+        for _ in 0..app_state.generate_steps {
           app_state.generator.generate_step(&mut app_state.grid);
         }
       }

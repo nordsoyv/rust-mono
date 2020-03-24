@@ -31,6 +31,10 @@ impl Generator for GrowingTreeGenerator {
     maze.get_mut_cell(CellCoord {x_pos:maze.width / 2 , y_pos: maze.height / 2}).part_of_maze = true;
   }
 
+  fn name(&self) -> &str {
+    "Growing Tree"
+  }
+
   fn generate(&mut self, maze: &mut SquareGrid2D) {
     while self.done == false {
       self.generate_step(maze);

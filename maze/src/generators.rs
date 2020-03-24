@@ -7,4 +7,5 @@ pub trait Generator {
   fn generate(&mut self,  maze: &mut SquareGrid2D);
   fn generate_step(&mut self, maze: &mut SquareGrid2D);
   fn done(&self) -> bool;
+  fn name(&self) -> &str ;
 }
