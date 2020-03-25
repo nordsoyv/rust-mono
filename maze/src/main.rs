@@ -21,12 +21,14 @@ const MENU_NEW_MAZE: usize = 1;
 const MENU_FASTER: usize = 2;
 const MENU_SLOWER: usize = 3;
 const MENU_DJIKSTRA: usize = 4;
+const MENU_SHOW_DIST: usize = 5;
 
 struct AppState {
   generator: Box<dyn Generator>,
   saved: bool,
   grid: SquareGrid2D,
   generate_steps: i32,
+  show_dist : bool,
 }
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
@@ -90,13 +92,15 @@ fn main() {
     saved: false,
     grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS),
     generate_steps: 20,
+    show_dist: false,
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
   menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).shortcut(Key::N, 0).build();
   menu.add_item("Faster", MENU_FASTER).enabled(true).shortcut(Key::F, 0).build();
   menu.add_item("Slower", MENU_SLOWER).enabled(true).shortcut(Key::S, 0).build();
-  menu.add_item("Djikstra", MENU_DJIKSTRA).enabled(true).shortcut(Key::D, 0).build();
+  // menu.add_item("Djikstra", MENU_DJIKSTRA).enabled(true).shortcut(Key::D, 0).build();
+  menu.add_item("Show distances", MENU_SHOW_DIST).enabled(true).shortcut(Key::D, 0).build();
   window.add_menu(&menu);
   window.set_title(get_title(&app_state).as_str());
   while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -124,6 +128,9 @@ fn main() {
               let mut d = Djikstra::new();
               d.run(mouse_coord,&mut app_state.grid);
             }
+            MENU_SHOW_DIST => {
+              app_state.show_dist = !app_state.show_dist;
+            }
             _ => println!("Unhandled menu command")
           }
         }
@@ -142,8 +149,14 @@ fn main() {
       if app_state.generator.done() {
         // window.set_cursor_style(CursorStyle::Arrow);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-          let cell = app_state.grid.get_mut_cell(mouse_coord);
-          cell.color = Some(CELL_ACTIVE_COLOR);
+          if app_state.show_dist {
+            Djikstra::new().run(mouse_coord,&mut app_state.grid);
+          }else {
+            let cell = app_state.grid.get_mut_cell(mouse_coord);
+            cell.color = Some(CELL_ACTIVE_COLOR);
+
+          }
+
         }
         app_state.grid.draw(&mut canvas);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
