@@ -63,11 +63,19 @@ impl Cell {
   fn draw_background(&self, canvas: &mut Canvas) {
     let color;
     if self.distance > 0 {
-      let d = (self.distance % 256) as u32;
-      let d = 256 - d;
-      let red = d << 16;
-      let green = d << 8;
-      let blue = d;
+      let dist = (self.distance % (256*3)) as u32;
+      let part = dist as f32 /3.0;
+      let blue = part as u32;
+      let remain = dist - blue;
+      let part = remain as f32 /2.0;
+      let green = part as u32;
+      let remain = remain - green;
+      let red = remain;
+
+
+      let red = red << 16;
+      let green = green << 8;
+
       color = red | green | blue;
     } else if self.color.is_some() {
       color = self.color.unwrap()

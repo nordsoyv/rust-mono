@@ -154,9 +154,7 @@ fn main() {
           }else {
             let cell = app_state.grid.get_mut_cell(mouse_coord);
             cell.color = Some(CELL_ACTIVE_COLOR);
-
           }
-
         }
         app_state.grid.draw(&mut canvas);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
