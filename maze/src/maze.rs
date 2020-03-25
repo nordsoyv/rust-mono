@@ -1,9 +1,9 @@
 use crate::canvas::Canvas;
 use crate::cell::{Cell, CellCoord};
-use crate::common::{Direction, };
+use crate::common::Direction;
 
 pub struct SquareGrid2D {
-  cells: Vec<Cell>,
+  pub cells: Vec<Cell>,
   pub width: i32,
   pub height: i32,
 }
@@ -23,13 +23,13 @@ impl SquareGrid2D {
     }
   }
 
-  fn get_cell(&self, coord: CellCoord) -> &Cell {
+  pub fn get_cell(&self, coord: CellCoord) -> &Cell {
     let index = coord.y_pos * self.height + coord.x_pos;
     return &self.cells[index as usize];
   }
 
   pub fn get_mut_cell(&mut self, coord: CellCoord) -> &mut Cell {
-    let index = coord.y_pos * self.height + coord.x_pos;
+    let index = (coord.y_pos * self.height) + coord.x_pos;
     return &mut self.cells[index as usize];
   }
 
@@ -49,7 +49,7 @@ impl SquareGrid2D {
       return false;
     }
 
-    let target_cell = self.get_cell(CellCoord { x_pos: target_x, y_pos: target_y });
+    let target_cell = self.get_cell(CellCoord::new(target_x,target_y) );
     if !target_cell.part_of_maze {
       return true;
     }
@@ -58,10 +58,10 @@ impl SquareGrid2D {
 
   pub fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord {
     match dir {
-      Direction::North => CellCoord { x_pos: coord.x_pos, y_pos: coord.y_pos + 1 },
-      Direction::South => CellCoord { x_pos: coord.x_pos, y_pos: coord.y_pos - 1 },
-      Direction::East => CellCoord { x_pos: coord.x_pos + 1, y_pos: coord.y_pos },
-      Direction::West => CellCoord { x_pos: coord.x_pos - 1, y_pos: coord.y_pos },
+      Direction::North => CellCoord::new(coord.x_pos, coord.y_pos + 1),
+      Direction::South => CellCoord::new(coord.x_pos, coord.y_pos - 1),
+      Direction::East => CellCoord::new(coord.x_pos + 1, coord.y_pos),
+      Direction::West => CellCoord::new(coord.x_pos - 1, coord.y_pos),
     }
   }
 

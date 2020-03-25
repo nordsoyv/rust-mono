@@ -8,16 +8,19 @@ use crate::common::{CELL_ACTIVE_COLOR, CELL_HEIGHT, CELL_WIDTH, HEIGHT, MARGIN, 
 use crate::generators::Generator;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::maze::SquareGrid2D;
+use crate::djikstra::Djikstra;
 
 mod canvas;
 mod cell;
 mod common;
 mod maze;
 mod generators;
+mod djikstra;
 
 const MENU_NEW_MAZE: usize = 1;
 const MENU_FASTER: usize = 2;
 const MENU_SLOWER: usize = 3;
+const MENU_DJIKSTRA: usize = 4;
 
 struct AppState {
   generator: Box<dyn Generator>,
@@ -86,17 +89,19 @@ fn main() {
     generator: Box::new(GrowingTreeGenerator::new(Strategy::Last)),
     saved: false,
     grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS),
-    generate_steps: 1,
+    generate_steps: 20,
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
   menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).shortcut(Key::N, 0).build();
   menu.add_item("Faster", MENU_FASTER).enabled(true).shortcut(Key::F, 0).build();
   menu.add_item("Slower", MENU_SLOWER).enabled(true).shortcut(Key::S, 0).build();
+  menu.add_item("Djikstra", MENU_DJIKSTRA).enabled(true).shortcut(Key::D, 0).build();
   window.add_menu(&menu);
   window.set_title(get_title(&app_state).as_str());
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
+      let mouse_coord = get_mouse_pos(&window);
       let menu_status = window.is_menu_pressed();
       match menu_status {
         None => {}
@@ -115,11 +120,14 @@ fn main() {
               app_state.generate_steps = app_state.generate_steps - 1;
               window.set_title(get_title(&app_state).as_str());
             }
+            MENU_DJIKSTRA => {
+              let mut d = Djikstra::new();
+              d.run(mouse_coord,&mut app_state.grid);
+            }
             _ => println!("Unhandled menu command")
           }
         }
       }
-      let mouse_coord = get_mouse_pos(&window);
       let mut canvas = Canvas {
         width: WIDTH,
         height: HEIGHT,

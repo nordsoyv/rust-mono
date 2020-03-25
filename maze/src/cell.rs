@@ -26,6 +26,7 @@ pub struct Cell {
   pub coord: CellCoord,
   pub part_of_maze: bool,
   pub color: Option<u32>,
+  pub distance: i32,
 }
 
 impl Cell {
@@ -35,15 +36,44 @@ impl Cell {
       left: None,
       top: None,
       right: None,
-      coord: CellCoord { x_pos: x, y_pos: y },
+      coord: CellCoord::new(x, y),
       part_of_maze: false,
       color: None,
+      distance: -1,
     }
   }
 
+  pub fn get_neighbours(&self) -> Vec<CellCoord> {
+    let mut neighbours = vec![];
+    if self.top.is_some() {
+      neighbours.push(self.top.unwrap());
+    }
+    if self.bottom.is_some() {
+      neighbours.push(self.bottom.unwrap());
+    }
+    if self.left.is_some() {
+      neighbours.push(self.left.unwrap());
+    }
+    if self.right.is_some() {
+      neighbours.push(self.right.unwrap());
+    }
+    neighbours
+  }
 
   fn draw_background(&self, canvas: &mut Canvas) {
-    let color = self.color.unwrap();
+    let color;
+    if self.distance > 0 {
+      let d = (self.distance % 256) as u32;
+      let d = 256 - d;
+      let red = d << 16;
+      let green = d << 8;
+      let blue = d;
+      color = red | green | blue;
+    } else if self.color.is_some() {
+      color = self.color.unwrap()
+    } else {
+      return;
+    }
     canvas.fill_square(
       self.coord.x_pos * CELL_WIDTH + CELL_INSET,
       self.coord.y_pos * CELL_HEIGHT + CELL_INSET,
@@ -88,11 +118,7 @@ impl Cell {
   }
 
   pub fn draw(&self, canvas: &mut Canvas) {
-    if self.color.is_some() {
-      self.draw_background(canvas);
-    }
-
-
+    self.draw_background(canvas);
     if self.top.is_none() {
       let y_pos = (self.coord.y_pos + 1) * CELL_HEIGHT;
       canvas.draw_horizontal_line((self.coord.x_pos * CELL_WIDTH) + CELL_INSET,
