@@ -87,7 +87,7 @@ impl Cell {
     }
   }
 
-  pub fn draw(&self, canvas: &mut Canvas) {
+  pub fn draw(&self, canvas: &mut Canvas, cell_inset : i32) {
     if self.color.is_some() {
       self.draw_background(canvas);
     }
@@ -95,81 +95,81 @@ impl Cell {
 
     if self.top.is_none() {
       let y_pos = (self.coord.y_pos + 1) * CELL_HEIGHT;
-      canvas.draw_horizontal_line((self.coord.x_pos * CELL_WIDTH) + CELL_INSET,
-                                  (y_pos) - CELL_INSET,
-                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
-                                  (y_pos) - CELL_INSET);
+      canvas.draw_horizontal_line((self.coord.x_pos * CELL_WIDTH) + cell_inset,
+                                  (y_pos) - cell_inset,
+                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - cell_inset,
+                                  (y_pos) - cell_inset);
     }
     if self.bottom.is_none() {
       let y_pos = self.coord.y_pos * CELL_HEIGHT;
-      canvas.draw_horizontal_line((self.coord.x_pos * CELL_WIDTH) + CELL_INSET,
-                                  y_pos + CELL_INSET,
-                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
-                                  y_pos + CELL_INSET);
+      canvas.draw_horizontal_line((self.coord.x_pos * CELL_WIDTH) + cell_inset,
+                                  y_pos + cell_inset,
+                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - cell_inset,
+                                  y_pos + cell_inset);
     }
     if self.left.is_none() {
       let x_pos = self.coord.x_pos * CELL_WIDTH;
-      canvas.draw_vertical_line(x_pos + CELL_INSET,
-                                (self.coord.y_pos * CELL_HEIGHT) + CELL_INSET,
-                                x_pos + CELL_INSET,
-                                ((self.coord.y_pos + 1) * CELL_HEIGHT) - CELL_INSET)
+      canvas.draw_vertical_line(x_pos + cell_inset,
+                                (self.coord.y_pos * CELL_HEIGHT) + cell_inset,
+                                x_pos + cell_inset,
+                                ((self.coord.y_pos + 1) * CELL_HEIGHT) - cell_inset)
     }
     if self.right.is_none() {
       let x_pos = (self.coord.x_pos + 1) * CELL_WIDTH;
-      canvas.draw_vertical_line(x_pos - CELL_INSET,
-                                (self.coord.y_pos * CELL_HEIGHT) + CELL_INSET,
-                                x_pos - CELL_INSET,
-                                ((self.coord.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
+      canvas.draw_vertical_line(x_pos - cell_inset,
+                                (self.coord.y_pos * CELL_HEIGHT) + cell_inset,
+                                x_pos - cell_inset,
+                                ((self.coord.y_pos + 1) * CELL_HEIGHT) - cell_inset,
       );
     }
 
-    if CELL_INSET > 0 {
+    if cell_inset > 0 {
       if self.top.is_some() {
         let y_pos = (self.coord.y_pos + 1) * CELL_HEIGHT;
-        canvas.draw_vertical_line((self.coord.x_pos * CELL_WIDTH) + CELL_INSET,
+        canvas.draw_vertical_line((self.coord.x_pos * CELL_WIDTH) + cell_inset,
                                   y_pos,
-                                  (self.coord.x_pos * CELL_WIDTH) + CELL_INSET,
-                                  (y_pos) - CELL_INSET);
+                                  (self.coord.x_pos * CELL_WIDTH) + cell_inset,
+                                  (y_pos) - cell_inset);
 
-        canvas.draw_vertical_line(((self.coord.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+        canvas.draw_vertical_line(((self.coord.x_pos + 1) * CELL_WIDTH) - cell_inset,
                                   y_pos,
-                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
-                                  (y_pos) - CELL_INSET);
+                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - cell_inset,
+                                  (y_pos) - cell_inset);
       }
       if self.bottom.is_some() {
         let y_pos = (self.coord.y_pos) * CELL_HEIGHT;
-        canvas.draw_vertical_line((self.coord.x_pos * CELL_WIDTH) + CELL_INSET,
+        canvas.draw_vertical_line((self.coord.x_pos * CELL_WIDTH) + cell_inset,
                                   y_pos,
-                                  (self.coord.x_pos * CELL_WIDTH) + CELL_INSET,
-                                  (y_pos) + CELL_INSET);
+                                  (self.coord.x_pos * CELL_WIDTH) + cell_inset,
+                                  (y_pos) + cell_inset);
 
-        canvas.draw_vertical_line(((self.coord.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
+        canvas.draw_vertical_line(((self.coord.x_pos + 1) * CELL_WIDTH) - cell_inset,
                                   y_pos,
-                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
-                                  (y_pos) + CELL_INSET);
+                                  ((self.coord.x_pos + 1) * CELL_WIDTH) - cell_inset,
+                                  (y_pos) + cell_inset);
       }
       if self.left.is_some() {
         let x_pos = self.coord.x_pos * CELL_WIDTH;
         canvas.draw_horizontal_line(x_pos,
-                                    (self.coord.y_pos * CELL_HEIGHT) + CELL_INSET,
-                                    x_pos + CELL_INSET,
-                                    (self.coord.y_pos * CELL_HEIGHT) + CELL_INSET);
+                                    (self.coord.y_pos * CELL_HEIGHT) + cell_inset,
+                                    x_pos + cell_inset,
+                                    (self.coord.y_pos * CELL_HEIGHT) + cell_inset);
         canvas.draw_horizontal_line(x_pos,
-                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
-                                    x_pos + CELL_INSET,
-                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - CELL_INSET);
+                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - cell_inset,
+                                    x_pos + cell_inset,
+                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - cell_inset);
       }
       if self.right.is_some() {
         let x_pos = (self.coord.x_pos + 1) * CELL_WIDTH;
         canvas.draw_horizontal_line(x_pos,
-                                    (self.coord.y_pos * CELL_HEIGHT) + CELL_INSET,
-                                    x_pos - CELL_INSET,
-                                    (self.coord.y_pos * CELL_HEIGHT) + CELL_INSET);
+                                    (self.coord.y_pos * CELL_HEIGHT) + cell_inset,
+                                    x_pos - cell_inset,
+                                    (self.coord.y_pos * CELL_HEIGHT) + cell_inset);
 
         canvas.draw_horizontal_line(x_pos,
-                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
-                                    x_pos - CELL_INSET,
-                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - CELL_INSET);
+                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - cell_inset,
+                                    x_pos - cell_inset,
+                                    ((self.coord.y_pos + 1) * CELL_HEIGHT) - cell_inset);
       }
     }
   }

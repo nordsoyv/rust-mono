@@ -6,10 +6,11 @@ pub struct SquareGrid2D {
   cells: Vec<Cell>,
   pub width: i32,
   pub height: i32,
+  pub cell_inset : i32,
 }
 
 impl SquareGrid2D {
-  pub fn new(width: i32, height: i32) -> SquareGrid2D {
+  pub fn new(width: i32, height: i32, cell_inset: i32) -> SquareGrid2D {
     let mut cells = vec![];
     for y in 0..height {
       for x in 0..width {
@@ -20,6 +21,7 @@ impl SquareGrid2D {
       cells,
       width,
       height,
+      cell_inset
     }
   }
 
@@ -146,6 +148,6 @@ impl SquareGrid2D {
   }
 
   fn draw_cell(&self, canvas: &mut Canvas, cell: Cell) {
-    cell.draw(canvas);
+    cell.draw(canvas, self.cell_inset);
   }
 }

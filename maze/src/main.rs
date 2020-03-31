@@ -18,12 +18,15 @@ mod generators;
 const MENU_NEW_MAZE: usize = 1;
 const MENU_FASTER: usize = 2;
 const MENU_SLOWER: usize = 3;
+const MENU_INSET_LARGER: usize = 4;
+const MENU_INSET_SMALLER: usize = 5;
 
 struct AppState {
   generator: Box<dyn Generator>,
   saved: bool,
   grid: SquareGrid2D,
   generate_steps: i32,
+  cell_inset: i32,
 }
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
@@ -69,8 +72,8 @@ fn get_mouse_pos(window: &Window) -> CellCoord {
   });
 }
 
-fn get_title(app_state : &AppState)-> String {
-  return format!("Maze type: {} -- Generation speed: {}",app_state.generator.name(),  app_state.generate_steps);
+fn get_title(app_state: &AppState) -> String {
+  return format!("Maze type: {} -- Generation speed: {}", app_state.generator.name(), app_state.generate_steps);
 }
 
 fn main() {
@@ -85,14 +88,17 @@ fn main() {
   let mut app_state = AppState {
     generator: Box::new(GrowingTreeGenerator::new(Strategy::Last)),
     saved: false,
-    grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS),
+    grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS, 1),
     generate_steps: 1,
+    cell_inset: 1,
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
   menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).shortcut(Key::N, 0).build();
   menu.add_item("Faster", MENU_FASTER).enabled(true).shortcut(Key::F, 0).build();
   menu.add_item("Slower", MENU_SLOWER).enabled(true).shortcut(Key::S, 0).build();
+  menu.add_item("Cell inset larger", MENU_INSET_LARGER).enabled(true).shortcut(Key::I, 0).build();
+  menu.add_item("Cell inset smaller", MENU_INSET_SMALLER).enabled(true).shortcut(Key::O, 0).build();
   window.add_menu(&menu);
   window.set_title(get_title(&app_state).as_str());
   while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -103,7 +109,7 @@ fn main() {
         Some(cmd) => {
           match cmd {
             MENU_NEW_MAZE => {
-              app_state.grid = SquareGrid2D::new(NUM_CELLS, NUM_CELLS);
+              app_state.grid = SquareGrid2D::new(NUM_CELLS, NUM_CELLS, app_state.cell_inset);
               app_state.generator = Box::new(GrowingTreeGenerator::new(Strategy::Last));
               app_state.generator.init(&mut app_state.grid);
             }
@@ -114,6 +120,19 @@ fn main() {
             MENU_SLOWER => {
               app_state.generate_steps = app_state.generate_steps - 1;
               window.set_title(get_title(&app_state).as_str());
+            }
+            MENU_INSET_SMALLER => {
+              app_state.grid.cell_inset = app_state.grid.cell_inset - 1;
+              if app_state.grid.cell_inset < 0 {
+                app_state.grid.cell_inset = 0;
+              }
+            }
+            MENU_INSET_LARGER => {
+//              app_state.cell_inset = app_state.cell_inset + 1;
+              app_state.grid.cell_inset = app_state.grid.cell_inset + 1;
+              if app_state.grid.cell_inset > CELL_WIDTH / 2 {
+                app_state.grid.cell_inset = CELL_WIDTH / 2;
+              }
             }
             _ => println!("Unhandled menu command")
           }
