@@ -1,5 +1,5 @@
 use crate::canvas::Canvas;
-use crate::common::{CELL_HEIGHT, CELL_INSET, CELL_WIDTH};
+use crate::common::{CELL_HEIGHT, CELL_WIDTH};
 
 #[derive(Clone, Copy, Debug)]
 pub struct CellCoord {
@@ -60,7 +60,7 @@ impl Cell {
     neighbours
   }
 
-  fn draw_background(&self, canvas: &mut Canvas) {
+  fn draw_background(&self, canvas: &mut Canvas, cell_inset : i32) {
     let color;
     if self.distance > 0 {
       let dist = (self.distance % (256*3)) as u32;
@@ -83,50 +83,50 @@ impl Cell {
       return;
     }
     canvas.fill_square(
-      self.coord.x_pos * CELL_WIDTH + CELL_INSET,
-      self.coord.y_pos * CELL_HEIGHT + CELL_INSET,
-      CELL_WIDTH - CELL_INSET - CELL_INSET,
-      CELL_HEIGHT - CELL_INSET - CELL_INSET,
+      self.coord.x_pos * CELL_WIDTH + cell_inset,
+      self.coord.y_pos * CELL_HEIGHT + cell_inset,
+      CELL_WIDTH - cell_inset - cell_inset,
+      CELL_HEIGHT - cell_inset - cell_inset,
       color);
-    if CELL_INSET > 0 {
+    if cell_inset > 0 {
       if self.top.is_some() {
         canvas.fill_square(
-          ((self.coord.x_pos) * CELL_WIDTH) + CELL_INSET,
-          ((self.coord.y_pos + 1) * CELL_HEIGHT) - CELL_INSET,
-          CELL_WIDTH - CELL_INSET - CELL_INSET,
-          CELL_INSET,
+          ((self.coord.x_pos) * CELL_WIDTH) + cell_inset,
+          ((self.coord.y_pos + 1) * CELL_HEIGHT) - cell_inset,
+          CELL_WIDTH - cell_inset - cell_inset,
+          cell_inset,
           color);
       }
       if self.bottom.is_some() {
         canvas.fill_square(
-          ((self.coord.x_pos) * CELL_WIDTH) + CELL_INSET,
+          ((self.coord.x_pos) * CELL_WIDTH) + cell_inset,
           self.coord.y_pos
             * CELL_HEIGHT,
-          CELL_WIDTH - CELL_INSET - CELL_INSET,
-          CELL_INSET,
+          CELL_WIDTH - cell_inset - cell_inset,
+          cell_inset,
           color);
       }
       if self.left.is_some() {
         canvas.fill_square(
           self.coord.x_pos * CELL_WIDTH,
-          ((self.coord.y_pos) * CELL_HEIGHT) + CELL_INSET,
-          CELL_INSET,
-          CELL_HEIGHT - CELL_INSET - CELL_INSET,
+          ((self.coord.y_pos) * CELL_HEIGHT) + cell_inset,
+          cell_inset,
+          CELL_HEIGHT - cell_inset - cell_inset,
           color);
       }
       if self.right.is_some() {
         canvas.fill_square(
-          ((self.coord.x_pos + 1) * CELL_WIDTH) - CELL_INSET,
-          ((self.coord.y_pos) * CELL_HEIGHT) + CELL_INSET,
-          CELL_INSET,
-          CELL_HEIGHT - CELL_INSET - CELL_INSET,
+          ((self.coord.x_pos + 1) * CELL_WIDTH) - cell_inset,
+          ((self.coord.y_pos) * CELL_HEIGHT) + cell_inset,
+          cell_inset,
+          CELL_HEIGHT - cell_inset - cell_inset,
           color);
       }
     }
   }
 
   pub fn draw(&self, canvas: &mut Canvas, cell_inset : i32) {
-    self.draw_background(canvas);
+    self.draw_background(canvas, cell_inset);
     if self.top.is_none() {
       let y_pos = (self.coord.y_pos + 1) * CELL_HEIGHT;
       canvas.draw_horizontal_line((self.coord.x_pos * CELL_WIDTH) + cell_inset,
