@@ -8,18 +8,22 @@ use crate::common::{CELL_ACTIVE_COLOR, CELL_HEIGHT, CELL_WIDTH, HEIGHT, MARGIN, 
 use crate::generators::Generator;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::maze::SquareGrid2D;
+use crate::djikstra::Djikstra;
 
 mod canvas;
 mod cell;
 mod common;
 mod maze;
 mod generators;
+mod djikstra;
 
 const MENU_NEW_MAZE: usize = 1;
 const MENU_FASTER: usize = 2;
 const MENU_SLOWER: usize = 3;
-const MENU_INSET_LARGER: usize = 4;
-const MENU_INSET_SMALLER: usize = 5;
+const MENU_DJIKSTRA: usize = 4;
+const MENU_SHOW_DIST: usize = 5;
+const MENU_INSET_LARGER: usize = 6;
+const MENU_INSET_SMALLER: usize = 7;
 
 struct AppState {
   generator: Box<dyn Generator>,
@@ -27,6 +31,7 @@ struct AppState {
   grid: SquareGrid2D,
   generate_steps: i32,
   cell_inset: i32,
+  show_dist : bool,
 }
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
@@ -89,7 +94,8 @@ fn main() {
     generator: Box::new(GrowingTreeGenerator::new(Strategy::Last)),
     saved: false,
     grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS, 1),
-    generate_steps: 1,
+    generate_steps: 20,
+    show_dist: false,
     cell_inset: 1,
   };
   app_state.generator.init(&mut app_state.grid);
@@ -99,10 +105,13 @@ fn main() {
   menu.add_item("Slower", MENU_SLOWER).enabled(true).shortcut(Key::S, 0).build();
   menu.add_item("Cell inset larger", MENU_INSET_LARGER).enabled(true).shortcut(Key::I, 0).build();
   menu.add_item("Cell inset smaller", MENU_INSET_SMALLER).enabled(true).shortcut(Key::O, 0).build();
+  // menu.add_item("Djikstra", MENU_DJIKSTRA).enabled(true).shortcut(Key::D, 0).build();
+  menu.add_item("Show distances", MENU_SHOW_DIST).enabled(true).shortcut(Key::D, 0).build();
   window.add_menu(&menu);
   window.set_title(get_title(&app_state).as_str());
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
+      let mouse_coord = get_mouse_pos(&window);
       let menu_status = window.is_menu_pressed();
       match menu_status {
         None => {}
@@ -134,11 +143,17 @@ fn main() {
                 app_state.grid.cell_inset = CELL_WIDTH / 2;
               }
             }
+            MENU_DJIKSTRA => {
+              let mut d = Djikstra::new();
+              d.run(mouse_coord,&mut app_state.grid);
+            }
+            MENU_SHOW_DIST => {
+              app_state.show_dist = !app_state.show_dist;
+            }
             _ => println!("Unhandled menu command")
           }
         }
       }
-      let mouse_coord = get_mouse_pos(&window);
       let mut canvas = Canvas {
         width: WIDTH,
         height: HEIGHT,
@@ -153,8 +168,12 @@ fn main() {
       if app_state.generator.done() {
         // window.set_cursor_style(CursorStyle::Arrow);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-          let cell = app_state.grid.get_mut_cell(mouse_coord);
-          cell.color = Some(CELL_ACTIVE_COLOR);
+          if app_state.show_dist {
+            Djikstra::new().run(mouse_coord,&mut app_state.grid);
+          }else {
+            let cell = app_state.grid.get_mut_cell(mouse_coord);
+            cell.color = Some(CELL_ACTIVE_COLOR);
+          }
         }
         app_state.grid.draw(&mut canvas);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
