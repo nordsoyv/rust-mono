@@ -1,0 +1,18 @@
+# Cargo.toml
+[package]
+name = "gfx-hal-tutorials"
+version = "0.1.0"
+edition = "2018"
+license = "CC0-1.0"
+
+[dependencies]
+bincode = "~1.2.1"
+gfx-hal = "=0.5.0"
+glsl-to-spirv = "=0.1.7"
+image = "~0.23.2"
+serde = { version = "~1.0.104", features = ["derive"] }
+winit = "~0.22.0"
+
+[target.'cfg(windows)'.dependencies.backend]
+package = "gfx-backend-vulkan"
+version = "=0.5.1"

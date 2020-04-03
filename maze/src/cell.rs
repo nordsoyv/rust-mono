@@ -72,7 +72,7 @@ impl Cell {
       let remain = remain - green;
       let red = remain;
 
-
+      dbg!(dist,red,green,blue);
       let red = red << 16;
       let green = green << 8;
 

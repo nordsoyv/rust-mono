@@ -59,12 +59,17 @@
       <sourceFolder url="file://$MODULE_DIR$/maze/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/maze/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/maze/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/gfx-hal-tutorials/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gfx-hal-tutorials/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gfx-hal-tutorials/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/gfx-hal-tutorials/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/advent/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-wasm/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/service/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/target" />
+      <excludeFolder url="file://$MODULE_DIR$/gfx-hal-tutorials/target" />
       <excludeFolder url="file://$MODULE_DIR$/maze/target" />
       <excludeFolder url="file://$MODULE_DIR$/parser-gen/target" />
       <excludeFolder url="file://$MODULE_DIR$/raytracer/target" />
