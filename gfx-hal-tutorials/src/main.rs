@@ -8,6 +8,15 @@ use gfx_hal::Instance;
 use gfx_hal::window::PresentationSurface;
 use glsl_to_spirv::ShaderType;
 
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+struct PushConstants {
+  color: [f32; 4],
+  pos: [f32; 2],
+  scale: [f32; 2],
+}
+
 struct Resources<B: gfx_hal::Backend> {
   instance: B::Instance,
   surface: B::Surface,
@@ -55,6 +64,101 @@ impl<B: gfx_hal::Backend> Drop for ResourceHolder<B> {
   }
 }
 
+/// Returns a view of a struct as a slice of `u32`s.
+unsafe fn push_constant_bytes<T>(push_constants: &T) -> &[u32] {
+  let size_in_bytes = std::mem::size_of::<T>();
+  let size_in_u32s = size_in_bytes / std::mem::size_of::<u32>();
+  let start_ptr = push_constants as *const T as *const u32;
+  std::slice::from_raw_parts(start_ptr, size_in_u32s)
+}
+
+/// Compile some GLSL shader source to SPIR-V.
+fn compile_shader(glsl: &str, shader_type: ShaderType) -> Vec<u32> {
+  use std::io::{Cursor, Read};
+
+  let mut compiled_file =
+    glsl_to_spirv::compile(glsl, shader_type).expect("Failed to compile shader");
+
+  let mut spirv_bytes = vec![];
+  compiled_file.read_to_end(&mut spirv_bytes).unwrap();
+
+  let spirv = gfx_hal::pso::read_spirv(Cursor::new(&spirv_bytes)).expect("Invalid SPIR-V");
+
+  spirv
+}
+
+
+/// Create a pipeline with the given layout and shaders.
+unsafe fn make_pipeline<B: gfx_hal::Backend>(
+  device: &B::Device,
+  render_pass: &B::RenderPass,
+  pipeline_layout: &B::PipelineLayout,
+  vertex_shader: &str,
+  fragment_shader: &str,
+) -> B::GraphicsPipeline {
+  use gfx_hal::pass::Subpass;
+  use gfx_hal::pso::{
+    BlendState, ColorBlendDesc, ColorMask, EntryPoint, Face, GraphicsPipelineDesc,
+    GraphicsShaderSet, Primitive, Rasterizer, Specialization,
+  };
+  let vertex_shader_module = device
+    .create_shader_module(&compile_shader(vertex_shader, ShaderType::Vertex))
+    .expect("Failed to create vertex shader module");
+
+  let fragment_shader_module = device
+    .create_shader_module(&compile_shader(fragment_shader, ShaderType::Fragment))
+    .expect("Failed to create fragment shader module");
+
+  let (vs_entry, fs_entry) = (
+    EntryPoint {
+      entry: "main",
+      module: &vertex_shader_module,
+      specialization: Specialization::default(),
+    },
+    EntryPoint {
+      entry: "main",
+      module: &fragment_shader_module,
+      specialization: Specialization::default(),
+    },
+  );
+
+  let shader_entries = GraphicsShaderSet {
+    vertex: vs_entry,
+    hull: None,
+    domain: None,
+    geometry: None,
+    fragment: Some(fs_entry),
+  };
+
+  let mut pipeline_desc = GraphicsPipelineDesc::new(
+    shader_entries,
+    Primitive::TriangleList,
+    Rasterizer {
+      cull_face: Face::BACK,
+      ..Rasterizer::FILL
+    },
+    pipeline_layout,
+    Subpass {
+      index: 0,
+      main_pass: render_pass,
+    },
+  );
+
+  pipeline_desc.blender.targets.push(ColorBlendDesc {
+    mask: ColorMask::ALL,
+    blend: Some(BlendState::ALPHA),
+  });
+
+  let pipeline = device
+    .create_graphics_pipeline(&pipeline_desc, None)
+    .expect("Failed to create graphics pipeline");
+
+  device.destroy_shader_module(vertex_shader_module);
+  device.destroy_shader_module(fragment_shader_module);
+
+  pipeline
+}
+
 // src/main.rs (or other binary)
 fn main() {
   const APP_NAME: &'static str = "Part 1: Drawing a triangle";
@@ -97,7 +201,6 @@ fn main() {
     };
 
     let adapter = instance.enumerate_adapters().remove(0);
-
     (instance, surface, adapter)
   };
 
@@ -184,101 +287,18 @@ fn main() {
 
 
   let pipeline_layout = unsafe {
+    use gfx_hal::pso::ShaderStageFlags;
+
+    let push_constant_bytes = std::mem::size_of::<PushConstants>() as u32;
+
     device
-      .create_pipeline_layout(&[], &[])
+      .create_pipeline_layout(&[], &[(ShaderStageFlags::VERTEX, 0..push_constant_bytes)])
       .expect("Out of memory")
   };
 
 
-  let vertex_shader = include_str!("shaders/part-1.vert");
-  let fragment_shader = include_str!("shaders/part-1.frag");
-
-  /// Compile some GLSL shader source to SPIR-V.
-  fn compile_shader(glsl: &str, shader_type: ShaderType) -> Vec<u32> {
-    use std::io::{Cursor, Read};
-
-    let mut compiled_file =
-      glsl_to_spirv::compile(glsl, shader_type).expect("Failed to compile shader");
-
-    let mut spirv_bytes = vec![];
-    compiled_file.read_to_end(&mut spirv_bytes).unwrap();
-
-    let spirv = gfx_hal::pso::read_spirv(Cursor::new(&spirv_bytes)).expect("Invalid SPIR-V");
-
-    spirv
-  }
-
-
-  /// Create a pipeline with the given layout and shaders.
-  unsafe fn make_pipeline<B: gfx_hal::Backend>(
-    device: &B::Device,
-    render_pass: &B::RenderPass,
-    pipeline_layout: &B::PipelineLayout,
-    vertex_shader: &str,
-    fragment_shader: &str,
-  ) -> B::GraphicsPipeline {
-    use gfx_hal::pass::Subpass;
-    use gfx_hal::pso::{
-      BlendState, ColorBlendDesc, ColorMask, EntryPoint, Face, GraphicsPipelineDesc,
-      GraphicsShaderSet, Primitive, Rasterizer, Specialization,
-    };
-    let vertex_shader_module = device
-      .create_shader_module(&compile_shader(vertex_shader, ShaderType::Vertex))
-      .expect("Failed to create vertex shader module");
-
-    let fragment_shader_module = device
-      .create_shader_module(&compile_shader(fragment_shader, ShaderType::Fragment))
-      .expect("Failed to create fragment shader module");
-
-    let (vs_entry, fs_entry) = (
-      EntryPoint {
-        entry: "main",
-        module: &vertex_shader_module,
-        specialization: Specialization::default(),
-      },
-      EntryPoint {
-        entry: "main",
-        module: &fragment_shader_module,
-        specialization: Specialization::default(),
-      },
-    );
-
-    let shader_entries = GraphicsShaderSet {
-      vertex: vs_entry,
-      hull: None,
-      domain: None,
-      geometry: None,
-      fragment: Some(fs_entry),
-    };
-
-    let mut pipeline_desc = GraphicsPipelineDesc::new(
-      shader_entries,
-      Primitive::TriangleList,
-      Rasterizer {
-        cull_face: Face::BACK,
-        ..Rasterizer::FILL
-      },
-      pipeline_layout,
-      Subpass {
-        index: 0,
-        main_pass: render_pass,
-      },
-    );
-
-    pipeline_desc.blender.targets.push(ColorBlendDesc {
-      mask: ColorMask::ALL,
-      blend: Some(BlendState::ALPHA),
-    });
-
-    let pipeline = device
-      .create_graphics_pipeline(&pipeline_desc, None)
-      .expect("Failed to create graphics pipeline");
-
-    device.destroy_shader_module(vertex_shader_module);
-    device.destroy_shader_module(fragment_shader_module);
-
-    pipeline
-  };
+  let vertex_shader = include_str!("shaders/part-2.vert");
+  let fragment_shader = include_str!("shaders/part-2.frag");
 
 
   let pipeline = unsafe {
@@ -308,6 +328,9 @@ fn main() {
       submission_complete_fence,
       rendering_complete_semaphore,
     }));
+
+  // We'll use the elapsed time to drive some animations later on.
+  let start_time = std::time::Instant::now();
 
   // Note that this takes a `move` closure. This means it will take ownership
   // over any resources referenced within. It also means they will be dropped
@@ -341,7 +364,51 @@ fn main() {
         let res: &mut Resources<_> = &mut resource_holder.0;
         let render_pass = &res.render_passes[0];
         let pipeline = &res.pipelines[0];
+        let pipeline_layout = &res.pipeline_layouts[0];
+        // This `anim` will be a number that oscillates smoothly
+        // between 0.0 and 1.0.
+        let anim = start_time.elapsed().as_secs_f32().sin() * 0.5 + 0.5;
 
+        let small = [0.33, 0.33];
+
+        let triangles = &[
+          // Red triangle
+          PushConstants {
+            color: [1.0, 0.0, 0.0, 1.0],
+            pos: [-0.5, -0.5],
+            scale: small,
+          },
+          // Green triangle
+          PushConstants {
+            color: [0.0, 1.0, 0.0, 1.0],
+            pos: [0.0, -0.5],
+            scale: small,
+          },
+          // Blue triangle
+          PushConstants {
+            color: [0.0, 0.0, 1.0, 1.0],
+            pos: [0.5, -0.5],
+            scale: small,
+          },
+          // Blue <-> cyan animated triangle
+          PushConstants {
+            color: [0.0, anim, 1.0, 1.0],
+            pos: [-0.5, 0.5],
+            scale: small,
+          },
+          // Down <-> up animated triangle
+          PushConstants {
+            color: [1.0, 1.0, 1.0, 1.0],
+            pos: [0.0, 0.5 - anim * 0.5],
+            scale: small,
+          },
+          // Small <-> big animated triangle
+          PushConstants {
+            color: [1.0, 1.0, 1.0, 1.0],
+            pos: [0.5, 0.5],
+            scale: [0.33 + anim * 0.33, 0.33 + anim * 0.33],
+          },
+        ];
         unsafe {
           use gfx_hal::pool::CommandPool;
 
@@ -450,7 +517,18 @@ fn main() {
             SubpassContents::Inline,
           );
           command_buffer.bind_graphics_pipeline(pipeline);
-          command_buffer.draw(0..3, 0..1);
+          for triangle in triangles {
+            use gfx_hal::pso::ShaderStageFlags;
+
+            command_buffer.push_graphics_constants(
+              pipeline_layout,
+              ShaderStageFlags::VERTEX,
+              0,
+              push_constant_bytes(triangle),
+            );
+
+            command_buffer.draw(0..3, 0..1);
+          }
           command_buffer.end_render_pass();
           command_buffer.finish();
         }
