@@ -176,10 +176,10 @@ fn main() {
     (logical, physical)
   };
 
-  let mut surface_extent = Extent2D {
-    width: physical_window_size.width,
-    height: physical_window_size.height,
-  };
+//  let mut surface_extent = Extent2D {
+//    width: physical_window_size.width,
+//    height: physical_window_size.height,
+//  };
 
   let window = winit::window::WindowBuilder::new()
     .with_title(APP_NAME)
