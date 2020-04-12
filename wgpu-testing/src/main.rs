@@ -50,6 +50,9 @@ const INDICES: &[u16] = &[
   1, 2, 4,
   2, 3, 4,
 ];
+const INDICES_LINE: &[u16] = &[
+  0, 1, 2, 3, 4, 0
+];
 
 
 struct App {
@@ -60,9 +63,12 @@ struct App {
   sc_desc: wgpu::SwapChainDescriptor,
   swap_chain: wgpu::SwapChain,
   render_pipeline: wgpu::RenderPipeline,
-  num_indices : u32,
+  line_render_pipeline: wgpu::RenderPipeline,
+  num_tri_indices: u32,
+  num_line_indices: u32,
   vertex_buffer : wgpu::Buffer,
   index_buffer : wgpu::Buffer,
+  line_index_buffer : wgpu::Buffer,
   size: winit::dpi::PhysicalSize<u32>,
   red: f64,
 }
@@ -98,15 +104,19 @@ impl App {
 
     let vs_src = include_str!("shaders/shader.vert");
     let fs_src = include_str!("shaders/shader.frag");
+    let fs_line_src = include_str!("shaders/line.frag");
 
     let vs_spirv = glsl_to_spirv::compile(vs_src, glsl_to_spirv::ShaderType::Vertex).unwrap();
     let fs_spirv = glsl_to_spirv::compile(fs_src, glsl_to_spirv::ShaderType::Fragment).unwrap();
+    let fs_line_spirv = glsl_to_spirv::compile(fs_line_src, glsl_to_spirv::ShaderType::Fragment).unwrap();
 
     let vs_data = wgpu::read_spirv(vs_spirv).unwrap();
     let fs_data = wgpu::read_spirv(fs_spirv).unwrap();
+    let fs_line_data = wgpu::read_spirv(fs_line_spirv).unwrap();
 
     let vs_module = device.create_shader_module(&vs_data);
     let fs_module = device.create_shader_module(&fs_data);
+    let fs_line_module = device.create_shader_module(&fs_line_data);
 
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
       bind_group_layouts: &[],
@@ -146,10 +156,46 @@ impl App {
       sample_mask: !0, // 6.
       alpha_to_coverage_enabled: false, // 7.
     });
+    let line_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+      layout: &render_pipeline_layout,
+      vertex_stage: wgpu::ProgrammableStageDescriptor {
+        module: &vs_module,
+        entry_point: "main", // 1.
+      },
+      fragment_stage: Some(wgpu::ProgrammableStageDescriptor { // 2.
+        module: &fs_line_module,
+        entry_point: "main",
+      }),
+      rasterization_state: Some(wgpu::RasterizationStateDescriptor {
+        front_face: wgpu::FrontFace::Ccw,
+        cull_mode: wgpu::CullMode::Back,
+        depth_bias: 0,
+        depth_bias_slope_scale: 0.0,
+        depth_bias_clamp: 0.0,
+      }),
+      color_states: &[
+        wgpu::ColorStateDescriptor {
+          format: sc_desc.format,
+          color_blend: wgpu::BlendDescriptor::REPLACE,
+          alpha_blend: wgpu::BlendDescriptor::REPLACE,
+          write_mask: wgpu::ColorWrite::ALL,
+        },
+      ],
+      primitive_topology: wgpu::PrimitiveTopology::LineStrip, // 1.
+      depth_stencil_state: None, // 2.
+      vertex_state: wgpu::VertexStateDescriptor {
+        index_format: wgpu::IndexFormat::Uint16,
+        vertex_buffers: &[Vertex::desc()],
+      },
+      sample_count: 1, // 5.
+      sample_mask: !0, // 6.
+      alpha_to_coverage_enabled: false, // 7.
+    });
 
 
     let vertex_buffer  = device.create_buffer_with_data(VERTICES.as_bytes(), wgpu::BufferUsage::VERTEX );
     let index_buffer = device.create_buffer_with_data(INDICES.as_bytes(), wgpu::BufferUsage::INDEX);
+    let line_index_buffer = device.create_buffer_with_data(INDICES_LINE.as_bytes(), wgpu::BufferUsage::INDEX);
 
     Self {
       surface,
@@ -161,8 +207,11 @@ impl App {
       size,
       vertex_buffer,
       index_buffer,
+      line_index_buffer,
       render_pipeline,
-      num_indices : INDICES.len() as u32,
+      line_render_pipeline,
+      num_tri_indices: INDICES.len() as u32,
+      num_line_indices: INDICES_LINE.len() as u32,
       red: 0.1,
     }
   }
@@ -215,7 +264,13 @@ impl App {
       render_pass.set_vertex_buffer(0, &self.vertex_buffer, 0,0);
       render_pass.set_index_buffer(&self.index_buffer,0,0);
 //      render_pass.draw(0..self.num_vertices, 0..1); // 3.
-      render_pass.draw_indexed(0..self.num_indices,0,0..1);
+      render_pass.draw_indexed(0..self.num_tri_indices, 0, 0..1);
+
+      render_pass.set_pipeline(&self.line_render_pipeline); // 2.
+      render_pass.set_index_buffer(&self.line_index_buffer,0,0);
+      render_pass.draw_indexed(0..self.num_line_indices, 0, 0..1);
+
+
     }
 
     self.queue.submit(&[
