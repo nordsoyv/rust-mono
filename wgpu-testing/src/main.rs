@@ -1,11 +1,13 @@
 mod example;
+mod vertex;
+mod wgpu_utils;
 
 use winit::{
   event::*,
   event_loop::{ControlFlow, EventLoop},
-  window::{Window, WindowBuilder},
+  window::{ WindowBuilder},
 };
-use crate::example::App;
+use crate::example::Example;
 
 
 async fn run() {
@@ -14,7 +16,7 @@ async fn run() {
     .build(&event_loop)
     .unwrap();
 
-  let mut app = App::new(&window).await;
+  let mut app = Example::new(&window).await;
 
   event_loop.run(move |event, _, control_flow| {
     match event {

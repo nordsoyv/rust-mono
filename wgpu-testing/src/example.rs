@@ -1,47 +1,16 @@
-use winit::window::Window;
-
-
-use zerocopy::{AsBytes};
 use winit::event::WindowEvent;
+use winit::window::Window;
+use zerocopy::AsBytes;
 
-// main.rs
-#[repr(C)]
-#[derive(Copy, Clone, Debug,AsBytes)]
-struct Vertex {
-  position: [f32; 3],
-  color: [f32; 3],
-}
+use crate::wgpu_utils::create_shader_module;
+use crate::vertex::VertexWithColor;
 
-// main.rs
-impl Vertex {
-  fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
-    use std::mem;
-    wgpu::VertexBufferDescriptor {
-      stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
-      step_mode: wgpu::InputStepMode::Vertex,
-      attributes: &[
-        wgpu::VertexAttributeDescriptor {
-          offset: 0,
-          shader_location: 0,
-          format: wgpu::VertexFormat::Float3,
-        },
-        wgpu::VertexAttributeDescriptor {
-          offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-          shader_location: 1,
-          format: wgpu::VertexFormat::Float3,
-        },
-      ]
-    }
-  }
-}
-
-// main.rs
-const VERTICES: &[Vertex] = &[
-  Vertex { position: [-0.0868241, 0.49240386, 0.0], color: [0.5, 0.0, 0.5] }, // A
-  Vertex { position: [-0.49513406, 0.06958647, 0.0], color: [0.5, 0.0, 0.5] }, // B
-  Vertex { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] }, // C
-  Vertex { position: [0.35966998, -0.3473291, 0.0], color: [0.5, 0.0, 0.5] }, // D
-  Vertex { position: [0.44147372, 0.2347359, 0.0],color: [0.5, 0.0, 0.5] }, // E
+const VERTICES: &[VertexWithColor] = &[
+  VertexWithColor { position: [-0.0868241, 0.49240386, 0.0], color: [0.5, 0.0, 0.5] }, // A
+  VertexWithColor { position: [-0.49513406, 0.06958647, 0.0], color: [0.5, 0.0, 0.5] }, // B
+  VertexWithColor { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] }, // C
+  VertexWithColor { position: [0.35966998, -0.3473291, 0.0], color: [0.5, 0.0, 0.5] }, // D
+  VertexWithColor { position: [0.44147372, 0.2347359, 0.0], color: [0.5, 0.0, 0.5] }, // E
 ];
 
 const INDICES: &[u16] = &[
@@ -54,8 +23,7 @@ const INDICES_LINE: &[u16] = &[
 ];
 
 
-
-pub struct App {
+pub struct Example {
   surface: wgpu::Surface,
   adapter: wgpu::Adapter,
   device: wgpu::Device,
@@ -66,14 +34,13 @@ pub struct App {
   line_render_pipeline: wgpu::RenderPipeline,
   num_tri_indices: u32,
   num_line_indices: u32,
-  vertex_buffer : wgpu::Buffer,
-  index_buffer : wgpu::Buffer,
-  line_index_buffer : wgpu::Buffer,
+  vertex_buffer: wgpu::Buffer,
+  index_buffer: wgpu::Buffer,
+  line_index_buffer: wgpu::Buffer,
   size: winit::dpi::PhysicalSize<u32>,
-  red: f64,
 }
 
-impl App {
+impl Example {
   pub async fn new(window: &Window) -> Self {
     let size = window.inner_size();
 
@@ -102,21 +69,9 @@ impl App {
     };
     let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
-    let vs_src = include_str!("shaders/shader.vert");
-    let fs_src = include_str!("shaders/shader.frag");
-    let fs_line_src = include_str!("shaders/line.frag");
-
-    let vs_spirv = glsl_to_spirv::compile(vs_src, glsl_to_spirv::ShaderType::Vertex).unwrap();
-    let fs_spirv = glsl_to_spirv::compile(fs_src, glsl_to_spirv::ShaderType::Fragment).unwrap();
-    let fs_line_spirv = glsl_to_spirv::compile(fs_line_src, glsl_to_spirv::ShaderType::Fragment).unwrap();
-
-    let vs_data = wgpu::read_spirv(vs_spirv).unwrap();
-    let fs_data = wgpu::read_spirv(fs_spirv).unwrap();
-    let fs_line_data = wgpu::read_spirv(fs_line_spirv).unwrap();
-
-    let vs_module = device.create_shader_module(&vs_data);
-    let fs_module = device.create_shader_module(&fs_data);
-    let fs_line_module = device.create_shader_module(&fs_line_data);
+    let vs_module = create_shader_module(&device, include_str!("shaders/shader.vert"), glsl_to_spirv::ShaderType::Vertex);
+    let fs_module = create_shader_module(&device, include_str!("shaders/shader.frag"), glsl_to_spirv::ShaderType::Fragment);
+    let fs_line_module = create_shader_module(&device, include_str!("shaders/line.frag"), glsl_to_spirv::ShaderType::Fragment);
 
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
       bind_group_layouts: &[],
@@ -150,7 +105,7 @@ impl App {
       depth_stencil_state: None, // 2.
       vertex_state: wgpu::VertexStateDescriptor {
         index_format: wgpu::IndexFormat::Uint16,
-        vertex_buffers: &[Vertex::desc()],
+        vertex_buffers: &[VertexWithColor::desc()],
       },
       sample_count: 1, // 5.
       sample_mask: !0, // 6.
@@ -185,7 +140,7 @@ impl App {
       depth_stencil_state: None, // 2.
       vertex_state: wgpu::VertexStateDescriptor {
         index_format: wgpu::IndexFormat::Uint16,
-        vertex_buffers: &[Vertex::desc()],
+        vertex_buffers: &[VertexWithColor::desc()],
       },
       sample_count: 1, // 5.
       sample_mask: !0, // 6.
@@ -193,7 +148,7 @@ impl App {
     });
 
 
-    let vertex_buffer  = device.create_buffer_with_data(VERTICES.as_bytes(), wgpu::BufferUsage::VERTEX );
+    let vertex_buffer = device.create_buffer_with_data(VERTICES.as_bytes(), wgpu::BufferUsage::VERTEX);
     let index_buffer = device.create_buffer_with_data(INDICES.as_bytes(), wgpu::BufferUsage::INDEX);
     let line_index_buffer = device.create_buffer_with_data(INDICES_LINE.as_bytes(), wgpu::BufferUsage::INDEX);
 
@@ -212,11 +167,10 @@ impl App {
       line_render_pipeline,
       num_tri_indices: INDICES.len() as u32,
       num_line_indices: INDICES_LINE.len() as u32,
-      red: 0.1,
     }
   }
 
-  pub  fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+  pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
     self.size = new_size;
     self.sc_desc.width = new_size.width;
     self.sc_desc.height = new_size.height;
@@ -225,10 +179,6 @@ impl App {
 
   pub fn input(&mut self, event: &WindowEvent) -> bool {
     match event {
-      WindowEvent::CursorMoved { position, .. } => {
-        self.red = (position.x + position.y) / 1000.0;
-        true
-      }
       _ => {
         false
       }
@@ -251,9 +201,9 @@ impl App {
             load_op: wgpu::LoadOp::Clear,
             store_op: wgpu::StoreOp::Store,
             clear_color: wgpu::Color {
-              r: self.red,
-              g: 0.2,
-              b: 0.3,
+              r: 1.0,
+              g: 1.0,
+              b: 1.0,
               a: 1.0,
             },
           }
@@ -261,16 +211,13 @@ impl App {
         depth_stencil_attachment: None,
       });
       render_pass.set_pipeline(&self.render_pipeline); // 2.
-      render_pass.set_vertex_buffer(0, &self.vertex_buffer, 0,0);
-      render_pass.set_index_buffer(&self.index_buffer,0,0);
-//      render_pass.draw(0..self.num_vertices, 0..1); // 3.
+      render_pass.set_vertex_buffer(0, &self.vertex_buffer, 0, 0);
+      render_pass.set_index_buffer(&self.index_buffer, 0, 0);
       render_pass.draw_indexed(0..self.num_tri_indices, 0, 0..1);
 
       render_pass.set_pipeline(&self.line_render_pipeline); // 2.
-      render_pass.set_index_buffer(&self.line_index_buffer,0,0);
+      render_pass.set_index_buffer(&self.line_index_buffer, 0, 0);
       render_pass.draw_indexed(0..self.num_line_indices, 0, 0..1);
-
-
     }
 
     self.queue.submit(&[
