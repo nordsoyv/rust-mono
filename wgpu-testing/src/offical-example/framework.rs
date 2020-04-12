@@ -157,7 +157,7 @@ async fn run_async<E: Example>(title: &str) {
 }
 
 pub fn run<E: Example>(title: &str) {
-  futures::executor::block_on(run_async::<E>(title));
+    futures::executor::block_on(run_async::<E>(title));
 }
 
 // This allows treating the framework as a standalone example,
