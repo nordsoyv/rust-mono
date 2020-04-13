@@ -24,6 +24,7 @@ const MENU_DJIKSTRA: usize = 4;
 const MENU_SHOW_DIST: usize = 5;
 const MENU_INSET_LARGER: usize = 6;
 const MENU_INSET_SMALLER: usize = 7;
+const MENU_SAVE: usize = 8;
 
 struct AppState {
   generator: Box<dyn Generator>,
@@ -91,16 +92,17 @@ fn main() {
   });
 
   let mut app_state = AppState {
-    generator: Box::new(GrowingTreeGenerator::new(Strategy::Last)),
+    generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(50))),
     saved: false,
     grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS, 1),
-    generate_steps: 20,
+    generate_steps: 1,
     show_dist: false,
     cell_inset: 1,
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
   menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).shortcut(Key::N, 0).build();
+  menu.add_item("Save", MENU_SAVE).enabled(true).shortcut(Key::P, 0).build();
   menu.add_item("Faster", MENU_FASTER).enabled(true).shortcut(Key::F, 0).build();
   menu.add_item("Slower", MENU_SLOWER).enabled(true).shortcut(Key::S, 0).build();
   menu.add_item("Cell inset larger", MENU_INSET_LARGER).enabled(true).shortcut(Key::I, 0).build();
@@ -112,6 +114,45 @@ fn main() {
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
       let mouse_coord = get_mouse_pos(&window);
+
+      let mut canvas = Canvas {
+        width: WIDTH,
+        height: HEIGHT,
+        buffer: vec![],
+      };
+      canvas.clear();
+      if !app_state.generator.done() {
+        for _ in 0..app_state.generate_steps {
+          app_state.generator.generate_step(&mut app_state.grid);
+        }
+      }
+      if app_state.generator.done() {
+        // window.set_cursor_style(CursorStyle::Arrow);
+        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
+          if app_state.show_dist {
+            Djikstra::new().run(mouse_coord,&mut app_state.grid);
+          }else {
+            let cell = app_state.grid.get_mut_cell(mouse_coord);
+            cell.color = Some(CELL_ACTIVE_COLOR);
+          }
+        }
+        app_state.grid.draw(&mut canvas);
+        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
+          let cell = app_state.grid.get_mut_cell(mouse_coord);
+          cell.color = None;
+        }
+
+        if window.is_key_down(Key::S) && !app_state.saved {
+          println!("Saving image");
+          save_image(&canvas.buffer, WIDTH, HEIGHT);
+          app_state.saved = true;
+          println!("image is saved");
+        }
+      } else {
+        app_state.grid.draw(&mut canvas);
+      }
+
+
       let menu_status = window.is_menu_pressed();
       match menu_status {
         None => {}
@@ -150,45 +191,13 @@ fn main() {
             MENU_SHOW_DIST => {
               app_state.show_dist = !app_state.show_dist;
             }
+            MENU_SAVE => {
+              save_image(&canvas.buffer, WIDTH, HEIGHT);
+              app_state.saved = true;
+            }
             _ => println!("Unhandled menu command")
           }
         }
-      }
-      let mut canvas = Canvas {
-        width: WIDTH,
-        height: HEIGHT,
-        buffer: vec![],
-      };
-      canvas.clear();
-      if !app_state.generator.done() {
-        for _ in 0..app_state.generate_steps {
-          app_state.generator.generate_step(&mut app_state.grid);
-        }
-      }
-      if app_state.generator.done() {
-        // window.set_cursor_style(CursorStyle::Arrow);
-        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-          if app_state.show_dist {
-            Djikstra::new().run(mouse_coord,&mut app_state.grid);
-          }else {
-            let cell = app_state.grid.get_mut_cell(mouse_coord);
-            cell.color = Some(CELL_ACTIVE_COLOR);
-          }
-        }
-        app_state.grid.draw(&mut canvas);
-        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-          let cell = app_state.grid.get_mut_cell(mouse_coord);
-          cell.color = None;
-        }
-
-        if window.is_key_down(Key::S) && !app_state.saved {
-          println!("Saving image");
-          save_image(&canvas.buffer, WIDTH, HEIGHT);
-          app_state.saved = true;
-          println!("image is saved");
-        }
-      } else {
-        app_state.grid.draw(&mut canvas);
       }
 
       // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
