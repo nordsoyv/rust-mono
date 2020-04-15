@@ -1,5 +1,9 @@
 use zerocopy::AsBytes;
 
+pub trait Vertex {
+  fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a>;
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, AsBytes)]
 pub struct VertexWithColor {
@@ -7,12 +11,11 @@ pub struct VertexWithColor {
   pub color: [f32; 3],
 }
 
-// main.rs
-impl VertexWithColor {
-  pub fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
+impl Vertex for VertexWithColor {
+   fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
     use std::mem;
     wgpu::VertexBufferDescriptor {
-      stride: mem::size_of::<VertexWithColor>() as wgpu::BufferAddress,
+      stride: mem::size_of::<Self>() as wgpu::BufferAddress,
       step_mode: wgpu::InputStepMode::Vertex,
       attributes: &[
         wgpu::VertexAttributeDescriptor {
@@ -38,11 +41,11 @@ pub struct VertexWithTex {
 }
 
 
-impl VertexWithTex {
-  pub fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
+impl Vertex for VertexWithTex {
+  fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
     use std::mem;
     wgpu::VertexBufferDescriptor {
-      stride: mem::size_of::<VertexWithTex>() as wgpu::BufferAddress,
+      stride: mem::size_of::<Self>() as wgpu::BufferAddress,
       step_mode: wgpu::InputStepMode::Vertex,
       attributes: &[
         wgpu::VertexAttributeDescriptor {
@@ -63,16 +66,15 @@ impl VertexWithTex {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, AsBytes)]
-pub struct Vertex {
+pub struct VertexPos {
   pub position: [f32; 3],
 }
 
-// main.rs
-impl Vertex {
-  pub fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
+impl Vertex for VertexPos {
+  fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
     use std::mem;
     wgpu::VertexBufferDescriptor {
-      stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
+      stride: mem::size_of::<Self>() as wgpu::BufferAddress,
       step_mode: wgpu::InputStepMode::Vertex,
       attributes: &[
         wgpu::VertexAttributeDescriptor {

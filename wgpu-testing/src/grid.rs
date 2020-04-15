@@ -3,27 +3,27 @@ use winit::window::Window;
 use zerocopy::AsBytes;
 
 use crate::wgpu_utils::create_shader_module;
-use crate::vertex::{Vertex};
+use crate::vertex::{VertexPos, Vertex};
 
 const MARGIN: f32  = 0.1;
 
-const VERTICES: &[Vertex] = &[
-  Vertex { position: [MARGIN, MARGIN, 0.0] }, //A
-  Vertex { position: [1.0- MARGIN, MARGIN, 0.0] }, //B
-  Vertex { position: [MARGIN, 1.0- MARGIN, 0.0] }, //C
-  Vertex { position: [1.0- MARGIN, 1.0- MARGIN, 0.0] }, //D
+const VERTICES: &[VertexPos] = &[
+  VertexPos { position: [MARGIN, MARGIN, 0.0] }, //A
+  VertexPos { position: [1.0- MARGIN, MARGIN, 0.0] }, //B
+  VertexPos { position: [MARGIN, 1.0- MARGIN, 0.0] }, //C
+  VertexPos { position: [1.0- MARGIN, 1.0- MARGIN, 0.0] }, //D
 
-  Vertex { position: [MARGIN, 0.0, 0.0] }, //E
-  Vertex { position: [1.0- MARGIN, 0.0, 0.0] }, //F
+  VertexPos { position: [MARGIN, 0.0, 0.0] }, //E
+  VertexPos { position: [1.0- MARGIN, 0.0, 0.0] }, //F
 
-  Vertex { position: [0.0, MARGIN, 0.0] }, //G
-  Vertex { position: [1.0, MARGIN, 0.0] }, //H
+  VertexPos { position: [0.0, MARGIN, 0.0] }, //G
+  VertexPos { position: [1.0, MARGIN, 0.0] }, //H
 
-  Vertex { position: [0.0, 1.0- MARGIN, 0.0] }, //I
-  Vertex { position: [1.0, 1.0- MARGIN, 0.0] }, //J
+  VertexPos { position: [0.0, 1.0- MARGIN, 0.0] }, //I
+  VertexPos { position: [1.0, 1.0- MARGIN, 0.0] }, //J
 
-  Vertex { position: [MARGIN, 1.0, 0.0] }, //K
-  Vertex { position: [1.0- MARGIN, 1.0, 0.0] }, //L
+  VertexPos { position: [MARGIN, 1.0, 0.0] }, //K
+  VertexPos { position: [1.0- MARGIN, 1.0, 0.0] }, //L
 ];
 
 const INDICES_FILL: &[u16] = &[
@@ -120,7 +120,7 @@ impl Grid {
       depth_stencil_state: None, // 2.
       vertex_state: wgpu::VertexStateDescriptor {
         index_format: wgpu::IndexFormat::Uint16,
-        vertex_buffers: &[Vertex::desc()],
+        vertex_buffers: &[VertexPos::desc()],
       },
       sample_count: 1, // 5.
       sample_mask: !0, // 6.
@@ -155,7 +155,7 @@ impl Grid {
       depth_stencil_state: None, // 2.
       vertex_state: wgpu::VertexStateDescriptor {
         index_format: wgpu::IndexFormat::Uint16,
-        vertex_buffers: &[Vertex::desc()],
+        vertex_buffers: &[VertexPos::desc()],
       },
       sample_count: 1, // 5.
       sample_mask: !0, // 6.

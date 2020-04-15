@@ -5,6 +5,7 @@ use zerocopy::AsBytes;
 
 use crate::wgpu_utils::create_shader_module;
 use crate::vertex::VertexWithTex;
+use crate::vertex::Vertex;
 
 const VERTICES: &[VertexWithTex] = &[
   VertexWithTex { position: [-0.0868241, 0.49240386, 0.0], tex_coords: [0.4131759, 1.0-0.99240386],}, // A
