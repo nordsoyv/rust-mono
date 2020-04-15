@@ -1,6 +1,7 @@
 mod example;
 mod vertex;
 mod wgpu_utils;
+mod grid;
 
 use winit::{
   event::*,
@@ -8,6 +9,7 @@ use winit::{
   window::{ WindowBuilder},
 };
 use crate::example::Example;
+use crate::grid::Grid;
 
 
 async fn run() {
