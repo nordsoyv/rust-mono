@@ -47,8 +47,6 @@ impl Texture {
       wgpu::BufferCopyView {
         buffer: &diffuse_buffer,
         offset: 0,
-//        row_pitch: 4 * dimensions.0, // the width of the texture in bytes
-//        image_height: dimensions.1,
         bytes_per_row: 4 * width,
         rows_per_image: height,
       },

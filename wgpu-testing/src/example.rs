@@ -1,5 +1,5 @@
 use wgpu::{BufferDescriptor, BufferUsage};
-use winit::event::WindowEvent;
+use winit::event::{WindowEvent, ElementState, VirtualKeyCode};
 use winit::window::Window;
 use zerocopy::AsBytes;
 
@@ -7,6 +7,7 @@ use crate::wgpu_utils::create_shader_module;
 use crate::vertex::VertexWithTex;
 use crate::vertex::Vertex;
 use crate::texture::Texture;
+use winit::event::WindowEvent::KeyboardInput;
 
 const VERTICES: &[VertexWithTex] = &[
   VertexWithTex { position: [-0.0868241, 0.49240386, 0.0], tex_coords: [0.4131759, 1.0-0.99240386],}, // A
@@ -34,7 +35,6 @@ pub struct Example {
   sc_desc: wgpu::SwapChainDescriptor,
   swap_chain: wgpu::SwapChain,
   render_pipeline: wgpu::RenderPipeline,
-  line_render_pipeline: wgpu::RenderPipeline,
   num_tri_indices: u32,
   num_line_indices: u32,
   vertex_buffer: wgpu::Buffer,
@@ -43,7 +43,9 @@ pub struct Example {
   size: winit::dpi::PhysicalSize<u32>,
 
   diffuse_texture: Texture,
-  diffuse_bind_group: wgpu::BindGroup,
+  happy_tree_bind_group: wgpu::BindGroup,
+  unhappy_tree_bind_group: wgpu::BindGroup,
+  happy : bool,
 }
 
 impl Example {
@@ -76,10 +78,10 @@ impl Example {
     let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
     // load texture
-    let diffuse_bytes = include_bytes!("happy-tree.png");
-    let (diffuse_texture, cmd_buffer) = Texture::from_bytes(&device, diffuse_bytes).unwrap();
+    let (happy_tree_texture, cmd_buffer) = Texture::from_bytes(&device, include_bytes!("happy-tree.png")).unwrap();
     queue.submit(&[cmd_buffer]);
-
+    let (unhappy_tree_texture, cmd_buffer) = Texture::from_bytes(&device, include_bytes!("unhappy-tree.png")).unwrap();
+    queue.submit(&[cmd_buffer]);
     let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
       bindings: &[
         wgpu::BindGroupLayoutEntry {
@@ -101,16 +103,30 @@ impl Example {
     });
 
 
-    let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let happy_tree_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
       layout: &texture_bind_group_layout,
       bindings: &[
         wgpu::Binding {
           binding: 0,
-          resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+          resource: wgpu::BindingResource::TextureView(&happy_tree_texture.view),
         },
         wgpu::Binding {
           binding: 1,
-          resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+          resource: wgpu::BindingResource::Sampler(&happy_tree_texture.sampler),
+        }
+      ],
+      label: None,
+    });
+    let unhappy_tree_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+      layout: &texture_bind_group_layout,
+      bindings: &[
+        wgpu::Binding {
+          binding: 0,
+          resource: wgpu::BindingResource::TextureView(&unhappy_tree_texture.view),
+        },
+        wgpu::Binding {
+          binding: 1,
+          resource: wgpu::BindingResource::Sampler(&unhappy_tree_texture.sampler),
         }
       ],
       label: None,
@@ -159,41 +175,6 @@ impl Example {
       sample_mask: !0, // 6.
       alpha_to_coverage_enabled: false, // 7.
     });
-    let line_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-      layout: &render_pipeline_layout,
-      vertex_stage: wgpu::ProgrammableStageDescriptor {
-        module: &vs_module,
-        entry_point: "main", // 1.
-      },
-      fragment_stage: Some(wgpu::ProgrammableStageDescriptor { // 2.
-        module: &fs_line_module,
-        entry_point: "main",
-      }),
-      rasterization_state: Some(wgpu::RasterizationStateDescriptor {
-        front_face: wgpu::FrontFace::Ccw,
-        cull_mode: wgpu::CullMode::Back,
-        depth_bias: 0,
-        depth_bias_slope_scale: 0.0,
-        depth_bias_clamp: 0.0,
-      }),
-      color_states: &[
-        wgpu::ColorStateDescriptor {
-          format: sc_desc.format,
-          color_blend: wgpu::BlendDescriptor::REPLACE,
-          alpha_blend: wgpu::BlendDescriptor::REPLACE,
-          write_mask: wgpu::ColorWrite::ALL,
-        },
-      ],
-      primitive_topology: wgpu::PrimitiveTopology::LineStrip, // 1.
-      depth_stencil_state: None, // 2.
-      vertex_state: wgpu::VertexStateDescriptor {
-        index_format: wgpu::IndexFormat::Uint16,
-        vertex_buffers: &[VertexWithTex::desc()],
-      },
-      sample_count: 1, // 5.
-      sample_mask: !0, // 6.
-      alpha_to_coverage_enabled: false, // 7.
-    });
 
 
     let vertex_buffer = device.create_buffer_with_data(VERTICES.as_bytes(), wgpu::BufferUsage::VERTEX);
@@ -208,15 +189,16 @@ impl Example {
       sc_desc,
       swap_chain,
       size,
-      diffuse_texture,
+      diffuse_texture: happy_tree_texture,
       vertex_buffer,
       index_buffer,
       line_index_buffer,
       render_pipeline,
-      line_render_pipeline,
       num_tri_indices: INDICES.len() as u32,
       num_line_indices: INDICES_LINE.len() as u32,
-      diffuse_bind_group,
+      happy_tree_bind_group: happy_tree_bind_group,
+      unhappy_tree_bind_group: unhappy_tree_bind_group,
+      happy : true
     }
   }
 
@@ -229,6 +211,24 @@ impl Example {
 
   pub fn input(&mut self, event: &WindowEvent) -> bool {
     match event {
+      WindowEvent::KeyboardInput {
+        input,
+        ..
+      } => {
+        match input {
+          winit::event::KeyboardInput {
+            state: ElementState::Pressed,
+            virtual_keycode: Some(VirtualKeyCode::Space),
+            ..
+          } => {
+            self.happy = ! self.happy;
+            true
+          }
+          _ => {
+            false
+          }
+        }
+      }
       _ => {
         false
       }
@@ -261,7 +261,11 @@ impl Example {
         depth_stencil_attachment: None,
       });
       render_pass.set_pipeline(&self.render_pipeline); // 2.
-      render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+      if self.happy {
+        render_pass.set_bind_group(0, &self.happy_tree_bind_group, &[]);
+      }else {
+        render_pass.set_bind_group(0, &self.unhappy_tree_bind_group, &[]);
+      }
       render_pass.set_vertex_buffer(0, &self.vertex_buffer, 0, 0);
       render_pass.set_index_buffer(&self.index_buffer, 0, 0);
       render_pass.draw_indexed(0..self.num_tri_indices, 0, 0..1);

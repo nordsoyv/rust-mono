@@ -48,7 +48,7 @@ async fn run() {
               virtual_keycode: Some(VirtualKeyCode::Escape),
               ..
             } => *control_flow = ControlFlow::Exit,
-            _ => *control_flow = ControlFlow::Wait,
+            _ => { app.input(event);},
           }
         }
         _ => *control_flow = ControlFlow::Wait,
