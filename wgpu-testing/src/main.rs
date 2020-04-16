@@ -2,6 +2,7 @@ mod example;
 mod vertex;
 mod wgpu_utils;
 mod grid;
+mod texture;
 
 use winit::{
   event::*,

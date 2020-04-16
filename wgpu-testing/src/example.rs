@@ -6,6 +6,7 @@ use zerocopy::AsBytes;
 use crate::wgpu_utils::create_shader_module;
 use crate::vertex::VertexWithTex;
 use crate::vertex::Vertex;
+use crate::texture::Texture;
 
 const VERTICES: &[VertexWithTex] = &[
   VertexWithTex { position: [-0.0868241, 0.49240386, 0.0], tex_coords: [0.4131759, 1.0-0.99240386],}, // A
@@ -40,9 +41,8 @@ pub struct Example {
   index_buffer: wgpu::Buffer,
   line_index_buffer: wgpu::Buffer,
   size: winit::dpi::PhysicalSize<u32>,
-  diffuse_texture: wgpu::Texture,
-  diffuse_texture_view: wgpu::TextureView,
-  diffuse_sampler: wgpu::Sampler,
+
+  diffuse_texture: Texture,
   diffuse_bind_group: wgpu::BindGroup,
 }
 
@@ -75,98 +75,10 @@ impl Example {
     };
     let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
-    let paths: [&'static [u8]; 1] = [
-      &include_bytes!("happy-tree.png")[..],
-    ];
-
-    let (mut image_width, mut image_height) = (0, 0);
-    let faces = paths
-      .iter()
-      .map(|png| {
-        let png = std::io::Cursor::new(png);
-        let decoder = png::Decoder::new(png);
-        let (info, mut reader) = decoder.read_info().expect("can read info");
-        image_width = info.width;
-        image_height = info.height;
-        let mut buf = vec![0; info.buffer_size()];
-        reader.next_frame(&mut buf).expect("can read png frame");
-        buf
-      })
-      .collect::<Vec<_>>();
-
-
-
-    let tex_size = wgpu::Extent3d {
-      width: image_width,
-      height: image_height,
-      depth: 1,
-    };
-    let diffuse_texture = device.create_texture(&wgpu::TextureDescriptor {
-      // All textures are stored as 3d, we represent our 2d texture
-      // by setting depth to 1.
-      label: None,
-      size: wgpu::Extent3d {
-        width: image_width,
-        height: image_height,
-        depth: 1,
-      },
-      // You can store multiple textures of the same size in one
-      // Texture object
-      array_layer_count: 1,
-      mip_level_count: 1, // We'll talk about this a little later
-      sample_count: 1,
-      dimension: wgpu::TextureDimension::D2,
-      format: wgpu::TextureFormat::Rgba8UnormSrgb,
-      // SAMPLED tells wgpu that we want to use this texture in shaders
-      // COPY_DST means that we want to copy data to this texture
-      usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
-
-    });
-
-    let mut diffuse_buffer = device
-      .create_buffer_with_data(&faces[0], BufferUsage::COPY_SRC);
-
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-      label: None
-    });
-
-    encoder.copy_buffer_to_texture(
-      wgpu::BufferCopyView {
-        buffer: &diffuse_buffer,
-        offset: 0,
-//        row_pitch: 4 * dimensions.0, // the width of the texture in bytes
-//        image_height: dimensions.1,
-        bytes_per_row: 4 * image_width,
-        rows_per_image: image_height,
-      },
-      wgpu::TextureCopyView {
-        texture: &diffuse_texture,
-        mip_level: 0,
-        array_layer: 0,
-        origin: wgpu::Origin3d::ZERO,
-      },
-      tex_size,
-    );
-
-    queue.submit(&[encoder.finish()]);
-
-
-    // We don't need to configure the texture view much, so let's
-// let wgpu define it.
-    let diffuse_texture_view = diffuse_texture.create_default_view();
-
-    let diffuse_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-      address_mode_u: wgpu::AddressMode::ClampToEdge,
-      address_mode_v: wgpu::AddressMode::ClampToEdge,
-      address_mode_w: wgpu::AddressMode::ClampToEdge,
-      mag_filter: wgpu::FilterMode::Linear,
-      min_filter: wgpu::FilterMode::Nearest,
-      mipmap_filter: wgpu::FilterMode::Nearest,
-      lod_min_clamp: -100.0,
-      lod_max_clamp: 100.0,
-      compare: wgpu::CompareFunction::Always,
-    });
-
+    // load texture
+    let diffuse_bytes = include_bytes!("happy-tree.png");
+    let (diffuse_texture, cmd_buffer) = Texture::from_bytes(&device, diffuse_bytes).unwrap();
+    queue.submit(&[cmd_buffer]);
 
     let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
       bindings: &[
@@ -194,11 +106,11 @@ impl Example {
       bindings: &[
         wgpu::Binding {
           binding: 0,
-          resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+          resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
         },
         wgpu::Binding {
           binding: 1,
-          resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
+          resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
         }
       ],
       label: None,
@@ -297,8 +209,6 @@ impl Example {
       swap_chain,
       size,
       diffuse_texture,
-      diffuse_texture_view,
-      diffuse_sampler,
       vertex_buffer,
       index_buffer,
       line_index_buffer,
@@ -355,10 +265,6 @@ impl Example {
       render_pass.set_vertex_buffer(0, &self.vertex_buffer, 0, 0);
       render_pass.set_index_buffer(&self.index_buffer, 0, 0);
       render_pass.draw_indexed(0..self.num_tri_indices, 0, 0..1);
-
-//      render_pass.set_pipeline(&self.line_render_pipeline); // 2.
-//      render_pass.set_index_buffer(&self.line_index_buffer, 0, 0);
-//      render_pass.draw_indexed(0..self.num_line_indices, 0, 0..1);
     }
 
     self.queue.submit(&[
