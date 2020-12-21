@@ -49,6 +49,7 @@ struct Instruction {
 impl IntCodeMachine {
   pub fn new(code : IntCode) -> IntCodeMachine { IntCodeMachine { code, instruction_pointer: 0, output : vec![] } }
 
+  #[allow(unused)]
   pub fn set_code(&mut self, new_code: IntCode) {
     self.code = new_code.clone();
   }
@@ -280,7 +281,7 @@ fn _print_int_code(code: &IntCode) {
 
 #[test]
 fn task02a() {
-  let mut int_code = int_code_reader("./res/task02.txt");
+  let mut int_code = int_code_reader("./res/2019/task02.txt");
   int_code[1] = 12;
   int_code[2] = 2;
   let mut machine = IntCodeMachine::new(int_code);
@@ -291,7 +292,7 @@ fn task02a() {
 
 #[test]
 fn task02b() {
-  let mut int_code = int_code_reader("./res/task02.txt");
+  let mut int_code = int_code_reader("./res/2019/task02.txt");
   int_code[1] = 42;
   int_code[2] = 59;
   let mut machine = IntCodeMachine::new(int_code);
@@ -303,9 +304,9 @@ fn task02b() {
 
 #[test]
 fn task05a() {
-  let int_code = int_code_reader("./res/task05.txt");
+  let int_code = int_code_reader("./res/2019/task05.txt");
   let mut machine = IntCodeMachine::new(int_code);
-  let output = machine.run( &mut vec![1]);
+  let _output = machine.run( &mut vec![1]);
   println!("{}", machine.output[0]);
   assert_eq!(16225258, machine.output[9])
 }
@@ -313,7 +314,7 @@ fn task05a() {
 
 #[test]
 fn task05b() {
-  let int_code = int_code_reader("./res/task05.txt");
+  let int_code = int_code_reader("./res/2019/task05.txt");
   let mut machine = IntCodeMachine::new(int_code);
   machine.run(&mut vec![5]);
   println!("{}",machine. output[0]);

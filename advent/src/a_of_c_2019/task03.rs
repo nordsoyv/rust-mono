@@ -204,7 +204,7 @@ impl Wire {
 
 impl Task for Task03A {
   fn run(&self) {
-    let content = util::read_file("./res/task03.txt");
+    let content = util::read_file("./res/2019/task03.txt");
     let mut lines = content.lines();
     let line = lines.next().unwrap();
     let mut w1 = Wire { segments: vec![] };
@@ -222,7 +222,7 @@ impl Task for Task03A {
 
 impl Task for Task03B {
   fn run(&self) {
-    let content = util::read_file("./res/task03.txt");
+    let content = util::read_file("./res/2019/task03.txt");
     let mut lines = content.lines();
     let line = lines.next().unwrap();
     let mut w1 = Wire { segments: vec![] };

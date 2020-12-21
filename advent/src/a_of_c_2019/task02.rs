@@ -1,4 +1,4 @@
-use crate::int_code::{int_code_reader, IntCodeMachine};
+use crate::a_of_c_2019::int_code::{int_code_reader, IntCodeMachine};
 use crate::task::Task;
 
 pub struct Task02A {}
@@ -8,7 +8,7 @@ pub struct Task02B {}
 
 impl Task for Task02A {
   fn run(&self) {
-    let mut int_code  = int_code_reader("./res/task02.txt");
+    let mut int_code  = int_code_reader("./res/2019/task02.txt");
     int_code[1] = 12;
     int_code[2] = 2;
     let mut machine = IntCodeMachine::new(int_code);
@@ -20,7 +20,7 @@ impl Task for Task02A {
 
 impl Task for Task02B {
   fn run(&self) {
-    let org_code = int_code_reader("./res/task02.txt");
+    let org_code = int_code_reader("./res/2019/task02.txt");
 
     for noun in 0..99 {
       for verb in 0..99 {

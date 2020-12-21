@@ -7,7 +7,7 @@ pub struct Task06B {}
 
 impl Task for Task06A {
   fn run(&self) {
-    let input = read_file("./res/task06.txt");
+    let input = read_file("./res/2019/task06.txt");
     let map = OrbitMap::new(input);
     let orbits = map.count_orbits();
     println!("Number of orbits: {}", orbits);
@@ -16,7 +16,7 @@ impl Task for Task06A {
 
 impl Task for Task06B {
   fn run(&self) {
-    let input = read_file("./res/task06.txt");
+    let input = read_file("./res/2019/task06.txt");
     let map = OrbitMap::new(input);
     let you_index = map.find_orbit_index_by_name("YOU".to_string());
     let san_index = map.find_orbit_index_by_name("SAN".to_string());
