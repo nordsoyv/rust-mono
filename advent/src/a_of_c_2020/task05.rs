@@ -18,7 +18,7 @@ impl Task for Task05A {
 impl Task for Task05B {
   fn run(&self) {
     let mut seats = [[false; 8]; 127];
-    read_file("./res/2020/task05.txt")
+    let _ = read_file("./res/2020/task05.txt")
       .lines()
       .map(|line| {
         let pass = BoardingPass::parse(line);
