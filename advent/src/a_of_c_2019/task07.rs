@@ -1,10 +1,11 @@
-use crate::int_code::{int_code_reader, IntCode, IntCodeMachine, MachineReturn};
+use crate::a_of_c_2019::int_code::{int_code_reader, IntCode, IntCodeMachine, MachineReturn};
 use crate::task::Task;
 
 pub struct Task07A {}
 
 pub struct Task07B {}
 
+#[allow(unused)]
 fn find_params_feedback(int_code: &IntCode) -> (i32, Vec<i32>) {
   let mut best = 0;
   let mut best_params = vec![];
@@ -19,11 +20,18 @@ fn find_params_feedback(int_code: &IntCode) -> (i32, Vec<i32>) {
           continue;
         }
         for fourth_iter in 5..10 {
-          if fourth_iter == first_iter || fourth_iter == second_iter || fourth_iter == third_iter {
+          if fourth_iter == first_iter
+            || fourth_iter == second_iter
+            || fourth_iter == third_iter
+          {
             continue;
           }
           for fifth_iter in 5..10 {
-            if fifth_iter == first_iter || fifth_iter == second_iter || fifth_iter == third_iter || fifth_iter == fourth_iter {
+            if fifth_iter == first_iter
+              || fifth_iter == second_iter
+              || fifth_iter == third_iter
+              || fifth_iter == fourth_iter
+            {
               continue;
             }
 
@@ -39,17 +47,22 @@ fn find_params_feedback(int_code: &IntCode) -> (i32, Vec<i32>) {
             let mut input4 = vec![fourth_iter];
             let mut input5 = vec![first_iter];
 
-            let mut output1 = machine1.run(&mut input1);
+            let mut output1;
+            let mut output2;
+            let mut output3;
+            let mut output4;
+            let mut output5;
+            machine1.run(&mut input1);
             input2.push(*machine1.output.last().unwrap());
-            let mut output2 = machine2.run(&mut input2);
+            machine2.run(&mut input2);
             input3.push(*machine2.output.last().unwrap());
-            let mut output3 = machine3.run(&mut input3);
+            machine3.run(&mut input3);
             input4.push(*machine3.output.last().unwrap());
-            let mut output4 = machine4.run(&mut input4);
+            machine4.run(&mut input4);
             input5.push(*machine4.output.last().unwrap());
-            let mut output5 = machine5.run(&mut input5);
+            machine5.run(&mut input5);
 
-            let mut last5 = 0;
+            let mut last5;
             let mut i = 0;
             loop {
               i += 1;
@@ -59,7 +72,6 @@ fn find_params_feedback(int_code: &IntCode) -> (i32, Vec<i32>) {
                 MachineReturn::Halt => println!("Machine 1 halted"),
                 MachineReturn::BreakForInput => {}
               }
-
 
               output2 = machine2.run(&mut vec![*machine1.output.last().unwrap()]);
               match output2 {
@@ -85,14 +97,15 @@ fn find_params_feedback(int_code: &IntCode) -> (i32, Vec<i32>) {
                   println!("Machine 5 halted");
                   break;
                 }
-                MachineReturn::BreakForInput => {},
+                MachineReturn::BreakForInput => {}
               }
 
-//              dbg!(last1,last2,last3,last4,last5);
+              //              dbg!(last1,last2,last3,last4,last5);
             }
 
             best = last5;
-            best_params = vec![first_iter, second_iter, third_iter, fourth_iter, fifth_iter];
+            best_params =
+              vec![first_iter, second_iter, third_iter, fourth_iter, fifth_iter];
           }
         }
       }
@@ -100,7 +113,6 @@ fn find_params_feedback(int_code: &IntCode) -> (i32, Vec<i32>) {
   }
   (best, best_params)
 }
-
 
 fn find_params(int_code: &IntCode) -> (i32, Vec<i32>) {
   let mut best = 0;
@@ -124,16 +136,22 @@ fn find_params(int_code: &IntCode) -> (i32, Vec<i32>) {
         machine3.run(&mut vec![third_iter, *machine2.output.last().unwrap()]);
 
         for fourth_iter in 0..5 {
-          if fourth_iter == first_iter || fourth_iter == second_iter || fourth_iter == third_iter {
+          if fourth_iter == first_iter
+            || fourth_iter == second_iter
+            || fourth_iter == third_iter
+          {
             continue;
           }
 
           let mut machine4 = IntCodeMachine::new(int_code.clone());
           machine4.run(&mut vec![fourth_iter, *machine3.output.last().unwrap()]);
 
-
           for fifth_iter in 0..5 {
-            if fifth_iter == first_iter || fifth_iter == second_iter || fifth_iter == third_iter || fifth_iter == fourth_iter {
+            if fifth_iter == first_iter
+              || fifth_iter == second_iter
+              || fifth_iter == third_iter
+              || fifth_iter == fourth_iter
+            {
               continue;
             }
 
@@ -144,7 +162,8 @@ fn find_params(int_code: &IntCode) -> (i32, Vec<i32>) {
             let result = *machine5.output.last().unwrap();
             if result > best {
               best = result;
-              best_params = vec![first_iter, second_iter, third_iter, fourth_iter, fifth_iter];
+              best_params =
+                vec![first_iter, second_iter, third_iter, fourth_iter, fifth_iter];
             }
           }
         }
@@ -157,7 +176,7 @@ fn find_params(int_code: &IntCode) -> (i32, Vec<i32>) {
 
 impl Task for Task07A {
   fn run(&self) {
-    let code = int_code_reader("./res/task07.txt");
+    let code = int_code_reader("./res/2019/task07.txt");
     let (best, best_params) = find_params(&code);
     println!("Best : {}, params : {:?}", best, best_params);
   }
@@ -166,16 +185,16 @@ impl Task for Task07A {
 impl Task for Task07B {
   fn run(&self) {
     let input = "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5".to_string();
-    let code = input
+    let _code = input
       .split(",")
       .collect::<Vec<&str>>()
       .iter()
       .map(|n| n.parse::<i32>().unwrap())
       .collect::<Vec<i32>>();
 
-//    let (best, best_params) = find_params_feedback(&code);
-//
-//    dbg!(best, & best_params);
+    //    let (best, best_params) = find_params_feedback(&code);
+    //
+    //    dbg!(best, & best_params);
   }
 }
 
@@ -191,14 +210,15 @@ fn test_a1() {
 
   let (best, best_params) = find_params(&code);
 
-  dbg!(best, & best_params);
+  dbg!(best, &best_params);
 
   assert_eq!(best, 43210);
 }
 
 #[test]
 fn test_a2() {
-  let input = "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0".to_string();
+  let input =
+    "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0".to_string();
   let code = input
     .split(",")
     .collect::<Vec<&str>>()
@@ -208,7 +228,7 @@ fn test_a2() {
 
   let (best, best_params) = find_params(&code);
 
-  dbg!(best, & best_params);
+  dbg!(best, &best_params);
 
   assert_eq!(best, 54321);
   assert_eq!(best_params, vec![0, 1, 2, 3, 4]);
@@ -226,16 +246,17 @@ fn test_a3() {
 
   let (best, best_params) = find_params(&code);
 
-  dbg!(best, & best_params);
+  dbg!(best, &best_params);
 
   assert_eq!(best, 65210);
   assert_eq!(best_params, vec![1, 0, 4, 3, 2]);
 }
 
-
 #[test]
 fn test_b1() {
-  let input = "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5".to_string();
+  let input =
+    "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5"
+      .to_string();
   let code = input
     .split(",")
     .collect::<Vec<&str>>()
@@ -245,7 +266,7 @@ fn test_b1() {
 
   let (best, best_params) = find_params_feedback(&code);
 
-  dbg!(best, & best_params);
+  dbg!(best, &best_params);
   assert_eq!(best, 139629729);
   assert_eq!(best_params, vec![9, 8, 7, 6, 5]);
 }
@@ -262,7 +283,7 @@ fn test_b2() {
 
   let (best, best_params) = find_params_feedback(&code);
 
-  dbg!(best, & best_params);
+  dbg!(best, &best_params);
   assert_eq!(best, 18216);
   assert_eq!(best_params, vec![9, 7, 8, 5, 6]);
 }

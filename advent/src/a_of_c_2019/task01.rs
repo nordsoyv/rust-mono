@@ -28,7 +28,7 @@ fn calc_full_module_weight(weight: f32) -> f32 {
 impl Task for Task01A {
     fn run(&self) {
         let contents =
-            fs::read_to_string("./res/task01a.txt").expect("Something went wrong reading the file");
+            fs::read_to_string("./res/2019/task01a.txt").expect("Something went wrong reading the file");
 
         let sum = contents
             .lines()
@@ -45,7 +45,7 @@ pub struct Task01B {}
 impl Task for Task01B {
     fn run(&self) {
         let contents =
-            fs::read_to_string("./res/task01a.txt").expect("Something went wrong reading the file");
+            fs::read_to_string("./res/2019/task01a.txt").expect("Something went wrong reading the file");
 
         let sum = contents
             .lines()
