@@ -11,7 +11,7 @@ impl Task for Task07A {
   fn run(&self) {
     let input = read_file("./res/2020/task07.txt");
     let rules = parse_rules(&input);
-    let parents = check_rules(&rules, "shiny gold");
+    let parents = check_rules_for_parents(&rules, "shiny gold");
     println!("Number of allowed parents: {}", parents);
   }
 }
@@ -103,7 +103,7 @@ fn parse_line(input: &str) -> Bag {
   }
 }
 
-fn check_rules(rules: &Vec<Rule>, name: &str) -> usize {
+fn check_rules_for_parents(rules: &Vec<Rule>, name: &str) -> usize {
   let mut found_colors = HashSet::new();
   let start_rule_id = get_rule_id(rules, name).unwrap();
   let start_rule = &rules[start_rule_id];
@@ -138,7 +138,7 @@ fn find_new_parents(rules: &Vec<Rule>, current_parents: &HashSet<usize>) -> Hash
 
 #[cfg(test)]
 mod test {
-  use crate::a_of_c_2020::task07::{check_rules, parse_line, parse_rules};
+  use crate::a_of_c_2020::task07::{check_rules_for_parents, parse_line, parse_rules};
 
   #[test]
   fn test_parse() {
@@ -200,7 +200,7 @@ faded blue bags contain no other bags.
 dotted black bags contain no other bags.";
 
     let rules = parse_rules(input);
-    let num_colors = check_rules(&rules, "shiny gold");
+    let num_colors = check_rules_for_parents(&rules, "shiny gold");
     assert_eq!(num_colors, 4);
   }
 }

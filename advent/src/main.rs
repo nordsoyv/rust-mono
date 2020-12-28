@@ -18,6 +18,7 @@ fn main() {
     "2020" => create_2020_task(&task_id),
     _ => panic!("Unknown year given")
   };
+  println!("Running task {} - {}", year,task_id);
   let start_run = std::time::Instant::now();
   task.run();
   let end_run = start_run.elapsed();
