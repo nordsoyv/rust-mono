@@ -18,7 +18,10 @@ impl Task for Task07A {
 
 impl Task for Task07B {
   fn run(&self) {
-    unimplemented!()
+    let input = read_file("./res/2020/task07.txt");
+    let rules = parse_rules(&input);
+    let count = check_rules_for_children(&rules, "shiny gold");
+    println!("Number of bags inside: {}", count);
   }
 }
 
@@ -26,7 +29,7 @@ impl Task for Task07B {
 struct Rule {
   id: usize,
   name: String,
-  // children: Vec<Child>,
+  children: Vec<Child>,
   parent: Vec<usize>,
 }
 
@@ -36,9 +39,9 @@ struct Bag {
   children: Vec<Child>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Child {
-  count: u32,
+  count: usize,
   name: String,
 }
 
@@ -47,6 +50,7 @@ fn parse_rules(input: &str) -> Vec<Rule> {
   for line in input.lines() {
     let bag = parse_line(line);
     let rule_id = get_rule_id_for_name(&mut rules, &bag.name);
+    update_rule(rule_id, &mut rules, &bag.children);
     for child in bag.children {
       let child_rule_id = get_rule_id_for_name(&mut rules, &child.name);
       let child_rule = rules.get_mut(child_rule_id).unwrap();
@@ -54,6 +58,16 @@ fn parse_rules(input: &str) -> Vec<Rule> {
     }
   }
   rules
+}
+
+fn update_rule(rule_id: usize, rules: &mut Vec<Rule>, children: &Vec<Child>) {
+  let rule = rules.get_mut(rule_id).unwrap();
+  if rule.children.len() != children.len() {
+    rule.children.clear();
+    for child in children {
+      rule.children.push(child.clone());
+    }
+  }
 }
 
 fn get_rule_id(rules: &Vec<Rule>, name: &str) -> Option<usize> {
@@ -73,6 +87,7 @@ fn get_rule_id_for_name(rules: &mut Vec<Rule>, name: &str) -> usize {
         name: name.to_owned(),
         parent: vec![],
         id: rules.len(),
+        children: vec![],
       };
       rules.push(rule);
       rules.len() - 1
@@ -91,7 +106,7 @@ fn parse_line(input: &str) -> Bag {
     if num == "no" {
       break;
     }
-    let count = num.parse::<u32>().unwrap();
+    let count = num.parse::<usize>().unwrap();
     i += 1;
     let name = items[i].to_owned() + " " + items[i + 1];
     i += 3;
@@ -101,6 +116,22 @@ fn parse_line(input: &str) -> Bag {
     name: main_bag,
     children,
   }
+}
+
+fn check_rules_for_children(rules: &Vec<Rule>, name: &str) -> usize {
+  let start_rule_id = get_rule_id(rules, name).unwrap();
+  let start_rule = &rules[start_rule_id];
+  check_rules_for_children_inner(start_rule, rules)
+}
+
+fn check_rules_for_children_inner(rule: &Rule, rules: &Vec<Rule>) -> usize {
+  let mut count = 0;
+  for child in &rule.children {
+    count += child.count;
+    let child_rule_id = get_rule_id(&rules, &child.name).unwrap();
+    count += child.count * check_rules_for_children_inner(&rules[child_rule_id], rules);
+  }
+  count
 }
 
 fn check_rules_for_parents(rules: &Vec<Rule>, name: &str) -> usize {
@@ -138,7 +169,7 @@ fn find_new_parents(rules: &Vec<Rule>, current_parents: &HashSet<usize>) -> Hash
 
 #[cfg(test)]
 mod test {
-  use crate::a_of_c_2020::task07::{check_rules_for_parents, parse_line, parse_rules};
+  use crate::a_of_c_2020::task07::{check_rules_for_children, check_rules_for_parents, parse_line, parse_rules};
 
   #[test]
   fn test_parse() {
@@ -188,7 +219,7 @@ dotted black bags contain no other bags.";
   }
 
   #[test]
-  fn check_rules_test() {
+  fn check_rules_for_parents_test() {
     let input = "light red bags contain 1 bright white bag, 2 muted yellow bags.
 dark orange bags contain 3 bright white bags, 4 muted yellow bags.
 bright white bags contain 1 shiny gold bag.
@@ -202,5 +233,22 @@ dotted black bags contain no other bags.";
     let rules = parse_rules(input);
     let num_colors = check_rules_for_parents(&rules, "shiny gold");
     assert_eq!(num_colors, 4);
+  }
+
+  #[test]
+  fn check_rules_for_children_test() {
+    let input = "light red bags contain 1 bright white bag, 2 muted yellow bags.
+dark orange bags contain 3 bright white bags, 4 muted yellow bags.
+bright white bags contain 1 shiny gold bag.
+muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.
+shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.
+dark olive bags contain 3 faded blue bags, 4 dotted black bags.
+vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
+faded blue bags contain no other bags.
+dotted black bags contain no other bags.";
+
+    let rules = parse_rules(input);
+    let num_colors = check_rules_for_children(&rules, "shiny gold");
+    assert_eq!(num_colors, 32);
   }
 }
