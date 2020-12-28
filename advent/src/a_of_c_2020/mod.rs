@@ -5,6 +5,7 @@ use crate::a_of_c_2020::task03::{Task03A, Task03B};
 use crate::a_of_c_2020::task04::{Task04A, Task04B};
 use crate::a_of_c_2020::task05::{Task05A, Task05B};
 use crate::a_of_c_2020::task06::{Task06A, Task06B};
+use crate::a_of_c_2020::task07::{Task07A, Task07B};
 
 mod task01;
 mod task02;
@@ -12,6 +13,7 @@ mod task03;
 mod task04;
 mod task05;
 mod task06;
+mod task07;
 
 pub fn create_2020_task(id: &str) -> Box<dyn Task> {
   match id {
@@ -50,6 +52,12 @@ pub fn create_2020_task(id: &str) -> Box<dyn Task> {
     }
     "06b" => {
       Box::new(Task06B {})
+    }
+    "07a" => {
+      Box::new(Task07A {})
+    }
+    "07b" => {
+      Box::new(Task07B {})
     }
     _ => panic!("No task found"),
   }
