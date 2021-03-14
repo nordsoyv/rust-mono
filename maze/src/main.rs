@@ -9,6 +9,7 @@ use crate::generators::Generator;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::maze::SquareGrid2D;
 use crate::djikstra::Djikstra;
+use std::process::Command;
 
 mod canvas;
 mod cell;
@@ -25,6 +26,7 @@ const MENU_SHOW_DIST: usize = 5;
 const MENU_INSET_LARGER: usize = 6;
 const MENU_INSET_SMALLER: usize = 7;
 const MENU_SAVE: usize = 8;
+const MENU_PRINT: usize = 9;
 
 struct AppState {
   generator: Box<dyn Generator>,
@@ -102,12 +104,13 @@ fn main() {
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
   menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).shortcut(Key::N, 0).build();
-  menu.add_item("Save", MENU_SAVE).enabled(true).shortcut(Key::P, 0).build();
+  menu.add_item("Save", MENU_SAVE).enabled(true).shortcut(Key::L, 0).build();
   menu.add_item("Faster", MENU_FASTER).enabled(true).shortcut(Key::F, 0).build();
   menu.add_item("Slower", MENU_SLOWER).enabled(true).shortcut(Key::S, 0).build();
   menu.add_item("Cell inset larger", MENU_INSET_LARGER).enabled(true).shortcut(Key::I, 0).build();
   menu.add_item("Cell inset smaller", MENU_INSET_SMALLER).enabled(true).shortcut(Key::O, 0).build();
   // menu.add_item("Djikstra", MENU_DJIKSTRA).enabled(true).shortcut(Key::D, 0).build();
+  menu.add_item("Print", MENU_PRINT).enabled(true).shortcut(Key::P, 0).build();
   menu.add_item("Show distances", MENU_SHOW_DIST).enabled(true).shortcut(Key::D, 0).build();
   window.add_menu(&menu);
   window.set_title(get_title(&app_state).as_str());
@@ -194,6 +197,18 @@ fn main() {
             MENU_SAVE => {
               save_image(&canvas.buffer, WIDTH, HEIGHT);
               app_state.saved = true;
+            }
+            MENU_PRINT => {
+              let cell = app_state.grid.get_mut_cell(mouse_coord);
+              cell.color = None;
+              canvas.clear();
+              app_state.grid.draw(&mut canvas);
+              save_image(&canvas.buffer, WIDTH, HEIGHT);
+              app_state.saved = true;
+              Command::new("mspaint")
+                .args(&["/pt", "image.png"])
+                .output()
+                .expect("Failed to execute process");
             }
             _ => println!("Unhandled menu command")
           }
