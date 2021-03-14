@@ -25,11 +25,13 @@ impl SquareGrid2D {
     }
   }
 
+  // FIXME: Should return Option<&Cell>
   pub fn get_cell(&self, coord: CellCoord) -> &Cell {
     let index = coord.y_pos * self.height + coord.x_pos;
     return &self.cells[index as usize];
   }
 
+  // FIXME: Should return Option<&mut Cell>
   pub fn get_mut_cell(&mut self, coord: CellCoord) -> &mut Cell {
     let index = (coord.y_pos * self.height) + coord.x_pos;
     return &mut self.cells[index as usize];
