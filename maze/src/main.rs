@@ -1,15 +1,15 @@
 use std::convert::TryFrom;
+use std::process::Command;
 
 use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
 
 use crate::canvas::Canvas;
 use crate::cell::CellCoord;
 use crate::common::{CELL_ACTIVE_COLOR, CELL_HEIGHT, CELL_WIDTH, HEIGHT, MARGIN, NUM_CELLS, WIDTH};
+use crate::djikstra::Djikstra;
 use crate::generators::Generator;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::maze::SquareGrid2D;
-use crate::djikstra::Djikstra;
-use std::process::Command;
 
 mod canvas;
 mod cell;
@@ -27,6 +27,8 @@ const MENU_INSET_LARGER: usize = 6;
 const MENU_INSET_SMALLER: usize = 7;
 const MENU_SAVE: usize = 8;
 const MENU_PRINT: usize = 9;
+const MENU_HARDER: usize = 10;
+const MENU_EASIER: usize = 11;
 
 struct AppState {
   generator: Box<dyn Generator>,
@@ -34,7 +36,8 @@ struct AppState {
   grid: SquareGrid2D,
   generate_steps: i32,
   cell_inset: i32,
-  show_dist : bool,
+  show_dist: bool,
+  difficulty: i32,
 }
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
@@ -81,7 +84,7 @@ fn get_mouse_pos(window: &Window) -> CellCoord {
 }
 
 fn get_title(app_state: &AppState) -> String {
-  return format!("Maze type: {} -- Generation speed: {}", app_state.generator.name(), app_state.generate_steps);
+  return format!("Maze type: {} -- Difficulty: {} -- Generation speed: {} ", app_state.generator.name(), app_state.difficulty, app_state.generate_steps);
 }
 
 fn main() {
@@ -94,12 +97,13 @@ fn main() {
   });
 
   let mut app_state = AppState {
-    generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(50))),
+    generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(10))),
     saved: false,
     grid: SquareGrid2D::new(NUM_CELLS, NUM_CELLS, 1),
     generate_steps: 1,
     show_dist: false,
     cell_inset: 1,
+    difficulty: 10,
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
@@ -112,6 +116,10 @@ fn main() {
   // menu.add_item("Djikstra", MENU_DJIKSTRA).enabled(true).shortcut(Key::D, 0).build();
   menu.add_item("Print", MENU_PRINT).enabled(true).shortcut(Key::P, 0).build();
   menu.add_item("Show distances", MENU_SHOW_DIST).enabled(true).shortcut(Key::D, 0).build();
+  // difficulty
+  menu.add_item("Harder Maze", MENU_HARDER).enabled(true).shortcut(Key::Q, 0).build();
+  menu.add_item("Easier Maze", MENU_EASIER).enabled(true).shortcut(Key::A, 0).build();
+
   window.add_menu(&menu);
   window.set_title(get_title(&app_state).as_str());
   while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -133,8 +141,8 @@ fn main() {
         // window.set_cursor_style(CursorStyle::Arrow);
         if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
           if app_state.show_dist {
-            Djikstra::new().run(mouse_coord,&mut app_state.grid);
-          }else {
+            Djikstra::new().run(mouse_coord, &mut app_state.grid);
+          } else {
             let cell = app_state.grid.get_mut_cell(mouse_coord);
             cell.color = Some(CELL_ACTIVE_COLOR);
           }
@@ -189,7 +197,7 @@ fn main() {
             }
             MENU_DJIKSTRA => {
               let mut d = Djikstra::new();
-              d.run(mouse_coord,&mut app_state.grid);
+              d.run(mouse_coord, &mut app_state.grid);
             }
             MENU_SHOW_DIST => {
               app_state.show_dist = !app_state.show_dist;
@@ -209,6 +217,23 @@ fn main() {
                 .args(&["/pt", "image.png"])
                 .output()
                 .expect("Failed to execute process");
+            }
+            MENU_HARDER => {
+              app_state.difficulty -= 1;
+              if app_state.difficulty < 1 {
+                app_state.difficulty = 1
+              }
+              app_state.grid = SquareGrid2D::new(NUM_CELLS, NUM_CELLS, app_state.cell_inset);
+              app_state.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(app_state.difficulty)));
+              app_state.generator.init(&mut app_state.grid);
+              window.set_title(get_title(&app_state).as_str());
+            }
+            MENU_EASIER => {
+              app_state.difficulty += 1;
+              app_state.grid = SquareGrid2D::new(NUM_CELLS, NUM_CELLS, app_state.cell_inset);
+              app_state.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(app_state.difficulty)));
+              app_state.generator.init(&mut app_state.grid);
+              window.set_title(get_title(&app_state).as_str());
             }
             _ => println!("Unhandled menu command")
           }
