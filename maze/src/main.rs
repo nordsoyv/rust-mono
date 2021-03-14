@@ -5,7 +5,7 @@ use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
 
 use crate::canvas::Canvas;
 use crate::cell::CellCoord;
-use crate::common::{CELL_ACTIVE_COLOR, CELL_HEIGHT, CELL_WIDTH, HEIGHT, MARGIN, NUM_CELLS, WIDTH};
+use crate::common::{CELL_ACTIVE_COLOR, CELL_HEIGHT, CELL_WIDTH, MARGIN, NUM_CELLS};
 use crate::djikstra::Djikstra;
 use crate::generators::Generator;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
@@ -31,6 +31,12 @@ const MENU_HARDER: usize = 10;
 const MENU_EASIER: usize = 11;
 const MENU_NUM_CELLS_INC: usize = 12;
 const MENU_NUM_CELLS_DEC: usize = 13;
+const MENU_CELL_SIZE_INC: usize= 14;
+const MENU_CELL_SIZE_DEC: usize= 15;
+
+const WIDTH:i32 =1000;
+const HEIGHT:i32 =1000;
+
 
 struct AppState {
   generator: Box<dyn Generator>,
@@ -41,6 +47,14 @@ struct AppState {
   show_dist: bool,
   difficulty: i32,
   num_cells: i32,
+  cell_width:i32,
+  cell_height:i32
+}
+
+impl AppState {
+  pub fn get_maze_size(&self)-> i32 {
+    (self.cell_width * self.num_cells) + ( MARGIN*2)
+  }
 }
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
@@ -91,7 +105,7 @@ fn get_title(app_state: &AppState) -> String {
 }
 
 fn generate_new_maze(app_state: &mut AppState) {
-  app_state.grid = SquareGrid2D::new(app_state.num_cells, app_state.num_cells, app_state.cell_inset);
+  app_state.grid = SquareGrid2D::new(app_state.num_cells, app_state.num_cells, app_state.cell_width, app_state.cell_height, app_state.cell_inset, );
   app_state.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(app_state.difficulty)));
   app_state.generator.init(&mut app_state.grid);
 }
@@ -104,16 +118,19 @@ fn main() {
     WindowOptions::default()).unwrap_or_else(|e| {
     panic!("{}", e);
   });
-
+// println!("Width {}", WIDTH);
+// println!("H {}", HEIGHT);
   let mut app_state = AppState {
     generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(10))),
     saved: false,
-    grid: SquareGrid2D::new(30, 30, 1),
+    grid: SquareGrid2D::new(30, 30,  15,15,0),
     generate_steps: 1,
     show_dist: false,
-    cell_inset: 1,
+    cell_inset: 0,
     difficulty: 10,
     num_cells: 30,
+    cell_width:15,
+    cell_height:15
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
@@ -137,6 +154,10 @@ fn main() {
   // Cell inset  R - F
   menu.add_item("Cell inset larger", MENU_INSET_LARGER).enabled(true).shortcut(Key::R, 0).build();
   menu.add_item("Cell inset smaller", MENU_INSET_SMALLER).enabled(true).shortcut(Key::F, 0).build();
+
+  // Cell size  T - G
+  menu.add_item("Cell size larger", MENU_CELL_SIZE_INC).enabled(true).shortcut(Key::T, 0).build();
+  menu.add_item("Cell size smaller", MENU_CELL_SIZE_DEC).enabled(true).shortcut(Key::G, 0).build();
 
   window.add_menu(&menu);
   window.set_title(get_title(&app_state).as_str());
@@ -211,10 +232,9 @@ fn main() {
               }
             }
             MENU_INSET_LARGER => {
-//              app_state.cell_inset = app_state.cell_inset + 1;
               app_state.grid.cell_inset = app_state.grid.cell_inset + 1;
-              if app_state.grid.cell_inset > CELL_WIDTH / 2 {
-                app_state.grid.cell_inset = CELL_WIDTH / 2;
+              if app_state.grid.cell_inset > app_state.cell_width / 4 {
+                app_state.grid.cell_inset = app_state.cell_width / 4;
               }
             }
             MENU_DJIKSTRA => {
@@ -255,8 +275,8 @@ fn main() {
             }
             MENU_NUM_CELLS_INC => {
               app_state.num_cells += 1;
-              if app_state.num_cells > NUM_CELLS {
-                app_state.num_cells = NUM_CELLS
+              if app_state.get_maze_size() > WIDTH {
+                app_state.num_cells -= 1;
               }
               generate_new_maze(&mut app_state);
             }
@@ -264,6 +284,24 @@ fn main() {
               app_state.num_cells -= 1;
               if app_state.num_cells < 1 {
                 app_state.num_cells = 1
+              }
+              generate_new_maze(&mut app_state);
+            }
+            MENU_CELL_SIZE_INC => {
+              app_state.cell_height +=1;
+              app_state.cell_width +=1;
+              if app_state.get_maze_size() > WIDTH {
+                app_state.cell_height -=1;
+                app_state.cell_width -=1;
+              }
+              generate_new_maze(&mut app_state);
+            }
+            MENU_CELL_SIZE_DEC => {
+              app_state.cell_height -=1;
+              app_state.cell_width -=1;
+              if app_state.cell_width <5 {
+                app_state.cell_width =5;
+                app_state.cell_height =5;
               }
               generate_new_maze(&mut app_state);
             }

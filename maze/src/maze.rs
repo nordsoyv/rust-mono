@@ -10,11 +10,11 @@ pub struct SquareGrid2D {
 }
 
 impl SquareGrid2D {
-  pub fn new(width: i32, height: i32, cell_inset: i32) -> SquareGrid2D {
+  pub fn new(width: i32, height: i32, cell_width:i32, cell_height:i32, cell_inset: i32) -> SquareGrid2D {
     let mut cells = vec![];
     for y in 0..height {
       for x in 0..width {
-        cells.push(Cell::default(x, y));
+        cells.push(Cell::default(x, y,cell_height,cell_width));
       }
     }
     SquareGrid2D {
