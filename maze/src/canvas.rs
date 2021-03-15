@@ -8,6 +8,7 @@ pub const FOREGROUND_COLOR: u32 = 0xff000000;
 pub struct Canvas {
   pub width: i32,
   pub height: i32,
+  pub offset:i32,
   pub buffer: Vec<u32>,
 }
 
@@ -17,6 +18,10 @@ impl Canvas {
     self.buffer = Vec::new();
     let size = usize::try_from((self.width + 1) * (self.height + 1)).unwrap();
     self.buffer.resize(size, BACKGROUND_COLOR);
+  }
+
+  pub fn set_offset(&mut self, offset : i32){
+    self.offset = offset;
   }
 
   fn normalize_coords(&self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> (i32, i32, i32, i32) {
@@ -50,7 +55,7 @@ impl Canvas {
     let (start_x, start_y, _end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
 
     let length = start_y - end_y;
-    let start_point = ((start_y - MARGIN) * self.width) + (start_x + MARGIN);
+    let start_point = ((start_y - MARGIN - self.offset) * self.width) + (start_x + MARGIN);
     for pos in 0..length {
       self.buffer[(start_point - (pos * self.width)) as usize] = FOREGROUND_COLOR;
     }
@@ -61,7 +66,7 @@ impl Canvas {
     let (start_x, start_y, end_x, _end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
 
     let length = end_x - start_x;
-    let start_point = ((start_y - MARGIN) * self.width) + (start_x + MARGIN);
+    let start_point = ((start_y - MARGIN -self.offset) * self.width) + (start_x + MARGIN);
     for pos in 0..length {
       self.buffer[(start_point + pos) as usize] = FOREGROUND_COLOR;
     }
@@ -73,7 +78,7 @@ impl Canvas {
     assert!(width >= 0);
     assert!(height >= 0);
 
-    let real_start_y = self.height - start_y - 1;
+    let real_start_y = self.height - start_y - 1 - self.offset;
     let start_point = ((real_start_y - MARGIN) * self.width) + (start_x + MARGIN);
 
     for x_pos in 0..width {

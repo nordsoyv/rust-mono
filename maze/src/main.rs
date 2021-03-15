@@ -5,7 +5,7 @@ use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
 
 use crate::canvas::Canvas;
 use crate::cell::CellCoord;
-use crate::common::{CELL_ACTIVE_COLOR, CELL_HEIGHT, CELL_WIDTH, MARGIN, NUM_CELLS};
+use crate::common::{CELL_ACTIVE_COLOR, MARGIN};
 use crate::djikstra::Djikstra;
 use crate::generators::Generator;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
@@ -31,11 +31,11 @@ const MENU_HARDER: usize = 10;
 const MENU_EASIER: usize = 11;
 const MENU_NUM_CELLS_INC: usize = 12;
 const MENU_NUM_CELLS_DEC: usize = 13;
-const MENU_CELL_SIZE_INC: usize= 14;
-const MENU_CELL_SIZE_DEC: usize= 15;
+const MENU_CELL_SIZE_INC: usize = 14;
+const MENU_CELL_SIZE_DEC: usize = 15;
 
-const WIDTH:i32 =1000;
-const HEIGHT:i32 =1000;
+const WIDTH: i32 = 1000;
+const HEIGHT: i32 = 1000;
 
 
 struct AppState {
@@ -47,13 +47,13 @@ struct AppState {
   show_dist: bool,
   difficulty: i32,
   num_cells: i32,
-  cell_width:i32,
-  cell_height:i32
+  cell_width: i32,
+  cell_height: i32,
 }
 
 impl AppState {
-  pub fn get_maze_size(&self)-> i32 {
-    (self.cell_width * self.num_cells) + ( MARGIN*2)
+  pub fn get_maze_size(&self) -> i32 {
+    (self.cell_width * self.num_cells) + (MARGIN * 2)
   }
 }
 
@@ -74,10 +74,11 @@ fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
   img_buf.save("image.png").unwrap();
 }
 
-fn get_mouse_pos(window: &Window, num_cells: i32) -> CellCoord {
+fn get_mouse_pos(window: &Window, app_state: &AppState) -> CellCoord {
+  let num_cells = app_state.num_cells;
   return window.get_mouse_pos(MouseMode::Discard).map(|(x, y)| {
-    let mut x_cell = ((x - MARGIN as f32) / CELL_WIDTH as f32) as i32;
-    let mut y_cell = ((y - MARGIN as f32) / CELL_HEIGHT as f32) as i32;
+    let mut x_cell = ((x - MARGIN as f32) / app_state.cell_width as f32) as i32;
+    let mut y_cell = ((y - MARGIN as f32) / app_state.cell_height as f32) as i32;
     if x_cell >= num_cells {
       x_cell = num_cells - 1;
     }
@@ -105,7 +106,7 @@ fn get_title(app_state: &AppState) -> String {
 }
 
 fn generate_new_maze(app_state: &mut AppState) {
-  app_state.grid = SquareGrid2D::new(app_state.num_cells, app_state.num_cells, app_state.cell_width, app_state.cell_height, app_state.cell_inset, );
+  app_state.grid = SquareGrid2D::new(app_state.num_cells, app_state.num_cells, app_state.cell_width, app_state.cell_height, app_state.cell_inset);
   app_state.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(app_state.difficulty)));
   app_state.generator.init(&mut app_state.grid);
 }
@@ -123,14 +124,14 @@ fn main() {
   let mut app_state = AppState {
     generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(10))),
     saved: false,
-    grid: SquareGrid2D::new(30, 30,  15,15,0),
-    generate_steps: 1,
+    grid: SquareGrid2D::new(30, 30, 15, 15, 0),
+    generate_steps: 10,
     show_dist: false,
     cell_inset: 0,
     difficulty: 10,
     num_cells: 30,
-    cell_width:15,
-    cell_height:15
+    cell_width: 15,
+    cell_height: 15,
   };
   app_state.generator.init(&mut app_state.grid);
   let mut menu = Menu::new("Main").unwrap();
@@ -163,14 +164,16 @@ fn main() {
   window.set_title(get_title(&app_state).as_str());
   while window.is_open() && !window.is_key_down(Key::Escape) {
     {
-      let mouse_coord = get_mouse_pos(&window, app_state.num_cells);
+      let mouse_coord = get_mouse_pos(&window, &app_state);
 
       let mut canvas = Canvas {
         width: WIDTH,
         height: HEIGHT,
         buffer: vec![],
+        offset: 0,
       };
       canvas.clear();
+      canvas.set_offset(HEIGHT - app_state.get_maze_size());
       if !app_state.generator.done() {
         for _ in 0..app_state.generate_steps {
           app_state.generator.generate_step(&mut app_state.grid);
@@ -288,20 +291,20 @@ fn main() {
               generate_new_maze(&mut app_state);
             }
             MENU_CELL_SIZE_INC => {
-              app_state.cell_height +=1;
-              app_state.cell_width +=1;
+              app_state.cell_height += 1;
+              app_state.cell_width += 1;
               if app_state.get_maze_size() > WIDTH {
-                app_state.cell_height -=1;
-                app_state.cell_width -=1;
+                app_state.cell_height -= 1;
+                app_state.cell_width -= 1;
               }
               generate_new_maze(&mut app_state);
             }
             MENU_CELL_SIZE_DEC => {
-              app_state.cell_height -=1;
-              app_state.cell_width -=1;
-              if app_state.cell_width <5 {
-                app_state.cell_width =5;
-                app_state.cell_height =5;
+              app_state.cell_height -= 1;
+              app_state.cell_width -= 1;
+              if app_state.cell_width < 5 {
+                app_state.cell_width = 5;
+                app_state.cell_height = 5;
               }
               generate_new_maze(&mut app_state);
             }
@@ -311,7 +314,7 @@ fn main() {
       }
 
       // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
-      window.update_with_buffer(&canvas.buffer, WIDTH as usize,HEIGHT as usize).unwrap();
+      window.update_with_buffer(&canvas.buffer, WIDTH as usize, HEIGHT as usize).unwrap();
     } // buffer lock ends here
   }
 }
