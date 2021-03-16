@@ -1,17 +1,17 @@
 use std::convert::TryFrom;
+
 use crate::common::MARGIN;
 
 pub const BACKGROUND_COLOR: u32 = 0x00ffffff;
-pub const FOREGROUND_COLOR: u32 = 0xff000000;
+pub const FOREGROUND_COLOR: u32 = 0x00000000;
 
 
 pub struct Canvas {
   pub width: i32,
   pub height: i32,
-  pub offset:i32,
+  pub offset: i32,
   pub buffer: Vec<u32>,
 }
-
 
 impl Canvas {
   pub fn clear(&mut self) {
@@ -20,7 +20,7 @@ impl Canvas {
     self.buffer.resize(size, BACKGROUND_COLOR);
   }
 
-  pub fn set_offset(&mut self, offset : i32){
+  pub fn set_offset(&mut self, offset: i32) {
     self.offset = offset;
   }
 
@@ -66,7 +66,7 @@ impl Canvas {
     let (start_x, start_y, end_x, _end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
 
     let length = end_x - start_x;
-    let start_point = ((start_y - MARGIN -self.offset) * self.width) + (start_x + MARGIN);
+    let start_point = ((start_y - MARGIN - self.offset) * self.width) + (start_x + MARGIN);
     for pos in 0..length {
       self.buffer[(start_point + pos) as usize] = FOREGROUND_COLOR;
     }

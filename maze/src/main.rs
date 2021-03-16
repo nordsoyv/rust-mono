@@ -7,9 +7,7 @@ use crate::canvas::Canvas;
 use crate::cell::CellCoord;
 use crate::common::{CELL_ACTIVE_COLOR, MARGIN};
 use crate::djikstra::Djikstra;
-use crate::generators::Generator;
-use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
-use crate::maze::SquareGrid2D;
+use crate::app_state::AppState;
 
 mod canvas;
 mod cell;
@@ -17,6 +15,7 @@ mod common;
 mod maze;
 mod generators;
 mod djikstra;
+mod app_state;
 
 const MENU_NEW_MAZE: usize = 1;
 const MENU_FASTER: usize = 2;
@@ -36,26 +35,6 @@ const MENU_CELL_SIZE_DEC: usize = 15;
 
 const WIDTH: i32 = 1000;
 const HEIGHT: i32 = 1000;
-
-
-struct AppState {
-  generator: Box<dyn Generator>,
-  saved: bool,
-  grid: SquareGrid2D,
-  generate_steps: i32,
-  cell_inset: i32,
-  show_dist: bool,
-  difficulty: i32,
-  num_cells: i32,
-  cell_width: i32,
-  cell_height: i32,
-}
-
-impl AppState {
-  pub fn get_maze_size(&self) -> i32 {
-    (self.cell_width * self.num_cells) + (MARGIN * 2)
-  }
-}
 
 fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
 //  let buffer = shared_buffer.lock().unwrap();
@@ -101,17 +80,8 @@ fn get_mouse_pos(window: &Window, app_state: &AppState) -> CellCoord {
   });
 }
 
-fn get_title(app_state: &AppState) -> String {
-  return format!("Maze type: {} -- Difficulty: {} -- Generation speed: {} ", app_state.generator.name(), app_state.difficulty, app_state.generate_steps);
-}
 
-fn generate_new_maze(app_state: &mut AppState) {
-  app_state.grid = SquareGrid2D::new(app_state.num_cells, app_state.num_cells, app_state.cell_width, app_state.cell_height, app_state.cell_inset);
-  app_state.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(app_state.difficulty)));
-  app_state.generator.init(&mut app_state.grid);
-}
-
-fn main() {
+fn create_window(app_state: &AppState) -> Window {
   let mut window = Window::new(
     "Test - ESC to exit",
     usize::try_from(WIDTH).unwrap(),
@@ -119,21 +89,9 @@ fn main() {
     WindowOptions::default()).unwrap_or_else(|e| {
     panic!("{}", e);
   });
-// println!("Width {}", WIDTH);
-// println!("H {}", HEIGHT);
-  let mut app_state = AppState {
-    generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(10))),
-    saved: false,
-    grid: SquareGrid2D::new(30, 30, 15, 15, 0),
-    generate_steps: 10,
-    show_dist: false,
-    cell_inset: 0,
-    difficulty: 10,
-    num_cells: 30,
-    cell_width: 15,
-    cell_height: 15,
-  };
-  app_state.generator.init(&mut app_state.grid);
+  window.limit_update_rate(Some(std::time::Duration::from_millis(16)));
+  window.set_background_color(255, 0, 0);
+
   let mut menu = Menu::new("Main").unwrap();
   menu.add_item("New maze", MENU_NEW_MAZE).enabled(true).shortcut(Key::N, 0).build();
   menu.add_item("Save", MENU_SAVE).enabled(true).shortcut(Key::L, 0).build();
@@ -161,161 +119,125 @@ fn main() {
   menu.add_item("Cell size smaller", MENU_CELL_SIZE_DEC).enabled(true).shortcut(Key::G, 0).build();
 
   window.add_menu(&menu);
-  window.set_title(get_title(&app_state).as_str());
+  window.set_title(app_state.get_title().as_str());
+
+  return window;
+}
+
+fn main() {
+  let mut app_state = AppState::new();
+
+  let mut window = create_window(&app_state);
+
+  app_state.generator.init(&mut app_state.grid);
+
   while window.is_open() && !window.is_key_down(Key::Escape) {
-    {
-      let mouse_coord = get_mouse_pos(&window, &app_state);
+    let mouse_coord = get_mouse_pos(&window, &app_state);
 
-      let mut canvas = Canvas {
-        width: WIDTH,
-        height: HEIGHT,
-        buffer: vec![],
-        offset: 0,
-      };
-      canvas.clear();
-      canvas.set_offset(HEIGHT - app_state.get_maze_size());
-      if !app_state.generator.done() {
-        for _ in 0..app_state.generate_steps {
-          app_state.generator.generate_step(&mut app_state.grid);
-        }
+    let mut canvas = Canvas {
+      width: WIDTH,
+      height: HEIGHT,
+      buffer: vec![],
+      offset: 0,
+    };
+    canvas.clear();
+    canvas.set_offset(HEIGHT - app_state.get_maze_size());
+
+    if !app_state.generator.done() {
+      for _ in 0..app_state.generate_steps {
+        app_state.generator.generate_step(&mut app_state.grid);
       }
-      if app_state.generator.done() {
-        // window.set_cursor_style(CursorStyle::Arrow);
-        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-          if app_state.show_dist {
-            Djikstra::new().run(mouse_coord, &mut app_state.grid);
-          } else {
-            let cell = app_state.grid.get_mut_cell(mouse_coord);
-            cell.color = Some(CELL_ACTIVE_COLOR);
-          }
-        }
-        app_state.grid.draw(&mut canvas);
-        if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
+    }
+    if app_state.generator.done() {
+      if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
+        if app_state.show_dist {
+          Djikstra::new().run(mouse_coord, &mut app_state.grid);
+        } else {
           let cell = app_state.grid.get_mut_cell(mouse_coord);
-          cell.color = None;
+          cell.color = Some(CELL_ACTIVE_COLOR);
         }
-
-        if window.is_key_down(Key::S) && !app_state.saved {
-          println!("Saving image");
-          save_image(&canvas.buffer, WIDTH, HEIGHT);
-          app_state.saved = true;
-          println!("image is saved");
-        }
-      } else {
-        app_state.grid.draw(&mut canvas);
       }
+      app_state.grid.draw(&mut canvas);
+      if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
+        let cell = app_state.grid.get_mut_cell(mouse_coord);
+        cell.color = None;
+      }
+    } else {
+      app_state.grid.draw(&mut canvas);
+    }
 
 
-      let menu_status = window.is_menu_pressed();
-      match menu_status {
-        None => {}
-        Some(cmd) => {
-          match cmd {
-            MENU_NEW_MAZE => {
-              generate_new_maze(&mut app_state);
-            }
-            MENU_FASTER => {
-              app_state.generate_steps = app_state.generate_steps + 1;
-              if app_state.generate_steps > 100 {
-                app_state.generate_steps = 100
-              }
-              window.set_title(get_title(&app_state).as_str());
-            }
-            MENU_SLOWER => {
-              app_state.generate_steps = app_state.generate_steps - 1;
-              if app_state.generate_steps < 1 {
-                app_state.generate_steps = 1
-              }
-              window.set_title(get_title(&app_state).as_str());
-            }
-            MENU_INSET_SMALLER => {
-              app_state.grid.cell_inset = app_state.grid.cell_inset - 1;
-              if app_state.grid.cell_inset < 0 {
-                app_state.grid.cell_inset = 0;
-              }
-            }
-            MENU_INSET_LARGER => {
-              app_state.grid.cell_inset = app_state.grid.cell_inset + 1;
-              if app_state.grid.cell_inset > app_state.cell_width / 4 {
-                app_state.grid.cell_inset = app_state.cell_width / 4;
-              }
-            }
-            MENU_DJIKSTRA => {
-              let mut d = Djikstra::new();
-              d.run(mouse_coord, &mut app_state.grid);
-            }
-            MENU_SHOW_DIST => {
-              app_state.show_dist = !app_state.show_dist;
-            }
-            MENU_SAVE => {
-              save_image(&canvas.buffer, WIDTH, HEIGHT);
-              app_state.saved = true;
-            }
-            MENU_PRINT => {
-              let cell = app_state.grid.get_mut_cell(mouse_coord);
-              cell.color = None;
-              canvas.clear();
-              app_state.grid.draw(&mut canvas);
-              save_image(&canvas.buffer, WIDTH, HEIGHT);
-              app_state.saved = true;
-              Command::new("mspaint")
-                .args(&["/pt", "image.png"])
-                .output()
-                .expect("Failed to execute process");
-            }
-            MENU_HARDER => {
-              app_state.difficulty -= 1;
-              if app_state.difficulty < 1 {
-                app_state.difficulty = 1
-              }
-              generate_new_maze(&mut app_state);
-              window.set_title(get_title(&app_state).as_str());
-            }
-            MENU_EASIER => {
-              app_state.difficulty += 1;
-              generate_new_maze(&mut app_state);
-              window.set_title(get_title(&app_state).as_str());
-            }
-            MENU_NUM_CELLS_INC => {
-              app_state.num_cells += 1;
-              if app_state.get_maze_size() > WIDTH {
-                app_state.num_cells -= 1;
-              }
-              generate_new_maze(&mut app_state);
-            }
-            MENU_NUM_CELLS_DEC => {
-              app_state.num_cells -= 1;
-              if app_state.num_cells < 1 {
-                app_state.num_cells = 1
-              }
-              generate_new_maze(&mut app_state);
-            }
-            MENU_CELL_SIZE_INC => {
-              app_state.cell_height += 1;
-              app_state.cell_width += 1;
-              if app_state.get_maze_size() > WIDTH {
-                app_state.cell_height -= 1;
-                app_state.cell_width -= 1;
-              }
-              generate_new_maze(&mut app_state);
-            }
-            MENU_CELL_SIZE_DEC => {
-              app_state.cell_height -= 1;
-              app_state.cell_width -= 1;
-              if app_state.cell_width < 5 {
-                app_state.cell_width = 5;
-                app_state.cell_height = 5;
-              }
-              generate_new_maze(&mut app_state);
-            }
-            _ => println!("Unhandled menu command")
+    let menu_status = window.is_menu_pressed();
+    match menu_status {
+      None => {}
+      Some(cmd) => {
+        match cmd {
+          MENU_NEW_MAZE => {
+            app_state.generate_new_maze();
           }
+          MENU_FASTER => {
+            app_state.generate_faster();
+            window.set_title(app_state.get_title().as_str());
+          }
+          MENU_SLOWER => {
+            app_state.generate_slower();
+            window.set_title(app_state.get_title().as_str());
+          }
+          MENU_INSET_SMALLER => {
+            app_state.inset_smaller();
+          }
+          MENU_INSET_LARGER => {
+            app_state.inset_larger();
+          }
+          MENU_DJIKSTRA => {
+            let mut d = Djikstra::new();
+            d.run(mouse_coord, &mut app_state.grid);
+          }
+          MENU_SHOW_DIST => {
+            app_state.show_distance();
+          }
+          MENU_SAVE => {
+            save_image(&canvas.buffer, WIDTH, HEIGHT);
+          }
+          MENU_PRINT => {
+            let cell = app_state.grid.get_mut_cell(mouse_coord);
+            cell.color = None;
+            canvas.clear();
+            app_state.grid.draw(&mut canvas);
+            save_image(&canvas.buffer, WIDTH, HEIGHT);
+            Command::new("mspaint")
+              .args(&["/pt", "image.png"])
+              .output()
+              .expect("Failed to execute process");
+          }
+          MENU_HARDER => {
+            app_state.difficulty_harder();
+            window.set_title(app_state.get_title().as_str());
+          }
+          MENU_EASIER => {
+            app_state.difficulty_easier();
+            window.set_title(app_state.get_title().as_str());
+          }
+          MENU_NUM_CELLS_INC => {
+            app_state.num_cell_inc();
+          }
+          MENU_NUM_CELLS_DEC => {
+            app_state.num_cell_dec();
+          }
+          MENU_CELL_SIZE_INC => {
+            app_state.cell_size_larger();
+          }
+          MENU_CELL_SIZE_DEC => {
+            app_state.cell_size_smaller();
+          }
+          _ => println!("Unhandled menu command")
         }
       }
+    }
 
-      // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
-      window.update_with_buffer(&canvas.buffer, WIDTH as usize, HEIGHT as usize).unwrap();
-    } // buffer lock ends here
+    // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
+    window.update_with_buffer(&canvas.buffer, WIDTH as usize, HEIGHT as usize).unwrap();
+    // buffer lock ends here
   }
 }
 
