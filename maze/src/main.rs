@@ -143,11 +143,7 @@ fn main() {
     canvas.clear();
     canvas.set_offset(HEIGHT - app_state.get_maze_size());
 
-    if !app_state.generator.done() {
-      for _ in 0..app_state.generate_steps {
-        app_state.generator.generate_step(&mut app_state.grid);
-      }
-    }
+    app_state.generate_maze();
     if app_state.generator.done() {
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
         if app_state.show_dist {
@@ -194,7 +190,7 @@ fn main() {
             d.run(mouse_coord, &mut app_state.grid);
           }
           MENU_SHOW_DIST => {
-            app_state.show_distance();
+            app_state.toggle_show_distance();
           }
           MENU_SAVE => {
             save_image(&canvas.buffer, WIDTH, HEIGHT);

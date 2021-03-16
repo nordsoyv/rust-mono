@@ -33,6 +33,14 @@ impl AppState {
     }
   }
 
+  pub fn generate_maze (&mut self){
+    if !self.generator.done() {
+      for _ in 0..self.generate_steps {
+        self.generator.generate_step(&mut self.grid);
+      }
+    }
+  }
+
   pub fn get_maze_size(&self) -> i32 {
     (self.cell_width * self.num_cells) + (MARGIN * 2)
   }
@@ -74,7 +82,7 @@ impl AppState {
     }
   }
 
-  pub fn show_distance(&mut self) {
+  pub fn toggle_show_distance(&mut self) {
     self.show_dist = !self.show_dist;
   }
 
