@@ -133,14 +133,17 @@ fn main() {
   while window.is_open() && !window.is_key_down(Key::Escape) {
     let mouse_coord = get_mouse_pos(&window, &app_state);
 
-    let mut canvas = Canvas {
-      width: WIDTH,
-      height: HEIGHT,
-      buffer: vec![],
-      offset: 0,
-    };
-    canvas.clear();
-    canvas.set_offset(HEIGHT - app_state.get_maze_size());
+    let mut canvas = Canvas::new(WIDTH,HEIGHT,HEIGHT - app_state.get_maze_size());
+
+    // {
+    //   width: WIDTH,
+    //   height: HEIGHT,
+    //   buffer: ve
+    //c![],
+    //   offset: 0,
+    // };
+    // canvas.clear();
+    // canvas.set_offset(HEIGHT - app_state.get_maze_size());
 
     app_state.generate_maze();
     if app_state.generator.done() {
@@ -192,14 +195,14 @@ fn main() {
             app_state.toggle_show_distance();
           }
           MENU_SAVE => {
-            save_image(&canvas.buffer, WIDTH, HEIGHT);
+            save_image(&canvas.get_buffer(), WIDTH, HEIGHT);
           }
           MENU_PRINT => {
             let cell = app_state.grid.get_mut_cell(mouse_coord);
             cell.color = None;
             canvas.clear();
             app_state.grid.draw(&mut canvas);
-            save_image(&canvas.buffer, WIDTH, HEIGHT);
+            save_image(&canvas.get_buffer(), WIDTH, HEIGHT);
             Command::new("mspaint")
               .args(&["/pt", "image.png"])
               .output()
@@ -231,7 +234,7 @@ fn main() {
     }
 
     // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
-    window.update_with_buffer(&canvas.buffer, WIDTH as usize, HEIGHT as usize).unwrap();
+    window.update_with_buffer(&canvas.get_buffer(), WIDTH as usize, HEIGHT as usize).unwrap();
     // buffer lock ends here
   }
 }
