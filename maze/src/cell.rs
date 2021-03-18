@@ -1,4 +1,4 @@
-use crate::canvas::Canvas;
+use canvas::Canvas;
 
 #[derive(Clone, Copy, Debug)]
 pub struct CellCoord {

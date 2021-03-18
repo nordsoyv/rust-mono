@@ -1,5 +1,11 @@
 use std::convert::TryFrom;
 
+pub const BACKGROUND_COLOR: u32 = 0x00ffffff;
+pub const FOREGROUND_COLOR: u32 = 0x00000000;
+
+pub const MARGIN: i32 = 10;
+pub const CELL_ACTIVE_COLOR : u32= 0xffffff00;
+
 pub struct Canvas {
     pub width: i32,
     pub height: i32,

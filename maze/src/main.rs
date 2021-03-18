@@ -3,13 +3,12 @@ use std::process::Command;
 
 use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
 
-use crate::canvas::Canvas;
 use crate::cell::CellCoord;
 use crate::common::{CELL_ACTIVE_COLOR, MARGIN};
 use crate::djikstra::Djikstra;
 use crate::app_state::AppState;
+use canvas::Canvas;
 
-mod canvas;
 mod cell;
 mod common;
 mod maze;

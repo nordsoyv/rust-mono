@@ -10,3 +10,4 @@ edition = "2018"
 minifb= "0.19.2"
 rand = "0.7.0"
 image = "0.22.1"
+canvas = { path = "../canvas" }

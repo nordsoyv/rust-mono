@@ -1,6 +1,6 @@
-use crate::canvas::Canvas;
 use crate::cell::{Cell, CellCoord};
 use crate::common::Direction;
+use canvas::Canvas;
 
 pub struct SquareGrid2D {
   pub cells: Vec<Cell>,
