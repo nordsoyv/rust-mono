@@ -2,14 +2,12 @@ use crate::cell::CellCoord;
 use crate::maze::SquareGrid2D;
 
 pub struct Djikstra {
-  frontier: Vec<CellCoord>
+  frontier: Vec<CellCoord>,
 }
 
 impl Djikstra {
   pub fn new() -> Djikstra {
-    Djikstra {
-      frontier: vec![]
-    }
+    Djikstra { frontier: vec![] }
   }
 
   pub fn run(&mut self, start: CellCoord, grid: &mut SquareGrid2D) {
@@ -20,7 +18,8 @@ impl Djikstra {
     start_cell.distance = 0;
     let neighbours = start_cell.get_neighbours();
     for n in &neighbours {
-      if n.x_pos == -1 || n.y_pos == -1 { // marker for entrance and exit
+      if n.x_pos == -1 || n.y_pos == -1 {
+        // marker for entrance and exit
         continue;
       }
       let cell = grid.get_mut_cell(*n);
@@ -34,7 +33,8 @@ impl Djikstra {
         (neighbours, active.distance)
       };
       for n in &neighbours {
-        if n.x_pos == -1 || n.y_pos == -1 { // marker for entrance and exit
+        if n.x_pos == -1 || n.y_pos == -1 {
+          // marker for entrance and exit
           continue;
         }
         let cell = grid.get_mut_cell(*n);

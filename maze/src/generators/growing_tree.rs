@@ -1,9 +1,9 @@
+use crate::cell::CellCoord;
+use crate::common::CELL_ACTIVE_COLOR;
+use crate::generators::Generator;
 use crate::maze::SquareGrid2D;
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::ThreadRng;
-use crate::common::{ CELL_ACTIVE_COLOR};
-use crate::generators::Generator;
-use crate::cell::CellCoord;
 
 #[allow(dead_code)]
 pub enum Strategy {
@@ -25,10 +25,34 @@ pub struct GrowingTreeGenerator {
 
 impl Generator for GrowingTreeGenerator {
   fn init(&mut self, maze: &mut SquareGrid2D) {
-    maze.get_mut_cell( CellCoord {x_pos: maze.width / 2 , y_pos: 0}).bottom = Some(CellCoord{x_pos:-1,y_pos:-1});
-    maze.get_mut_cell(  CellCoord {x_pos:maze.width / 2 , y_pos: maze.height - 1}).top = Some(CellCoord{x_pos:-1,y_pos:-1});
-    self.stack.push(  CellCoord {x_pos:maze.width / 2 , y_pos: maze.height / 2});
-    maze.get_mut_cell(CellCoord {x_pos:maze.width / 2 , y_pos: maze.height / 2}).part_of_maze = true;
+    maze
+      .get_mut_cell(CellCoord {
+        x_pos: maze.width / 2,
+        y_pos: 0,
+      })
+      .bottom = Some(CellCoord {
+      x_pos: -1,
+      y_pos: -1,
+    });
+    maze
+      .get_mut_cell(CellCoord {
+        x_pos: maze.width / 2,
+        y_pos: maze.height - 1,
+      })
+      .top = Some(CellCoord {
+      x_pos: -1,
+      y_pos: -1,
+    });
+    self.stack.push(CellCoord {
+      x_pos: maze.width / 2,
+      y_pos: maze.height / 2,
+    });
+    maze
+      .get_mut_cell(CellCoord {
+        x_pos: maze.width / 2,
+        y_pos: maze.height / 2,
+      })
+      .part_of_maze = true;
   }
 
   fn name(&self) -> &str {
@@ -57,7 +81,7 @@ impl Generator for GrowingTreeGenerator {
       return;
     }
     let random_dir = self.get_random(available_dirs.len());
-    maze.carve(coord ,available_dirs[random_dir]);
+    maze.carve(coord, available_dirs[random_dir]);
     let next_cell = maze.get_cell_in_dir(coord, available_dirs[random_dir]);
     self.stack.push(next_cell);
   }
@@ -102,7 +126,8 @@ impl GrowingTreeGenerator {
       }
       Strategy::LastAndRandom(num) => {
         let n = self.get_random(num as usize);
-        if n == 0 { // pick a random
+        if n == 0 {
+          // pick a random
           self.get_random(self.stack.len())
         } else {
           self.stack.len() - 1

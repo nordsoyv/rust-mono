@@ -6,22 +6,28 @@ pub struct SquareGrid2D {
   pub cells: Vec<Cell>,
   pub width: i32,
   pub height: i32,
-  pub cell_inset : i32,
+  pub cell_inset: i32,
 }
 
 impl SquareGrid2D {
-  pub fn new(width: i32, height: i32, cell_width:i32, cell_height:i32, cell_inset: i32) -> SquareGrid2D {
+  pub fn new(
+    width: i32,
+    height: i32,
+    cell_width: i32,
+    cell_height: i32,
+    cell_inset: i32,
+  ) -> SquareGrid2D {
     let mut cells = vec![];
     for y in 0..height {
       for x in 0..width {
-        cells.push(Cell::default(x, y,cell_height,cell_width));
+        cells.push(Cell::default(x, y, cell_height, cell_width));
       }
     }
     SquareGrid2D {
       cells,
       width,
       height,
-      cell_inset
+      cell_inset,
     }
   }
 
@@ -41,19 +47,19 @@ impl SquareGrid2D {
     let target_x = match dir {
       Direction::West => coord.x_pos - 1,
       Direction::East => coord.x_pos + 1,
-      _ => coord.x_pos
+      _ => coord.x_pos,
     };
     let target_y = match dir {
       Direction::South => coord.y_pos - 1,
       Direction::North => coord.y_pos + 1,
-      _ => coord.y_pos
+      _ => coord.y_pos,
     };
 
     if target_x < 0 || target_x >= self.width || target_y < 0 || target_y >= self.height {
       return false;
     }
 
-    let target_cell = self.get_cell(CellCoord::new(target_x,target_y) );
+    let target_cell = self.get_cell(CellCoord::new(target_x, target_y));
     if !target_cell.part_of_maze {
       return true;
     }
@@ -73,18 +79,26 @@ impl SquareGrid2D {
     let x_end = match dir {
       Direction::West => coord_start.x_pos - 1,
       Direction::East => coord_start.x_pos + 1,
-      _ => coord_start.x_pos
+      _ => coord_start.x_pos,
     };
     let y_end = match dir {
       Direction::South => coord_start.y_pos - 1,
       Direction::North => coord_start.y_pos + 1,
-      _ => coord_start.y_pos
+      _ => coord_start.y_pos,
     };
-    let coord_end = CellCoord { x_pos: x_end, y_pos: y_end };
-    if coord_start.x_pos < 0 || coord_end.x_pos < 0
-      || coord_start.y_pos < 0 || coord_end.y_pos < 0
-      || coord_start.x_pos > self.width || coord_end.x_pos > self.width
-      || coord_start.y_pos > self.height || coord_end.y_pos > self.height {
+    let coord_end = CellCoord {
+      x_pos: x_end,
+      y_pos: y_end,
+    };
+    if coord_start.x_pos < 0
+      || coord_end.x_pos < 0
+      || coord_start.y_pos < 0
+      || coord_end.y_pos < 0
+      || coord_start.x_pos > self.width
+      || coord_end.x_pos > self.width
+      || coord_start.y_pos > self.height
+      || coord_end.y_pos > self.height
+    {
       return;
     }
     {
@@ -124,7 +138,6 @@ impl SquareGrid2D {
       }
     }
   }
-
 
   pub fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction> {
     let mut dirs = vec![];

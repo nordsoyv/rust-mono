@@ -1,7 +1,7 @@
-use crate::generators::Generator;
-use crate::maze::SquareGrid2D;
 use crate::common::MARGIN;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
+use crate::generators::Generator;
+use crate::maze::SquareGrid2D;
 use crate::WIDTH;
 
 pub struct AppState {
@@ -16,10 +16,8 @@ pub struct AppState {
   pub cell_height: i32,
 }
 
-
 impl AppState {
-
-  pub fn new () -> AppState {
+  pub fn new() -> AppState {
     AppState {
       generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(10))),
       grid: SquareGrid2D::new(30, 30, 15, 15, 0),
@@ -33,7 +31,7 @@ impl AppState {
     }
   }
 
-  pub fn generate_maze (&mut self){
+  pub fn generate_maze(&mut self) {
     if !self.generator.done() {
       for _ in 0..self.generate_steps {
         self.generator.generate_step(&mut self.grid);
@@ -46,11 +44,22 @@ impl AppState {
   }
 
   pub fn get_title(&self) -> String {
-    return format!("Maze type: {} -- Difficulty: {} -- Generation speed: {} ", self.generator.name(), self.difficulty, self.generate_steps);
+    return format!(
+      "Maze type: {} -- Difficulty: {} -- Generation speed: {} ",
+      self.generator.name(),
+      self.difficulty,
+      self.generate_steps
+    );
   }
 
   pub fn generate_new_maze(&mut self) {
-    self.grid = SquareGrid2D::new(self.num_cells, self.num_cells, self.cell_width, self.cell_height, self.cell_inset);
+    self.grid = SquareGrid2D::new(
+      self.num_cells,
+      self.num_cells,
+      self.cell_width,
+      self.cell_height,
+      self.cell_inset,
+    );
     self.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(self.difficulty)));
     self.generator.init(&mut self.grid);
   }
@@ -122,7 +131,7 @@ impl AppState {
     self.generate_new_maze();
   }
 
-  pub fn difficulty_harder(&mut self){
+  pub fn difficulty_harder(&mut self) {
     self.difficulty -= 1;
     if self.difficulty < 1 {
       self.difficulty = 1
@@ -130,7 +139,7 @@ impl AppState {
     self.generate_new_maze();
   }
 
-  pub fn difficulty_easier(&mut self){
+  pub fn difficulty_easier(&mut self) {
     self.difficulty += 1;
     self.generate_new_maze();
   }

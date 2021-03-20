@@ -7,4 +7,4 @@ pub enum Direction {
 }
 
 pub const MARGIN: i32 = 10;
-pub const CELL_ACTIVE_COLOR : u32= 0xffffff00;
+pub const CELL_ACTIVE_COLOR: u32 = 0xffffff00;
