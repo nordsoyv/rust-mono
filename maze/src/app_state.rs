@@ -2,7 +2,7 @@ use crate::common::MARGIN;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
 use crate::maze::SquareGrid2D;
-use crate::WIDTH;
+use crate::{HEIGHT, WIDTH};
 
 pub struct AppState {
   pub generator: Box<dyn Generator>,
@@ -11,7 +11,8 @@ pub struct AppState {
   cell_inset: i32,
   pub show_dist: bool,
   difficulty: i32,
-  pub num_cells: i32,
+  pub num_cells_width: i32,
+  pub num_cells_height: i32,
   pub cell_width: i32,
   pub cell_height: i32,
 }
@@ -25,7 +26,8 @@ impl AppState {
       show_dist: false,
       cell_inset: 0,
       difficulty: 10,
-      num_cells: 30,
+      num_cells_height: 30,
+      num_cells_width: 30,
       cell_width: 15,
       cell_height: 15,
     }
@@ -39,8 +41,11 @@ impl AppState {
     }
   }
 
-  pub fn get_maze_size(&self) -> i32 {
-    (self.cell_width * self.num_cells) + (MARGIN * 2)
+  pub fn get_maze_size(&self) -> (i32, i32) {
+    (
+      (self.cell_width * self.num_cells_width) + (MARGIN * 2),
+      (self.cell_height * self.num_cells_height) + (MARGIN * 2),
+    )
   }
 
   pub fn get_title(&self) -> String {
@@ -54,8 +59,8 @@ impl AppState {
 
   pub fn generate_new_maze(&mut self) {
     self.grid = SquareGrid2D::new(
-      self.num_cells,
-      self.num_cells,
+      self.num_cells_width,
+      self.num_cells_height,
       self.cell_width,
       self.cell_height,
       self.cell_inset,
@@ -109,7 +114,7 @@ impl AppState {
   pub fn cell_size_larger(&mut self) {
     self.cell_height += 1;
     self.cell_width += 1;
-    if self.get_maze_size() > WIDTH {
+    if self.get_maze_size().0 > WIDTH || self.get_maze_size().1 > HEIGHT {
       self.cell_height -= 1;
       self.cell_width -= 1;
     }
@@ -117,18 +122,34 @@ impl AppState {
     self.grid.cell_width = self.cell_width;
   }
 
-  pub fn num_cell_inc(&mut self) {
-    self.num_cells += 1;
-    if self.get_maze_size() > WIDTH {
-      self.num_cells -= 1;
+  pub fn num_cell_height_inc(&mut self) {
+    self.num_cells_height += 2;
+    if self.get_maze_size().1 > HEIGHT {
+      self.num_cells_height -= 2;
     }
     self.generate_new_maze();
   }
 
-  pub fn num_cell_dec(&mut self) {
-    self.num_cells -= 1;
-    if self.num_cells < 1 {
-      self.num_cells = 1
+  pub fn num_cell_height_dec(&mut self) {
+    self.num_cells_height -= 2;
+    if self.num_cells_height < 1 {
+      self.num_cells_height = 2
+    }
+    self.generate_new_maze();
+  }
+
+  pub fn num_cell_width_inc(&mut self) {
+    self.num_cells_width += 2;
+    if self.get_maze_size().0 > WIDTH {
+      self.num_cells_width -= 2;
+    }
+    self.generate_new_maze();
+  }
+
+  pub fn num_cell_width_dec(&mut self) {
+    self.num_cells_width -= 2;
+    if self.num_cells_width < 1 {
+      self.num_cells_width = 2
     }
     self.generate_new_maze();
   }

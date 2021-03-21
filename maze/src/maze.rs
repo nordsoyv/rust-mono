@@ -37,7 +37,7 @@ impl SquareGrid2D {
   }
 
   pub fn get_cell(&self, coord: CellCoord) -> Option<&Cell> {
-    let index = coord.y_pos * self.height + coord.x_pos;
+    let index = coord.y_pos * self.width + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&self.cells[index as usize]);
     }
@@ -45,7 +45,7 @@ impl SquareGrid2D {
   }
 
   pub fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut Cell> {
-    let index = (coord.y_pos * self.height) + coord.x_pos;
+    let index = (coord.y_pos * self.width) + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&mut self.cells[index as usize]);
     }

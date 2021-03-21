@@ -28,10 +28,12 @@ const MENU_SAVE: usize = 8;
 const MENU_PRINT: usize = 9;
 const MENU_HARDER: usize = 10;
 const MENU_EASIER: usize = 11;
-const MENU_NUM_CELLS_INC: usize = 12;
-const MENU_NUM_CELLS_DEC: usize = 13;
-const MENU_CELL_SIZE_INC: usize = 14;
-const MENU_CELL_SIZE_DEC: usize = 15;
+const MENU_NUM_CELLS_HEIGHT_INC: usize = 12;
+const MENU_NUM_CELLS_HEIGHT_DEC: usize = 13;
+const MENU_NUM_CELLS_WIDTH_INC: usize = 14;
+const MENU_NUM_CELLS_WIDTH_DEC: usize = 15;
+const MENU_CELL_SIZE_INC: usize = 16;
+const MENU_CELL_SIZE_DEC: usize = 17;
 
 const WIDTH: i32 = 1000;
 const HEIGHT: i32 = 1000;
@@ -54,17 +56,18 @@ fn save_image(buffer: &Vec<u32>, width: i32, height: i32) {
 }
 
 fn get_mouse_pos(window: &Window, app_state: &AppState) -> CellCoord {
-  let num_cells = app_state.num_cells;
+  let num_cells_width = app_state.num_cells_width;
+  let num_cells_height = app_state.num_cells_height;
   return window
     .get_mouse_pos(MouseMode::Discard)
     .map(|(x, y)| {
       let mut x_cell = ((x - MARGIN as f32) / app_state.cell_width as f32) as i32;
       let mut y_cell = ((y - MARGIN as f32) / app_state.cell_height as f32) as i32;
-      if x_cell >= num_cells {
-        x_cell = num_cells - 1;
+      if x_cell >= num_cells_width {
+        x_cell = num_cells_width - 1;
       }
-      if y_cell >= num_cells {
-        y_cell = num_cells - 1;
+      if y_cell >= num_cells_height {
+        y_cell = num_cells_height - 1;
       }
       if x_cell < 0 {
         x_cell = 0;
@@ -74,7 +77,7 @@ fn get_mouse_pos(window: &Window, app_state: &AppState) -> CellCoord {
       }
       CellCoord {
         x_pos: x_cell,
-        y_pos: num_cells - y_cell - 1,
+        y_pos: num_cells_height - y_cell - 1,
       }
     })
     .unwrap_or(CellCoord {
@@ -138,14 +141,14 @@ fn create_window(app_state: &AppState) -> Window {
     .shortcut(Key::S, 0)
     .build();
 
-  // more less Cells E - D
+  // Taller lower maze Cells E - D
   menu
-    .add_item("More Cells", MENU_NUM_CELLS_INC)
+    .add_item("Taller Maze", MENU_NUM_CELLS_HEIGHT_INC)
     .enabled(true)
     .shortcut(Key::E, 0)
     .build();
   menu
-    .add_item("Less Cells", MENU_NUM_CELLS_DEC)
+    .add_item("Lower Maze", MENU_NUM_CELLS_HEIGHT_DEC)
     .enabled(true)
     .shortcut(Key::D, 0)
     .build();
@@ -174,6 +177,18 @@ fn create_window(app_state: &AppState) -> Window {
     .shortcut(Key::G, 0)
     .build();
 
+  // Wider narrow maze Cells Y - H
+  menu
+    .add_item("Wider Maze", MENU_NUM_CELLS_WIDTH_INC)
+    .enabled(true)
+    .shortcut(Key::Y, 0)
+    .build();
+  menu
+    .add_item("Narrower Maze", MENU_NUM_CELLS_WIDTH_DEC)
+    .enabled(true)
+    .shortcut(Key::H, 0)
+    .build();
+
   window.add_menu(&menu);
   window.set_title(app_state.get_title().as_str());
 
@@ -190,7 +205,7 @@ fn main() {
   while window.is_open() && !window.is_key_down(Key::Escape) {
     let mouse_coord = get_mouse_pos(&window, &app_state);
 
-    let mut canvas = Canvas::new(WIDTH, HEIGHT, HEIGHT - app_state.get_maze_size());
+    let mut canvas = Canvas::new(WIDTH, HEIGHT, HEIGHT - app_state.get_maze_size().1);
     app_state.generate_maze();
     if app_state.generator.done() {
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
@@ -263,11 +278,17 @@ fn main() {
           app_state.difficulty_easier();
           window.set_title(app_state.get_title().as_str());
         }
-        MENU_NUM_CELLS_INC => {
-          app_state.num_cell_inc();
+        MENU_NUM_CELLS_HEIGHT_INC => {
+          app_state.num_cell_height_inc();
         }
-        MENU_NUM_CELLS_DEC => {
-          app_state.num_cell_dec();
+        MENU_NUM_CELLS_HEIGHT_DEC => {
+          app_state.num_cell_height_dec();
+        }
+        MENU_NUM_CELLS_WIDTH_INC => {
+          app_state.num_cell_width_inc();
+        }
+        MENU_NUM_CELLS_WIDTH_DEC => {
+          app_state.num_cell_width_dec();
         }
         MENU_CELL_SIZE_INC => {
           app_state.cell_size_larger();
