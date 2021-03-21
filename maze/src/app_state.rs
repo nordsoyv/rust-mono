@@ -102,7 +102,8 @@ impl AppState {
       self.cell_width = 5;
       self.cell_height = 5;
     }
-    self.generate_new_maze();
+    self.grid.cell_height = self.cell_height;
+    self.grid.cell_width = self.cell_width;
   }
 
   pub fn cell_size_larger(&mut self) {
@@ -112,7 +113,8 @@ impl AppState {
       self.cell_height -= 1;
       self.cell_width -= 1;
     }
-    self.generate_new_maze();
+    self.grid.cell_height = self.cell_height;
+    self.grid.cell_width = self.cell_width;
   }
 
   pub fn num_cell_inc(&mut self) {

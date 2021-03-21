@@ -191,17 +191,6 @@ fn main() {
     let mouse_coord = get_mouse_pos(&window, &app_state);
 
     let mut canvas = Canvas::new(WIDTH, HEIGHT, HEIGHT - app_state.get_maze_size());
-
-    // {
-    //   width: WIDTH,
-    //   height: HEIGHT,
-    //   buffer: ve
-    //c![],
-    //   offset: 0,
-    // };
-    // canvas.clear();
-    // canvas.set_offset(HEIGHT - app_state.get_maze_size());
-
     app_state.generate_maze();
     if app_state.generator.done() {
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
