@@ -1,6 +1,7 @@
+use canvas::Canvas;
+
 use crate::cell::{Cell, CellCoord};
 use crate::common::Direction;
-use canvas::Canvas;
 
 pub struct SquareGrid2D {
   pub cells: Vec<Cell>,
@@ -31,16 +32,20 @@ impl SquareGrid2D {
     }
   }
 
-  // FIXME: Should return Option<&Cell>
-  pub fn get_cell(&self, coord: CellCoord) -> &Cell {
+  pub fn get_cell(&self, coord: CellCoord) -> Option<&Cell> {
     let index = coord.y_pos * self.height + coord.x_pos;
-    return &self.cells[index as usize];
+    if (index as usize) < self.cells.len() {
+      return Some(&self.cells[index as usize]);
+    }
+    return None;
   }
 
-  // FIXME: Should return Option<&mut Cell>
-  pub fn get_mut_cell(&mut self, coord: CellCoord) -> &mut Cell {
+  pub fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut Cell> {
     let index = (coord.y_pos * self.height) + coord.x_pos;
-    return &mut self.cells[index as usize];
+    if (index as usize) < self.cells.len() {
+      return Some(&mut self.cells[index as usize]);
+    }
+    return None;
   }
 
   pub fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
@@ -59,10 +64,12 @@ impl SquareGrid2D {
       return false;
     }
 
-    let target_cell = self.get_cell(CellCoord::new(target_x, target_y));
-    if !target_cell.part_of_maze {
-      return true;
+    if let Some(target_cell) = self.get_cell(CellCoord::new(target_x, target_y)) {
+      if !target_cell.part_of_maze {
+        return true;
+      }
     }
+
     return false;
   }
 
@@ -101,8 +108,8 @@ impl SquareGrid2D {
     {
       return;
     }
-    {
-      let start_cell = self.get_mut_cell(coord_start);
+
+    if let Some(start_cell) = self.get_mut_cell(coord_start) {
       start_cell.part_of_maze = true;
       match dir {
         Direction::North => {
@@ -119,8 +126,8 @@ impl SquareGrid2D {
         }
       }
     }
-    {
-      let end_cell = self.get_mut_cell(coord_end);
+
+    if let Some(end_cell) = self.get_mut_cell(coord_end) {
       end_cell.part_of_maze = true;
       match dir {
         Direction::North => {

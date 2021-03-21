@@ -3,11 +3,12 @@ use std::process::Command;
 
 use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
 
+use canvas::Canvas;
+
 use crate::app_state::AppState;
 use crate::cell::CellCoord;
 use crate::common::{CELL_ACTIVE_COLOR, MARGIN};
 use crate::djikstra::Djikstra;
-use canvas::Canvas;
 
 mod app_state;
 mod cell;
@@ -207,14 +208,16 @@ fn main() {
         if app_state.show_dist {
           Djikstra::new().run(mouse_coord, &mut app_state.grid);
         } else {
-          let cell = app_state.grid.get_mut_cell(mouse_coord);
-          cell.color = Some(CELL_ACTIVE_COLOR);
+          if let Some(cell) = app_state.grid.get_mut_cell(mouse_coord) {
+            cell.color = Some(CELL_ACTIVE_COLOR);
+          }
         }
       }
       app_state.grid.draw(&mut canvas);
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
-        let cell = app_state.grid.get_mut_cell(mouse_coord);
-        cell.color = None;
+        if let Some(cell) = app_state.grid.get_mut_cell(mouse_coord) {
+          cell.color = None;
+        }
       }
     } else {
       app_state.grid.draw(&mut canvas);
@@ -252,8 +255,9 @@ fn main() {
           save_image(&canvas.get_buffer(), WIDTH, HEIGHT);
         }
         MENU_PRINT => {
-          let cell = app_state.grid.get_mut_cell(mouse_coord);
-          cell.color = None;
+          if let Some(cell) = app_state.grid.get_mut_cell(mouse_coord) {
+            cell.color = None
+          }
           canvas.clear();
           app_state.grid.draw(&mut canvas);
           save_image(&canvas.get_buffer(), WIDTH, HEIGHT);

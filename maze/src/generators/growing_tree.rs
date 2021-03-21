@@ -1,9 +1,10 @@
+use rand::distributions::{Distribution, Uniform};
+use rand::prelude::ThreadRng;
+
 use crate::cell::CellCoord;
 use crate::common::CELL_ACTIVE_COLOR;
 use crate::generators::Generator;
 use crate::maze::SquareGrid2D;
-use rand::distributions::{Distribution, Uniform};
-use rand::prelude::ThreadRng;
 
 #[allow(dead_code)]
 pub enum Strategy {
@@ -30,6 +31,7 @@ impl Generator for GrowingTreeGenerator {
         x_pos: maze.width / 2,
         y_pos: 0,
       })
+      .unwrap()
       .bottom = Some(CellCoord {
       x_pos: -1,
       y_pos: -1,
@@ -39,6 +41,7 @@ impl Generator for GrowingTreeGenerator {
         x_pos: maze.width / 2,
         y_pos: maze.height - 1,
       })
+      .unwrap()
       .top = Some(CellCoord {
       x_pos: -1,
       y_pos: -1,
@@ -52,6 +55,7 @@ impl Generator for GrowingTreeGenerator {
         x_pos: maze.width / 2,
         y_pos: maze.height / 2,
       })
+      .unwrap()
       .part_of_maze = true;
   }
 
@@ -72,11 +76,15 @@ impl Generator for GrowingTreeGenerator {
     }
     let next_cell_index = self.get_next_index();
     let coord = self.stack[next_cell_index];
-    maze.get_mut_cell(coord).color = Some(CELL_ACTIVE_COLOR);
+    if let Some(cell) = maze.get_mut_cell(coord) {
+      cell.color = Some(CELL_ACTIVE_COLOR);
+    }
 
     let available_dirs = maze.get_allowed_directions(coord);
     if available_dirs.len() == 0 {
-      maze.get_mut_cell(coord).color = None;
+      if let Some(cell) = maze.get_mut_cell(coord) {
+        cell.color = None;
+      }
       self.stack.remove(next_cell_index);
       return;
     }
