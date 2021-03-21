@@ -12,7 +12,7 @@ impl Djikstra {
 
   pub fn run(&mut self, start: CellCoord, grid: &mut SquareGrid2D) {
     {
-      grid.cells.iter_mut().for_each(|c| c.distance = -1);
+      grid.reset_cell_dist();
     }
     let start_cell = grid.get_mut_cell(start).unwrap();
     start_cell.distance = 0;

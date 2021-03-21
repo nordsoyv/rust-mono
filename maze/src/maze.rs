@@ -4,7 +4,7 @@ use crate::cell::{Cell, CellCoord};
 use crate::common::Direction;
 
 pub struct SquareGrid2D {
-  pub cells: Vec<Cell>,
+  cells: Vec<Cell>,
   pub width: i32,
   pub height: i32,
   pub cell_inset: i32,
@@ -34,6 +34,10 @@ impl SquareGrid2D {
       cell_height,
       cell_width,
     }
+  }
+
+  pub fn reset_cell_dist(&mut self) {
+    self.cells.iter_mut().for_each(|c| c.distance = -1);
   }
 
   pub fn get_cell(&self, coord: CellCoord) -> Option<&Cell> {
