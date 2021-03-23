@@ -205,7 +205,7 @@ fn main() {
   while window.is_open() && !window.is_key_down(Key::Escape) {
     let mouse_coord = get_mouse_pos(&window, &app_state);
 
-    let mut canvas = Canvas::new(WIDTH, HEIGHT, HEIGHT - app_state.get_maze_size().1);
+    let mut canvas = Canvas::new(WIDTH, HEIGHT, HEIGHT - app_state.get_maze_size().1, 10);
     app_state.generate_maze();
     if app_state.generator.done() {
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
