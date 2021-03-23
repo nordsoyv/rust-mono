@@ -132,7 +132,7 @@ impl Cell {
     canvas.set_fg_color(0x00000000);
     if self.top.is_none() {
       let y_pos = (self.coord.y_pos + 1) * cell_height;
-      canvas.draw_horizontal_line(
+      canvas.draw_line(
         (self.coord.x_pos * cell_width) + cell_inset,
         (y_pos) - cell_inset,
         ((self.coord.x_pos + 1) * cell_width) - cell_inset,
@@ -141,7 +141,7 @@ impl Cell {
     }
     if self.bottom.is_none() {
       let y_pos = self.coord.y_pos * cell_height;
-      canvas.draw_horizontal_line(
+      canvas.draw_line(
         (self.coord.x_pos * cell_width) + cell_inset,
         y_pos + cell_inset,
         ((self.coord.x_pos + 1) * cell_width) - cell_inset,
@@ -150,7 +150,7 @@ impl Cell {
     }
     if self.left.is_none() {
       let x_pos = self.coord.x_pos * cell_width;
-      canvas.draw_vertical_line(
+      canvas.draw_line(
         x_pos + cell_inset,
         (self.coord.y_pos * cell_height) + cell_inset,
         x_pos + cell_inset,
@@ -159,7 +159,7 @@ impl Cell {
     }
     if self.right.is_none() {
       let x_pos = (self.coord.x_pos + 1) * cell_width;
-      canvas.draw_vertical_line(
+      canvas.draw_line(
         x_pos - cell_inset,
         (self.coord.y_pos * cell_height) + cell_inset,
         x_pos - cell_inset,
@@ -170,14 +170,14 @@ impl Cell {
     if cell_inset > 0 {
       if self.top.is_some() {
         let y_pos = (self.coord.y_pos + 1) * cell_height;
-        canvas.draw_vertical_line(
+        canvas.draw_line(
           (self.coord.x_pos * cell_width) + cell_inset,
           y_pos,
           (self.coord.x_pos * cell_width) + cell_inset,
           (y_pos) - cell_inset,
         );
 
-        canvas.draw_vertical_line(
+        canvas.draw_line(
           ((self.coord.x_pos + 1) * cell_width) - cell_inset,
           y_pos,
           ((self.coord.x_pos + 1) * cell_width) - cell_inset,
@@ -186,14 +186,14 @@ impl Cell {
       }
       if self.bottom.is_some() {
         let y_pos = (self.coord.y_pos) * cell_height;
-        canvas.draw_vertical_line(
+        canvas.draw_line(
           (self.coord.x_pos * cell_width) + cell_inset,
           y_pos,
           (self.coord.x_pos * cell_width) + cell_inset,
           (y_pos) + cell_inset,
         );
 
-        canvas.draw_vertical_line(
+        canvas.draw_line(
           ((self.coord.x_pos + 1) * cell_width) - cell_inset,
           y_pos,
           ((self.coord.x_pos + 1) * cell_width) - cell_inset,
@@ -202,13 +202,13 @@ impl Cell {
       }
       if self.left.is_some() {
         let x_pos = self.coord.x_pos * cell_width;
-        canvas.draw_horizontal_line(
+        canvas.draw_line(
           x_pos,
           (self.coord.y_pos * cell_height) + cell_inset,
           x_pos + cell_inset,
           (self.coord.y_pos * cell_height) + cell_inset,
         );
-        canvas.draw_horizontal_line(
+        canvas.draw_line(
           x_pos,
           ((self.coord.y_pos + 1) * cell_height) - cell_inset,
           x_pos + cell_inset,
@@ -217,14 +217,14 @@ impl Cell {
       }
       if self.right.is_some() {
         let x_pos = (self.coord.x_pos + 1) * cell_width;
-        canvas.draw_horizontal_line(
+        canvas.draw_line(
           x_pos,
           (self.coord.y_pos * cell_height) + cell_inset,
           x_pos - cell_inset,
           (self.coord.y_pos * cell_height) + cell_inset,
         );
 
-        canvas.draw_horizontal_line(
+        canvas.draw_line(
           x_pos,
           ((self.coord.y_pos + 1) * cell_height) - cell_inset,
           x_pos - cell_inset,
