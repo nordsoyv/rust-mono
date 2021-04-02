@@ -84,12 +84,12 @@ impl Cell {
     } else {
       return;
     }
+    canvas.set_fg_color(color);
     canvas.fill_square(
       self.coord.x_pos * cell_width + cell_inset,
       self.coord.y_pos * cell_height + cell_inset,
       cell_width - cell_inset - cell_inset,
       cell_height - cell_inset - cell_inset,
-      color,
     );
     if cell_inset > 0 {
       if self.top.is_some() {
@@ -98,7 +98,6 @@ impl Cell {
           ((self.coord.y_pos + 1) * cell_height) - cell_inset,
           cell_width - cell_inset - cell_inset,
           cell_inset,
-          color,
         );
       }
       if self.bottom.is_some() {
@@ -107,7 +106,6 @@ impl Cell {
           self.coord.y_pos * cell_height,
           cell_width - cell_inset - cell_inset,
           cell_inset,
-          color,
         );
       }
       if self.left.is_some() {
@@ -116,7 +114,6 @@ impl Cell {
           ((self.coord.y_pos) * cell_height) + cell_inset,
           cell_inset,
           cell_height - cell_inset - cell_inset,
-          color,
         );
       }
       if self.right.is_some() {
@@ -125,7 +122,6 @@ impl Cell {
           ((self.coord.y_pos) * cell_height) + cell_inset,
           cell_inset,
           cell_height - cell_inset - cell_inset,
-          color,
         );
       }
     }
@@ -133,6 +129,7 @@ impl Cell {
 
   pub fn draw(&self, canvas: &mut Canvas, cell_inset: i32, cell_width: i32, cell_height: i32) {
     self.draw_background(canvas, cell_inset, cell_width, cell_height);
+    canvas.set_fg_color(0x00000000);
     if self.top.is_none() {
       let y_pos = (self.coord.y_pos + 1) * cell_height;
       canvas.draw_horizontal_line(

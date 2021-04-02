@@ -201,11 +201,13 @@ fn main() {
   let mut window = create_window(&app_state);
 
   app_state.generator.init(&mut app_state.grid);
+  let mut canvas = Canvas::new(WIDTH, HEIGHT, HEIGHT - app_state.get_maze_size().1, 10);
 
   while window.is_open() && !window.is_key_down(Key::Escape) {
     let mouse_coord = get_mouse_pos(&window, &app_state);
-
-    let mut canvas = Canvas::new(WIDTH, HEIGHT, HEIGHT - app_state.get_maze_size().1, 10);
+    canvas.set_offset(HEIGHT - app_state.get_maze_size().1);
+    canvas.set_bg_color(0x00ffffff);
+    canvas.clear();
     app_state.generate_maze();
     if app_state.generator.done() {
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
