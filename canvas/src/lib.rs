@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
-const BACKGROUND_COLOR: u32 = 0x00ffffff;
-const FOREGROUND_COLOR: u32 = 0x00000000;
+const BACKGROUND_COLOR: u32 = 0x00000000;
+const FOREGROUND_COLOR: u32 = 0x00ffffff;
 
 pub struct Canvas {
   width: i32,
@@ -26,6 +26,14 @@ impl Canvas {
     };
     c.clear();
     c
+  }
+
+  pub fn set_bg_color(&mut self, color: u32) {
+    self.bg_color = color;
+  }
+
+  pub fn set_fg_color(&mut self, color: u32) {
+    self.fg_color = color;
   }
 
   pub fn get_buffer(&self) -> &Vec<u32> {
@@ -95,17 +103,17 @@ impl Canvas {
       self.draw_horizontal_line(start_x, start_y, end_x, end_y);
       return;
     }
-    panic!(format!(
+    panic!(
       "Can't draw line start ({},{}), end ({},{})",
       start_x, start_y, end_x, end_y
-    ));
+    );
   }
 
   pub fn draw_vertical_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     assert_eq!(start_x, end_x);
     let (start_x, start_y, _end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
 
-    let length = start_y - end_y;
+    let length = start_y - end_y + 1;
     let start_point =
       ((start_y - self.margin - self.offset) * self.width) + (start_x + self.margin);
     for pos in 0..length {
@@ -117,7 +125,7 @@ impl Canvas {
     assert_eq!(start_y, end_y);
     let (start_x, start_y, end_x, _end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
 
-    let length = end_x - start_x;
+    let length = end_x - start_x + 1;
     let start_point =
       ((start_y - self.margin - self.offset) * self.width) + (start_x + self.margin);
 
@@ -126,7 +134,7 @@ impl Canvas {
     }
   }
 
-  pub fn fill_square(&mut self, start_x: i32, start_y: i32, width: i32, height: i32, color: u32) {
+  pub fn fill_square(&mut self, start_x: i32, start_y: i32, width: i32, height: i32) {
     assert!(start_x >= 0);
     assert!(start_y >= 0);
     assert!(width >= 0);
@@ -135,12 +143,33 @@ impl Canvas {
     let real_start_y = self.height - start_y - 1 - self.offset;
     let start_point = ((real_start_y - self.margin) * self.width) + (start_x + self.margin);
 
-    for x_pos in 0..width {
-      for y_pos in 0..height {
-        let pos = start_point - (y_pos * self.width) + x_pos;
-        self.buffer[pos as usize] = color;
+    for y_pos in 0..height {
+      let line_start = start_point - (y_pos * self.width);
+      for x_pos in 0..width {
+        let pos = line_start + x_pos;
+        self.buffer[pos as usize] = self.fg_color;
       }
     }
+  }
+
+  #[allow(dead_code)]
+  fn output_drawn_pixels(&self) -> String {
+    let mut w = String::new();
+    for y_pos in 0..self.height {
+      let line_start = (y_pos * self.width) as usize;
+      for x_pos in 0..self.width {
+        let pos = line_start + x_pos as usize;
+        if self.buffer[pos] == 0 {
+          w.push('0');
+        } else {
+          w.push('1');
+        }
+      }
+      if y_pos != self.height - 1 {
+        w.push('\n');
+      }
+    }
+    return w;
   }
 }
 
@@ -151,38 +180,51 @@ mod tests {
   #[test]
   fn can_draw_horizontal_line() {
     let mut canvas = Canvas::new(10, 4, 0, 0);
+    let fg = 0x00000001;
+    canvas.set_fg_color(fg);
     canvas.draw_line(1, 1, 5, 1);
-    let bg = 0x00ffffff;
-    let fg = 0x00000000;
-    #[rustfmt::skip]
-    let result = vec![
-      bg,bg,bg,bg,bg,bg,bg,bg,bg,bg,
-      bg,bg,bg,bg,bg,bg,bg,bg,bg,bg,
-      bg,fg,fg,fg,fg,bg,bg,bg,bg,bg,
-      bg,bg,bg,bg,bg,bg,bg,bg,bg,bg,
-    ];
-    assert_eq!(canvas.get_buffer(), &result);
+    let result = "0000000000
+0000000000
+0111110000
+0000000000";
+    assert_eq!(canvas.output_drawn_pixels(), result);
   }
 
   #[test]
   fn can_draw_vertical_line() {
     let mut canvas = Canvas::new(3, 10, 0, 0);
+    canvas.set_fg_color(0x00000001);
     canvas.draw_line(1, 1, 1, 5);
-    let bg = 0x00ffffff;
-    let fg = 0x00000000;
     #[rustfmt::skip]
-    let result = vec![
-      bg,bg,bg,
-      bg,bg,bg,
-      bg,bg,bg,
-      bg,bg,bg,
-      bg,bg,bg,
-      bg,fg,bg,
-      bg,fg,bg,
-      bg,fg,bg,
-      bg,fg,bg,
-      bg,bg,bg,
-    ];
-    assert_eq!(canvas.get_buffer(), &result);
+      let result = "000
+000
+000
+000
+010
+010
+010
+010
+010
+000";
+    assert_eq!(canvas.output_drawn_pixels(), result);
+  }
+
+  #[test]
+  fn can_draw_sqaure() {
+    let mut canvas = Canvas::new(10, 10, 0, 0);
+    let fg = 0x00000001;
+    canvas.set_fg_color(fg);
+    canvas.fill_square(2, 2, 4, 5);
+    let result = "0000000000
+0000000000
+0000000000
+0011110000
+0011110000
+0011110000
+0011110000
+0011110000
+0000000000
+0000000000".to_string();
+    assert_eq!(canvas.output_drawn_pixels(), result);
   }
 }
