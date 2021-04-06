@@ -1,12 +1,16 @@
+mod vector;
+
 use std::convert::TryFrom;
 
 const BACKGROUND_COLOR: u32 = 0x00000000;
 const FOREGROUND_COLOR: u32 = 0x00ffffff;
 
+
 pub struct Canvas {
   width: i32,
   height: i32,
-  offset: i32,
+  x_offset: i32,
+  y_offset: i32,
   bg_color: u32,
   fg_color: u32,
   margin: i32,
@@ -14,11 +18,12 @@ pub struct Canvas {
 }
 
 impl Canvas {
-  pub fn new(width: i32, height: i32, offset: i32, margin: i32) -> Canvas {
+  pub fn new(width: i32, height: i32, margin: i32) -> Canvas {
     let mut c = Canvas {
       width,
       height,
-      offset,
+      y_offset: 0,
+      x_offset: 0,
       bg_color: BACKGROUND_COLOR,
       fg_color: FOREGROUND_COLOR,
       margin: margin,
@@ -46,8 +51,9 @@ impl Canvas {
     self.buffer.resize(size, self.bg_color);
   }
 
-  pub fn set_offset(&mut self, offset: i32) {
-    self.offset = offset;
+  pub fn set_offset(&mut self, x_offset:i32, y_offset: i32) {
+    self.x_offset = x_offset;
+    self.y_offset = y_offset;
   }
 
   fn normalize_coords(
@@ -57,6 +63,7 @@ impl Canvas {
     end_x: i32,
     end_y: i32,
   ) -> (i32, i32, i32, i32) {
+
     let (start_y, end_y) = if start_y > end_y {
       (end_y, start_y)
     } else {
@@ -94,7 +101,15 @@ impl Canvas {
     (start_x, start_y, end_x, end_y)
   }
 
+  fn apply_offset(&self, coord_x:i32, coord_y:i32)->(i32,i32){
+    (coord_x + self.x_offset, coord_y + self.y_offset)
+  }
+
   pub fn draw_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
+    let (start_x,start_y) = self.apply_offset(start_x,start_y);
+    let (end_x,end_y) = self.apply_offset(end_x,end_y);
+
+    let (start_x, start_y, _end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
     if start_x == end_x {
       self.draw_vertical_line(start_x, start_y, end_x, end_y);
       return;
@@ -111,11 +126,9 @@ impl Canvas {
 
   pub fn draw_vertical_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     assert_eq!(start_x, end_x);
-    let (start_x, start_y, _end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
-
     let length = start_y - end_y + 1;
     let start_point =
-      ((start_y - self.margin - self.offset) * self.width) + (start_x + self.margin);
+      ((start_y - self.margin) * self.width) + (start_x + self.margin);
     for pos in 0..length {
       self.buffer[(start_point - (pos * self.width)) as usize] = self.fg_color;
     }
@@ -123,11 +136,9 @@ impl Canvas {
 
   pub fn draw_horizontal_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     assert_eq!(start_y, end_y);
-    let (start_x, start_y, end_x, _end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
-
     let length = end_x - start_x + 1;
     let start_point =
-      ((start_y - self.margin - self.offset) * self.width) + (start_x + self.margin);
+      ((start_y - self.margin) * self.width) + (start_x + self.margin);
 
     for pos in 0..length {
       self.buffer[(start_point + pos) as usize] = self.fg_color;
@@ -140,8 +151,8 @@ impl Canvas {
     assert!(width >= 0);
     assert!(height >= 0);
 
-    let real_start_y = self.height - start_y - 1 - self.offset;
-    let start_point = ((real_start_y - self.margin) * self.width) + (start_x + self.margin);
+    let real_start_y = self.height - start_y - 1 - self.y_offset;
+    let start_point = ((real_start_y - self.margin) * self.width) + (start_x + self.margin) + self.x_offset;
 
     for y_pos in 0..height {
       let line_start = start_point - (y_pos * self.width);
@@ -179,7 +190,7 @@ mod tests {
 
   #[test]
   fn can_draw_horizontal_line() {
-    let mut canvas = Canvas::new(10, 4, 0, 0);
+    let mut canvas = Canvas::new(10, 4, 0, );
     let fg = 0x00000001;
     canvas.set_fg_color(fg);
     canvas.draw_line(1, 1, 5, 1);
@@ -192,7 +203,7 @@ mod tests {
 
   #[test]
   fn can_draw_vertical_line() {
-    let mut canvas = Canvas::new(3, 10, 0, 0);
+    let mut canvas = Canvas::new(3, 10, 0, );
     canvas.set_fg_color(0x00000001);
     canvas.draw_line(1, 1, 1, 5);
     #[rustfmt::skip]
@@ -211,7 +222,7 @@ mod tests {
 
   #[test]
   fn can_draw_sqaure() {
-    let mut canvas = Canvas::new(10, 10, 0, 0);
+    let mut canvas = Canvas::new(10, 10, 0, );
     let fg = 0x00000001;
     canvas.set_fg_color(fg);
     canvas.fill_square(2, 2, 4, 5);
@@ -225,6 +236,41 @@ mod tests {
 0011110000
 0000000000
 0000000000".to_string();
+    assert_eq!(canvas.output_drawn_pixels(), result);
+  }
+
+  #[test]
+  fn can_use_offset_with_fill_square(){
+    let mut canvas = Canvas::new(10,10,0,);
+    let fg = 0x00000001;
+    canvas.set_fg_color(fg);
+    canvas.set_offset(2,2);
+    canvas.fill_square(2, 2, 2, 2);
+    let result = "0000000000
+0000000000
+0000000000
+0000000000
+0000110000
+0000110000
+0000000000
+0000000000
+0000000000
+0000000000".to_string();
+    assert_eq!(canvas.output_drawn_pixels(), result);
+  }
+
+  #[test]
+  fn can_use_offset_with_horizontal_line() {
+    let mut canvas = Canvas::new(10, 5, 0, );
+    let fg = 0x00000001;
+    canvas.set_fg_color(fg);
+    canvas.set_offset(1,1);
+    canvas.draw_line(1, 1, 5, 1);
+    let result = "0000000000
+0000000000
+0011111000
+0000000000
+0000000000";
     assert_eq!(canvas.output_drawn_pixels(), result);
   }
 }
