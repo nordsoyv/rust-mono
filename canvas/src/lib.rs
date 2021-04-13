@@ -179,10 +179,6 @@ impl Canvas {
     }
     return w;
   }
-
-  pub fn set_fg_color(&mut self, color: u32) {
-    self.fg_color = color;
-  }
 }
 
 #[cfg(test)]
