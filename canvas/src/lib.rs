@@ -62,41 +62,48 @@ impl Canvas {
     end_x: i32,
     end_y: i32,
   ) -> (i32, i32, i32, i32) {
-    let (start_y, end_y) = if start_y > end_y {
+    let (new_start_y, new_end_y) = if start_y > end_y {
       (end_y, start_y)
     } else {
       (start_y, end_y)
     };
-    let (start_x, end_x) = if start_x > end_x {
+    let (new_start_x, new_end_x) = if start_x > end_x {
       (end_x, start_x)
     } else {
       (start_x, end_x)
     };
-    let start_x = if start_x < 0 { 0 } else { start_x };
-    let start_y = {
-      let t = self.height - start_y - 1;
+    let new_new_start_x = if new_start_x < 0 { 0 } else { new_start_x };
+    let new_new_start_y = {
+      let t = self.height - new_start_y - 1;
       if t < 0 {
         0
       } else {
         t
       }
     };
-    let end_x = if end_x >= self.width {
+    let new_new_end_x = if new_end_x >= self.width {
       self.width - 1
     } else {
-      end_x
+      new_end_x
     };
 
-    let end_y = {
-      let t = self.height - end_y - 1;
+    let new_new_end_y = {
+      let t = self.height - new_end_y - 1;
       if t >= self.height {
         self.height - 1
+      } else if t < 0 {
+        0
       } else {
         t
       }
     };
 
-    (start_x, start_y, end_x, end_y)
+    (
+      new_new_start_x,
+      new_new_start_y,
+      new_new_end_x,
+      new_new_end_y,
+    )
   }
 
   fn apply_offset(&self, coord_x: i32, coord_y: i32) -> (i32, i32) {
@@ -116,10 +123,10 @@ impl Canvas {
       self.draw_horizontal_line(start_x, start_y, end_x, end_y);
       return;
     }
-    panic!(
-      "Can't draw line start ({},{}), end ({},{})",
-      start_x, start_y, end_x, end_y
-    );
+    // panic!(
+    //   "Can't draw line start ({},{}), end ({},{})",
+    //   start_x, start_y, end_x, end_y
+    // );
   }
 
   fn draw_vertical_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
