@@ -1,6 +1,6 @@
-mod vector;
-
 use std::convert::TryFrom;
+
+mod vector;
 
 const BACKGROUND_COLOR: u32 = 0x00000000;
 const FOREGROUND_COLOR: u32 = 0x00ffffff;
@@ -153,7 +153,16 @@ impl Canvas {
     assert!(start_y >= 0);
     assert!(width >= 0);
     assert!(height >= 0);
-
+    let width = if start_x + width > self.width {
+      self.width - start_x
+    } else {
+      width
+    };
+    let height = if start_y + height > self.height {
+      self.height - start_y
+    } else {
+      height
+    };
     let real_start_y = self.height - start_y - 1 - self.y_offset;
     let start_point =
       ((real_start_y - self.margin) * self.width) + (start_x + self.margin) + self.x_offset;
