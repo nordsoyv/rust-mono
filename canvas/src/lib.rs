@@ -62,16 +62,22 @@ impl Canvas {
     end_x: i32,
     end_y: i32,
   ) -> (i32, i32, i32, i32) {
-    let (new_start_y, new_end_y) = if start_y > end_y {
-      (end_y, start_y)
+    // let (new_start_y, new_end_y) = if start_y > end_y {
+    //   (end_y, start_y)
+    // } else {
+    //   (start_y, end_y)
+    // };
+    // let (new_start_x, new_end_x) = if start_x > end_x {
+    //   (end_x, start_x)
+    // } else {
+    //   (start_x, end_x)
+    // };
+    let (new_start_x, new_start_y, new_end_x, new_end_y) = if start_x < end_x {
+      (start_x, start_y, end_x, end_y)
     } else {
-      (start_y, end_y)
+      (end_x, end_y, start_x, start_y)
     };
-    let (new_start_x, new_end_x) = if start_x > end_x {
-      (end_x, start_x)
-    } else {
-      (start_x, end_x)
-    };
+
     let new_new_start_x = if new_start_x < 0 { 0 } else { new_start_x };
     let new_new_start_y = {
       let t = self.height - new_start_y - 1;
@@ -97,7 +103,6 @@ impl Canvas {
         t
       }
     };
-
     (
       new_new_start_x,
       new_new_start_y,
@@ -114,23 +119,26 @@ impl Canvas {
     let (start_x, start_y) = self.apply_offset(start_x, start_y);
     let (end_x, end_y) = self.apply_offset(end_x, end_y);
 
-    let (start_x, start_y, _end_x, end_y) = self.normalize_coords(start_x, start_y, end_x, end_y);
-    if start_x == end_x {
-      self.draw_vertical_line(start_x, start_y, end_x, end_y);
+    let (new_start_x, new_start_y, new_end_x, new_end_y) =
+      self.normalize_coords(start_x, start_y, end_x, end_y);
+    if new_start_x == new_end_x {
+      self.draw_vertical_line(new_start_x, new_start_y, new_end_x, new_end_y);
       return;
     }
-    if start_y == end_y {
-      self.draw_horizontal_line(start_x, start_y, end_x, end_y);
+    if new_start_y == new_end_y {
+      self.draw_horizontal_line(new_start_x, new_start_y, new_end_x, new_end_y);
       return;
     }
-    // panic!(
-    //   "Can't draw line start ({},{}), end ({},{})",
-    //   start_x, start_y, end_x, end_y
-    // );
+    self.draw_other_line(new_start_x, new_start_y, new_end_x, new_end_y);
   }
 
   fn draw_vertical_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     assert_eq!(start_x, end_x);
+    let (start_y, end_y) = if start_y > end_y {
+      (start_y, end_y)
+    } else {
+      (end_y, start_y)
+    };
     let length = start_y - end_y + 1;
     let start_point = ((start_y - self.margin) * self.width) + (start_x + self.margin);
     for pos in 0..length {
@@ -145,6 +153,66 @@ impl Canvas {
 
     for pos in 0..length {
       self.buffer[(start_point + pos) as usize] = self.fg_color;
+    }
+  }
+
+  fn draw_other_line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32) {
+    if (y1 - y0).abs() < (x1 - x0).abs() {
+      if x0 > x1 {
+        self.draw_line_low(x1, y1, x0, y0);
+      } else {
+        self.draw_line_low(x0, y0, x1, y1);
+      }
+    } else {
+      if y0 > y1 {
+        self.draw_line_high(x1, y1, x0, y0);
+      } else {
+        self.draw_line_high(x0, y0, x1, y1);
+      }
+    }
+  }
+
+  fn draw_line_low(&mut self, x0: i32, y0: i32, x1: i32, y1: i32) {
+    let delta_x = x1 - x0;
+    let mut delta_y = y1 - y0;
+    let mut y_inc = 1;
+    if delta_y < 0 {
+      y_inc = -1;
+      delta_y = -delta_y;
+    }
+    let mut delta_err = (2 * delta_y) - delta_x;
+
+    let mut y = y0;
+    for x in x0..x1 {
+      self.buffer[((y * self.width) + x) as usize] = self.fg_color;
+      if delta_err > 0 {
+        y += y_inc;
+        delta_err = delta_err + (2 * (delta_y - delta_x));
+      } else {
+        delta_err = delta_err + 2 * delta_y
+      }
+    }
+  }
+
+  fn draw_line_high(&mut self, x0: i32, y0: i32, x1: i32, y1: i32) {
+    let mut delta_x = x1 - x0;
+    let delta_y = y1 - y0;
+    let mut x_inc = 1;
+    if delta_x < 0 {
+      x_inc = -1;
+      delta_x = -delta_x;
+    }
+    let mut delta_err = (2 * delta_x) - delta_y;
+
+    let mut x = x0;
+    for y in y0..y1 {
+      self.buffer[((y * self.width) + x) as usize] = self.fg_color;
+      if delta_err > 0 {
+        x += x_inc;
+        delta_err = delta_err + (2 * (delta_x - delta_y));
+      } else {
+        delta_err = delta_err + 2 * delta_x
+      }
     }
   }
 

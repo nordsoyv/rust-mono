@@ -17,14 +17,14 @@ impl AppState {
   }
 }
 
-fn get_mouse_pos(window: &Window) -> (f32, f32) {
+fn get_mouse_pos(window: &Window) -> Option<(f32, f32)> {
   return window
     .get_mouse_pos(MouseMode::Discard)
     .map(|(x, y)| {
       let new_y = HEIGHT as f32 - y - 1.0;
-      (x, new_y)
+      Some((x, new_y))
     })
-    .unwrap_or((-1.0, -1.0));
+    .unwrap_or(None);
 }
 
 fn create_window(app_state: &AppState) -> Window {
@@ -63,9 +63,13 @@ fn main() {
     canvas.set_bg_color(0x00ffffff);
     canvas.set_fg_color(0x00000000);
     canvas.clear();
-    if mouse_coord.0 >= 0.0 {
-      canvas.fill_square(mouse_coord.0 as i32, mouse_coord.1 as i32, 200, 200);
+    if let Some((x, y)) = mouse_coord {
+      canvas.draw_line(200, 200, x as i32, y as i32);
     }
+
+    // if mouse_coord.0 >= 0.0 {
+    //   canvas.fill_square(mouse_coord.0 as i32, mouse_coord.1 as i32, 200, 200);
+    // }
 
     // canvas.draw_line(200, 200, mouse_coord.0 as i32, mouse_coord.1 as i32);
     // dbg!(mouse_coord);
