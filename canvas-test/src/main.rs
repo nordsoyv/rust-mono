@@ -27,7 +27,7 @@ fn get_mouse_pos(window: &Window) -> Option<(f32, f32)> {
     .unwrap_or(None);
 }
 
-fn create_window(app_state: &AppState) -> Window {
+fn create_window(_app_state: &AppState) -> Window {
   let mut window = Window::new(
     "Test - ESC to exit",
     usize::try_from(WIDTH).unwrap(),
@@ -54,7 +54,7 @@ fn create_window(app_state: &AppState) -> Window {
 }
 
 fn main() {
-  let mut app_state = AppState::new();
+  let app_state = AppState::new();
   let mut window = create_window(&app_state);
   let mut canvas = Canvas::new(WIDTH, HEIGHT, 0);
   while window.is_open() && !window.is_key_down(Key::Escape) {
