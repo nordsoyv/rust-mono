@@ -284,8 +284,8 @@ mod tests {
 
   #[test]
   fn can_set_fg_color() {
-    let mut canvas = Canvas::new(10, 4, 0, 0);
-    let bg = 0x00ffffff;
+    let mut canvas = Canvas::new(10, 4, 0);
+    let bg = 0;
     let fg = 0x00aaaaaa;
     canvas.set_fg_color(fg);
     canvas.draw_line(1, 1, 5, 1);
@@ -293,7 +293,7 @@ mod tests {
       let result = vec![
       bg,bg,bg,bg,bg,bg,bg,bg,bg,bg,
       bg,bg,bg,bg,bg,bg,bg,bg,bg,bg,
-      bg,fg,fg,fg,fg,bg,bg,bg,bg,bg,
+      bg,fg,fg,fg,fg,fg,bg,bg,bg,bg,
       bg,bg,bg,bg,bg,bg,bg,bg,bg,bg,
     ];
     assert_eq!(canvas.get_buffer(), &result);
@@ -376,8 +376,8 @@ mod tests {
 
   #[test]
   fn can_draw_square() {
-    let mut canvas = Canvas::new(7, 7, 0, 0);
-    let bg = 0x00ffffff;
+    let mut canvas = Canvas::new(7, 7, 0);
+    let bg = 0;
     let fg = 0x00aaaaaa;
     canvas.set_fg_color(fg);
     canvas.fill_square(2, 2, 4, 4);
