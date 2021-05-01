@@ -369,4 +369,22 @@ mod tests {
     ];
     assert_eq!(canvas.get_buffer(), &result);
   }
+
+  #[test]
+  fn can_draw_other_line() {
+    let mut canvas = Canvas::new(7, 4, 0);
+    let bg = 0;
+    let fg = 1;
+    canvas.set_fg_color(fg);
+    canvas.draw_line(1, 1, 5, 3);
+
+    #[rustfmt::skip]
+    let result = vec![
+      bg, bg, bg, bg, bg, bg, bg, 
+      bg, bg, bg, fg, fg, bg, bg, 
+      bg, fg, fg, bg, bg, bg, bg, 
+      bg, bg, bg, bg, bg, bg, bg,
+    ];
+    assert_eq!(canvas.get_buffer(), &result);
+  }
 }
