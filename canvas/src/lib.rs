@@ -62,52 +62,13 @@ impl Canvas {
     end_x: i32,
     end_y: i32,
   ) -> (i32, i32, i32, i32) {
-    // let (new_start_y, new_end_y) = if start_y > end_y {
-    //   (end_y, start_y)
-    // } else {
-    //   (start_y, end_y)
-    // };
-    // let (new_start_x, new_end_x) = if start_x > end_x {
-    //   (end_x, start_x)
-    // } else {
-    //   (start_x, end_x)
-    // };
-    let (new_start_x, new_start_y, new_end_x, new_end_y) = if start_x < end_x {
-      (start_x, start_y, end_x, end_y)
-    } else {
-      (end_x, end_y, start_x, start_y)
-    };
-
-    let new_new_start_x = if new_start_x < 0 { 0 } else { new_start_x };
-    let new_new_start_y = {
-      let t = self.height - new_start_y - 1;
-      if t < 0 {
-        0
-      } else {
-        t
-      }
-    };
-    let new_new_end_x = if new_end_x >= self.width {
-      self.width - 1
-    } else {
-      new_end_x
-    };
-
-    let new_new_end_y = {
-      let t = self.height - new_end_y - 1;
-      if t >= self.height {
-        self.height - 1
-      } else if t < 0 {
-        0
-      } else {
-        t
-      }
-    };
+    let new_start_y = self.height - start_y - 1;
+    let new_end_y = self.height - end_y - 1;
     (
-      new_new_start_x,
-      new_new_start_y,
-      new_new_end_x,
-      new_new_end_y,
+      clamp(start_x, 0, self.width - 1),
+      clamp(new_start_y, 0, self.height - 1),
+      clamp(end_x, 0, self.width - 1),
+      clamp(new_end_y, 0, self.height - 1),
     )
   }
 
@@ -148,8 +109,13 @@ impl Canvas {
 
   fn draw_horizontal_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     assert_eq!(start_y, end_y);
-    let length = end_x - start_x + 1;
-    let start_point = ((start_y - self.margin) * self.width) + (start_x + self.margin);
+    let (new_start_x, new_end_x) = if start_x > end_x {
+      (end_x, start_x)
+    } else {
+      (start_x, end_x)
+    };
+    let length = new_end_x - new_start_x + 1;
+    let start_point = ((start_y - self.margin) * self.width) + (new_start_x + self.margin);
 
     for pos in 0..length {
       self.buffer[(start_point + pos) as usize] = self.fg_color;
@@ -263,6 +229,16 @@ impl Canvas {
     }
     return w;
   }
+}
+
+fn clamp(input: i32, min: i32, max: i32) -> i32 {
+  if input < min {
+    return min;
+  }
+  if input > max {
+    return max;
+  }
+  input
 }
 
 #[cfg(test)]
