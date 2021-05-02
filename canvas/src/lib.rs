@@ -73,13 +73,15 @@ impl Canvas {
   }
 
   fn apply_offset(&self, coord_x: i32, coord_y: i32) -> (i32, i32) {
-    (coord_x + self.x_offset, coord_y + self.y_offset)
+    (
+      coord_x + self.x_offset + self.margin,
+      coord_y + self.y_offset - self.margin,
+    )
   }
 
   pub fn draw_line(&mut self, start_x: i32, start_y: i32, end_x: i32, end_y: i32) {
     let (start_x, start_y) = self.apply_offset(start_x, start_y);
     let (end_x, end_y) = self.apply_offset(end_x, end_y);
-
     let (new_start_x, new_start_y, new_end_x, new_end_y) =
       self.normalize_coords(start_x, start_y, end_x, end_y);
     if new_start_x == new_end_x {
@@ -101,7 +103,7 @@ impl Canvas {
       (end_y, start_y)
     };
     let length = start_y - end_y + 1;
-    let start_point = ((start_y - self.margin) * self.width) + (start_x + self.margin);
+    let start_point = (start_y * self.width) + start_x;
     for pos in 0..length {
       self.buffer[(start_point - (pos * self.width)) as usize] = self.fg_color;
     }
@@ -115,7 +117,7 @@ impl Canvas {
       (start_x, end_x)
     };
     let length = new_end_x - new_start_x + 1;
-    let start_point = ((start_y - self.margin) * self.width) + (new_start_x + self.margin);
+    let start_point = (start_y * self.width) + new_start_x;
 
     for pos in 0..length {
       self.buffer[(start_point + pos) as usize] = self.fg_color;
