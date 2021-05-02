@@ -9,6 +9,7 @@ use crate::app_state::AppState;
 use crate::cell::CellCoord;
 use crate::common::{CELL_ACTIVE_COLOR, MARGIN};
 use crate::djikstra::Djikstra;
+use crate::maze::Grid;
 
 mod app_state;
 mod cell;
@@ -200,7 +201,7 @@ fn main() {
 
   let mut window = create_window(&app_state);
 
-  app_state.generator.init(&mut app_state.grid);
+  // app_state.generator.init(&mut app_state.grid);
   let mut canvas = Canvas::new(WIDTH, HEIGHT, 10);
 
   while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -212,7 +213,7 @@ fn main() {
     if app_state.generator.done() {
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
         if app_state.show_dist {
-          Djikstra::new().run(mouse_coord, &mut app_state.grid);
+          // Djikstra::new().run(mouse_coord, &mut app_state.grid);
         } else {
           if let Some(cell) = app_state.grid.get_mut_cell(mouse_coord) {
             cell.color = Some(CELL_ACTIVE_COLOR);
@@ -244,15 +245,15 @@ fn main() {
           app_state.generate_slower();
           window.set_title(app_state.get_title().as_str());
         }
-        MENU_INSET_SMALLER => {
-          app_state.inset_smaller();
-        }
-        MENU_INSET_LARGER => {
-          app_state.inset_larger();
-        }
+        // MENU_INSET_SMALLER => {
+        //   app_state.inset_smaller();
+        // }
+        // MENU_INSET_LARGER => {
+        //   app_state.inset_larger();
+        // }
         MENU_DJIKSTRA => {
           let mut d = Djikstra::new();
-          d.run(mouse_coord, &mut app_state.grid);
+          // d.run(mouse_coord, &mut app_state.grid);
         }
         MENU_SHOW_DIST => {
           app_state.toggle_show_distance();

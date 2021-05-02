@@ -4,7 +4,7 @@ use rand::prelude::ThreadRng;
 use crate::cell::CellCoord;
 use crate::common::CELL_ACTIVE_COLOR;
 use crate::generators::Generator;
-use crate::maze::SquareGrid2D;
+use crate::maze::{Grid, SquareGrid2D};
 
 #[allow(dead_code)]
 pub enum Strategy {
@@ -26,37 +26,25 @@ pub struct GrowingTreeGenerator {
 
 impl Generator for GrowingTreeGenerator {
   fn init(&mut self, maze: &mut SquareGrid2D) {
-    maze
-      .get_mut_cell(CellCoord {
-        x_pos: maze.width / 2,
-        y_pos: 0,
-      })
-      .unwrap()
-      .bottom = Some(CellCoord {
-      x_pos: -1,
-      y_pos: -1,
-    });
-    maze
-      .get_mut_cell(CellCoord {
-        x_pos: maze.width / 2,
-        y_pos: maze.height - 1,
-      })
-      .unwrap()
-      .top = Some(CellCoord {
-      x_pos: -1,
-      y_pos: -1,
-    });
-    self.stack.push(CellCoord {
+    let entrance_cell = CellCoord {
       x_pos: maze.width / 2,
-      y_pos: maze.height / 2,
+      y_pos: 0,
+    };
+    let exit_cell = CellCoord {
+      x_pos: maze.width / 2,
+      y_pos: maze.height - 1,
+    };
+    let start_cell = entrance_cell;
+    maze.get_mut_cell(entrance_cell).unwrap().bottom = Some(CellCoord {
+      x_pos: -1,
+      y_pos: -1,
     });
-    maze
-      .get_mut_cell(CellCoord {
-        x_pos: maze.width / 2,
-        y_pos: maze.height / 2,
-      })
-      .unwrap()
-      .part_of_maze = true;
+    maze.get_mut_cell(exit_cell).unwrap().top = Some(CellCoord {
+      x_pos: -1,
+      y_pos: -1,
+    });
+    maze.get_mut_cell(start_cell).unwrap().part_of_maze = true;
+    self.stack.push(start_cell);
   }
 
   fn name(&self) -> &str {

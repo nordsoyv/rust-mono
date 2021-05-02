@@ -1,5 +1,5 @@
 use crate::cell::CellCoord;
-use crate::maze::SquareGrid2D;
+use crate::maze::{Grid, SquareGrid2D};
 
 pub struct Djikstra {
   frontier: Vec<CellCoord>,

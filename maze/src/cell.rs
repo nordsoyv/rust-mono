@@ -1,5 +1,11 @@
 use canvas::Canvas;
 
+use crate::save_image;
+
+fn is_odd(num: i32) -> bool {
+  return num & 1 != 0;
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct CellCoord {
   pub x_pos: i32,
@@ -14,7 +20,7 @@ impl CellCoord {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Cell {
+pub struct SquareCell {
   pub left: Option<CellCoord>,
   pub right: Option<CellCoord>,
   pub top: Option<CellCoord>,
@@ -25,9 +31,9 @@ pub struct Cell {
   pub distance: i32,
 }
 
-impl Cell {
-  pub fn default(x: i32, y: i32) -> Cell {
-    Cell {
+impl SquareCell {
+  pub fn default(x: i32, y: i32) -> SquareCell {
+    SquareCell {
       bottom: None,
       left: None,
       top: None,
@@ -231,6 +237,104 @@ impl Cell {
           ((self.coord.y_pos + 1) * cell_height) - cell_inset,
         );
       }
+    }
+  }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct HexCell {
+  pub north: Option<CellCoord>,
+  pub south: Option<CellCoord>,
+  pub north_east: Option<CellCoord>,
+  pub north_west: Option<CellCoord>,
+  pub south_east: Option<CellCoord>,
+  pub south_west: Option<CellCoord>,
+
+  pub coord: CellCoord,
+  pub part_of_maze: bool,
+  pub color: Option<u32>,
+  pub distance: i32,
+}
+
+impl HexCell {
+  pub fn default(x: i32, y: i32) -> HexCell {
+    HexCell {
+      north: None,
+      north_east: None,
+      north_west: None,
+      south: None,
+      south_east: None,
+      south_west: None,
+      coord: CellCoord::new(x, y),
+      part_of_maze: false,
+      color: None,
+      distance: -1,
+    }
+  }
+  pub fn get_neighbours(&self) -> Vec<CellCoord> {
+    let mut neighbours = vec![];
+    if self.north.is_some() {
+      neighbours.push(self.north.unwrap());
+    }
+    if self.north_west.is_some() {
+      neighbours.push(self.north_west.unwrap());
+    }
+    if self.north_east.is_some() {
+      neighbours.push(self.north_east.unwrap());
+    }
+    if self.south.is_some() {
+      neighbours.push(self.south.unwrap());
+    }
+    if self.south_west.is_some() {
+      neighbours.push(self.south_west.unwrap());
+    }
+    if self.south_east.is_some() {
+      neighbours.push(self.south_east.unwrap());
+    }
+    neighbours
+  }
+
+  pub fn draw(&self, canvas: &mut Canvas, size: f32) {
+    canvas.set_fg_color(0);
+    let a_size: f32 = size / 2.0;
+    let b_size: f32 = (size * 3.0_f32.sqrt()) / 2.0;
+    let width = size * 2.0;
+    let height = b_size * 2.0;
+
+    let cx = size + 3.0 * self.coord.x_pos as f32 * a_size;
+    let mut cy = b_size + self.coord.y_pos as f32 * height;
+    if is_odd(self.coord.x_pos) {
+      cy += b_size;
+    }
+
+    // f/n = far/near
+    // n/s/e/w = north/south/east/west
+    let x_fw = (cx - size);
+    let x_nw = cx - a_size;
+    let x_ne = cx + a_size;
+    let x_fe = cx + size;
+
+    let y_n = cy - b_size;
+    let y_m = cy;
+    let y_s = cy + b_size;
+
+    if self.north.is_none() {
+      canvas.draw_line(x_nw as i32, y_n as i32, x_ne as i32, y_n as i32);
+    }
+    if self.north_east.is_none() {
+      canvas.draw_line(x_ne as i32, y_n as i32, x_fe as i32, y_m as i32);
+    }
+    if self.south_east.is_none() {
+      canvas.draw_line(x_fe as i32, y_m as i32, x_ne as i32, y_s as i32);
+    }
+    if self.south.is_none() {
+      canvas.draw_line(x_ne as i32, y_s as i32, x_nw as i32, y_s as i32);
+    }
+    if self.south_west.is_none() {
+      canvas.draw_line(x_fw as i32, y_m as i32, x_nw as i32, y_s as i32);
+    }
+    if self.north_west.is_none() {
+      canvas.draw_line(x_fw as i32, y_m as i32, x_nw as i32, y_n as i32);
     }
   }
 }

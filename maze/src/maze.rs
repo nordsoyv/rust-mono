@@ -1,10 +1,20 @@
 use canvas::Canvas;
 
-use crate::cell::{Cell, CellCoord};
+use crate::cell::{CellCoord, HexCell, SquareCell};
 use crate::common::Direction;
 
+pub trait Grid {
+  fn get_cell(&self, coord: CellCoord) -> Option<&SquareCell>;
+  fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut SquareCell>;
+  fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool;
+  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord;
+  fn carve(&mut self, coord_start: CellCoord, dir: Direction);
+  fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction>;
+  fn draw(&self, canvas: &mut Canvas);
+}
+
 pub struct SquareGrid2D {
-  cells: Vec<Cell>,
+  cells: Vec<SquareCell>,
   pub width: i32,
   pub height: i32,
   pub cell_inset: i32,
@@ -23,7 +33,7 @@ impl SquareGrid2D {
     let mut cells = vec![];
     for y in 0..height {
       for x in 0..width {
-        cells.push(Cell::default(x, y));
+        cells.push(SquareCell::default(x, y));
       }
     }
     SquareGrid2D {
@@ -40,7 +50,13 @@ impl SquareGrid2D {
     self.cells.iter_mut().for_each(|c| c.distance = -1);
   }
 
-  pub fn get_cell(&self, coord: CellCoord) -> Option<&Cell> {
+  fn draw_cell(&self, canvas: &mut Canvas, cell: SquareCell) {
+    cell.draw(canvas, self.cell_inset, self.cell_width, self.cell_height);
+  }
+}
+
+impl Grid for SquareGrid2D {
+  fn get_cell(&self, coord: CellCoord) -> Option<&SquareCell> {
     let index = coord.y_pos * self.width + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&self.cells[index as usize]);
@@ -48,7 +64,7 @@ impl SquareGrid2D {
     return None;
   }
 
-  pub fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut Cell> {
+  fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut SquareCell> {
     let index = (coord.y_pos * self.width) + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&mut self.cells[index as usize]);
@@ -56,7 +72,7 @@ impl SquareGrid2D {
     return None;
   }
 
-  pub fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
+  fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
     let target_x = match dir {
       Direction::West => coord.x_pos - 1,
       Direction::East => coord.x_pos + 1,
@@ -81,7 +97,7 @@ impl SquareGrid2D {
     return false;
   }
 
-  pub fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord {
+  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord {
     match dir {
       Direction::North => CellCoord::new(coord.x_pos, coord.y_pos + 1),
       Direction::South => CellCoord::new(coord.x_pos, coord.y_pos - 1),
@@ -90,7 +106,7 @@ impl SquareGrid2D {
     }
   }
 
-  pub fn carve(&mut self, coord_start: CellCoord, dir: Direction) {
+  fn carve(&mut self, coord_start: CellCoord, dir: Direction) {
     let x_end = match dir {
       Direction::West => coord_start.x_pos - 1,
       Direction::East => coord_start.x_pos + 1,
@@ -154,7 +170,7 @@ impl SquareGrid2D {
     }
   }
 
-  pub fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction> {
+  fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction> {
     let mut dirs = vec![];
     if self.can_carve(coord, Direction::North) {
       dirs.push(Direction::North);
@@ -171,13 +187,67 @@ impl SquareGrid2D {
     return dirs;
   }
 
-  pub fn draw(&self, canvas: &mut Canvas) {
+  fn draw(&self, canvas: &mut Canvas) {
     for cell in &self.cells {
       self.draw_cell(canvas, *cell);
     }
   }
+}
 
-  fn draw_cell(&self, canvas: &mut Canvas, cell: Cell) {
-    cell.draw(canvas, self.cell_inset, self.cell_width, self.cell_height);
+pub struct HexGrid {
+  cells: Vec<HexCell>,
+  pub width: i32,
+  pub height: i32,
+  pub cell_size: i32,
+  // pub cell_height: i32,
+}
+
+impl HexGrid {
+  pub fn new(width: i32, height: i32, cell_size: i32) -> HexGrid {
+    let mut cells = vec![];
+    for y in 0..height {
+      for x in 0..width {
+        cells.push(HexCell::default(x, y));
+      }
+    }
+    HexGrid {
+      cells,
+      width,
+      height,
+      cell_size,
+    }
+  }
+}
+
+impl Grid for HexGrid {
+  fn get_cell(&self, coord: CellCoord) -> Option<&SquareCell> {
+    todo!()
+  }
+
+  fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut SquareCell> {
+    todo!()
+  }
+
+  fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
+    todo!()
+  }
+
+  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord {
+    todo!()
+  }
+
+  fn carve(&mut self, coord_start: CellCoord, dir: Direction) {
+    todo!()
+  }
+
+  fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction> {
+    todo!()
+  }
+
+  fn draw(&self, canvas: &mut Canvas) {
+    for cell in &self.cells {
+      cell.draw(canvas, self.cell_size as f32);
+      // self.draw_cell(canvas, *cell);
+    }
   }
 }
