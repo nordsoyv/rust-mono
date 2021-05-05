@@ -315,6 +315,25 @@ mod tests {
       .to_string();
     assert_eq!(canvas.output_drawn_pixels(), result);
   }
+  #[test]
+  fn can_draw_sqaure_in_corner() {
+    let mut canvas = Canvas::new(10, 10, 0);
+    let fg = 0x00000001;
+    canvas.set_fg_color(fg);
+    canvas.fill_square(0, 0, 4, 4);
+    let result = "0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+0000000000
+1111000000
+1111000000
+1111000000
+1111000000"
+      .to_string();
+    assert_eq!(canvas.output_drawn_pixels(), result);
+  }
 
   #[test]
   fn can_use_offset_with_fill_square() {

@@ -6,17 +6,15 @@ use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
 use canvas::Canvas;
 
 use crate::app_state::AppState;
-use crate::cell::CellCoord;
 use crate::common::{CELL_ACTIVE_COLOR, MARGIN};
 use crate::djikstra::Djikstra;
-use crate::maze::Grid;
+use crate::grid::types::CellCoord;
 
 mod app_state;
-mod cell;
 mod common;
 mod djikstra;
 mod generators;
-mod maze;
+mod grid;
 
 const MENU_NEW_MAZE: usize = 1;
 const MENU_FASTER: usize = 2;
@@ -200,7 +198,7 @@ fn main() {
   let mut app_state = AppState::new();
 
   let mut window = create_window(&app_state);
-
+  app_state.grid.init();
   // app_state.generator.init(&mut app_state.grid);
   let mut canvas = Canvas::new(WIDTH, HEIGHT, 10);
 
@@ -216,14 +214,14 @@ fn main() {
           // Djikstra::new().run(mouse_coord, &mut app_state.grid);
         } else {
           if let Some(cell) = app_state.grid.get_mut_cell(mouse_coord) {
-            cell.color = Some(CELL_ACTIVE_COLOR);
+            cell.set_color(Some(CELL_ACTIVE_COLOR));
           }
         }
       }
       app_state.grid.draw(&mut canvas);
       if mouse_coord.x_pos != -1 && mouse_coord.y_pos != -1 {
         if let Some(cell) = app_state.grid.get_mut_cell(mouse_coord) {
-          cell.color = None;
+          cell.set_color(None);
         }
       }
     } else {
@@ -263,7 +261,7 @@ fn main() {
         }
         MENU_PRINT => {
           if let Some(cell) = app_state.grid.get_mut_cell(mouse_coord) {
-            cell.color = None
+            cell.set_color(None)
           }
           canvas.clear();
           app_state.grid.draw(&mut canvas);

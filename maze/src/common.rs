@@ -1,8 +1,12 @@
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Direction {
   North,
+  NorthEast,
+  NorthWest,
   East,
   South,
+  SouthEast,
+  SouthWest,
   West,
 }
 

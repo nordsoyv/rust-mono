@@ -1,10 +1,9 @@
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::ThreadRng;
 
-use crate::cell::CellCoord;
 use crate::common::CELL_ACTIVE_COLOR;
 use crate::generators::Generator;
-use crate::maze::{Grid, SquareGrid2D};
+use crate::grid::types::{CellCoord, Grid};
 
 #[allow(dead_code)]
 pub enum Strategy {
@@ -25,25 +24,16 @@ pub struct GrowingTreeGenerator {
 }
 
 impl Generator for GrowingTreeGenerator {
-  fn init(&mut self, maze: &mut SquareGrid2D) {
-    let entrance_cell = CellCoord {
-      x_pos: maze.width / 2,
+  fn init(&mut self, maze: &mut dyn Grid) {
+    let start_cell = CellCoord {
+      x_pos: maze.get_width() / 2,
       y_pos: 0,
     };
-    let exit_cell = CellCoord {
-      x_pos: maze.width / 2,
-      y_pos: maze.height - 1,
-    };
-    let start_cell = entrance_cell;
-    maze.get_mut_cell(entrance_cell).unwrap().bottom = Some(CellCoord {
-      x_pos: -1,
-      y_pos: -1,
-    });
-    maze.get_mut_cell(exit_cell).unwrap().top = Some(CellCoord {
-      x_pos: -1,
-      y_pos: -1,
-    });
-    maze.get_mut_cell(start_cell).unwrap().part_of_maze = true;
+    maze.init();
+    maze
+      .get_mut_cell(start_cell)
+      .unwrap()
+      .set_part_of_maze(true);
     self.stack.push(start_cell);
   }
 
@@ -51,13 +41,13 @@ impl Generator for GrowingTreeGenerator {
     "Growing Tree"
   }
 
-  fn generate(&mut self, maze: &mut SquareGrid2D) {
+  fn generate(&mut self, maze: &mut dyn Grid) {
     while self.done == false {
       self.generate_step(maze);
     }
   }
 
-  fn generate_step(&mut self, maze: &mut SquareGrid2D) {
+  fn generate_step(&mut self, maze: &mut dyn Grid) {
     if self.stack.len() == 0 {
       self.done = true;
       return;
@@ -65,13 +55,13 @@ impl Generator for GrowingTreeGenerator {
     let next_cell_index = self.get_next_index();
     let coord = self.stack[next_cell_index];
     if let Some(cell) = maze.get_mut_cell(coord) {
-      cell.color = Some(CELL_ACTIVE_COLOR);
+      cell.set_color(Some(CELL_ACTIVE_COLOR));
     }
 
     let available_dirs = maze.get_allowed_directions(coord);
     if available_dirs.len() == 0 {
       if let Some(cell) = maze.get_mut_cell(coord) {
-        cell.color = None;
+        cell.set_color(None);
       }
       self.stack.remove(next_cell_index);
       return;

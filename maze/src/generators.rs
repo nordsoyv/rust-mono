@@ -1,11 +1,11 @@
+use crate::grid::types::Grid;
+
 pub mod growing_tree;
 
-use crate::maze::SquareGrid2D;
-
 pub trait Generator {
-  fn init(&mut self, maze: &mut SquareGrid2D);
-  fn generate(&mut self, maze: &mut SquareGrid2D);
-  fn generate_step(&mut self, maze: &mut SquareGrid2D);
+  fn init(&mut self, maze: &mut dyn Grid);
+  fn generate(&mut self, maze: &mut dyn Grid);
+  fn generate_step(&mut self, maze: &mut dyn Grid);
   fn done(&self) -> bool;
   fn name(&self) -> &str;
 }

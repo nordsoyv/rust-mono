@@ -1,13 +1,13 @@
 use crate::common::MARGIN;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
-use crate::maze::{HexGrid, SquareGrid2D};
+use crate::grid::hex_grid::HexGrid;
+use crate::grid::types::Grid;
 use crate::{HEIGHT, WIDTH};
-use std::fs::read_to_string;
 
 pub struct AppState {
   pub generator: Box<dyn Generator>,
-  pub grid: HexGrid,
+  pub grid: Box<dyn Grid>,
   pub generate_steps: i32,
   cell_inset: i32,
   pub show_dist: bool,
@@ -23,15 +23,15 @@ impl AppState {
     AppState {
       generator: Box::new(GrowingTreeGenerator::new(Strategy::LastAndRandom(10))),
       // grid: SquareGrid2D::new(30, 30, 15, 15, 0),
-      grid: HexGrid::new(10, 10, 10),
+      grid: Box::new(HexGrid::new(10, 10, 20)),
       generate_steps: 10,
       show_dist: false,
       cell_inset: 0,
       difficulty: 10,
-      num_cells_height: 30,
-      num_cells_width: 30,
-      cell_width: 15,
-      cell_height: 15,
+      num_cells_height: 10,
+      num_cells_width: 10,
+      cell_width: 20,
+      cell_height: 20,
     }
   }
 
@@ -45,10 +45,8 @@ impl AppState {
   }
 
   pub fn get_maze_size(&self) -> (i32, i32) {
-    (
-      (self.cell_width * self.num_cells_width) + (MARGIN * 2),
-      (self.cell_height * self.num_cells_height) + (MARGIN * 2),
-    )
+    let grid_size = self.grid.get_size_in_pixels();
+    return (grid_size.0 + (MARGIN * 2), grid_size.1 + (MARGIN * 2));
   }
 
   pub fn get_title(&self) -> String {
@@ -61,7 +59,12 @@ impl AppState {
   }
 
   pub fn generate_new_maze(&mut self) {
-    self.grid = HexGrid::new(self.num_cells_width, self.num_cells_height, self.cell_width);
+    self.grid = Box::new(HexGrid::new(
+      self.num_cells_width,
+      self.num_cells_height,
+      self.cell_width,
+    ));
+    self.grid.init();
     self.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(self.difficulty)));
     // self.generator.init(&mut self.grid);
   }
@@ -104,7 +107,7 @@ impl AppState {
       self.cell_width = 5;
       self.cell_height = 5;
     }
-    self.grid.cell_size = self.cell_height;
+    self.grid.set_cell_size(self.cell_height);
     // self.grid.cell_width = self.cell_width;
   }
 
@@ -115,7 +118,7 @@ impl AppState {
       self.cell_height -= 1;
       self.cell_width -= 1;
     }
-    self.grid.cell_size = self.cell_height;
+    self.grid.set_cell_size(self.cell_height);
     // self.grid.cell_width = self.cell_width;
   }
 

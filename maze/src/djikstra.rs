@@ -1,5 +1,4 @@
-use crate::cell::CellCoord;
-use crate::maze::{Grid, SquareGrid2D};
+use crate::grid::types::{CellCoord, Grid};
 
 pub struct Djikstra {
   frontier: Vec<CellCoord>,
@@ -10,12 +9,12 @@ impl Djikstra {
     Djikstra { frontier: vec![] }
   }
 
-  pub fn run(&mut self, start: CellCoord, grid: &mut SquareGrid2D) {
+  pub fn run(&mut self, start: CellCoord, grid: &mut dyn Grid) {
     {
-      grid.reset_cell_dist();
+      // grid.reset_cell_dist();
     }
     let start_cell = grid.get_mut_cell(start).unwrap();
-    start_cell.distance = 0;
+    start_cell.set_distance(0);
     let neighbours = start_cell.get_neighbours();
     for n in &neighbours {
       if n.x_pos == -1 || n.y_pos == -1 {
@@ -23,7 +22,7 @@ impl Djikstra {
         continue;
       }
       if let Some(cell) = grid.get_mut_cell(*n) {
-        cell.distance = 1;
+        cell.set_distance(1);
       }
       self.frontier.push(*n);
     }
@@ -31,7 +30,7 @@ impl Djikstra {
       let (neighbours, distance) = {
         let active = grid.get_cell(self.frontier.pop().unwrap()).unwrap();
         let neighbours = active.get_neighbours();
-        (neighbours, active.distance)
+        (neighbours, active.get_distance())
       };
       for n in &neighbours {
         if n.x_pos == -1 || n.y_pos == -1 {
@@ -39,8 +38,8 @@ impl Djikstra {
           continue;
         }
         if let Some(cell) = grid.get_mut_cell(*n) {
-          if cell.distance == -1 {
-            cell.distance = distance + 1;
+          if cell.get_distance() == -1 {
+            cell.set_distance(distance + 1);
             self.frontier.push(*n);
           }
         }
