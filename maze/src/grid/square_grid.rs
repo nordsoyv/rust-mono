@@ -344,15 +344,13 @@ impl Grid for SquareGrid2D {
     return false;
   }
 
-  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord {
+  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord> {
     match dir {
-      Direction::North => CellCoord::new(coord.x_pos, coord.y_pos + 1),
-      Direction::South => CellCoord::new(coord.x_pos, coord.y_pos - 1),
-      Direction::East => CellCoord::new(coord.x_pos + 1, coord.y_pos),
-      Direction::West => CellCoord::new(coord.x_pos - 1, coord.y_pos),
-      _ => {
-        panic!("No cell in this direction")
-      }
+      Direction::North => Some(CellCoord::new(coord.x_pos, coord.y_pos + 1)),
+      Direction::South => Some(CellCoord::new(coord.x_pos, coord.y_pos - 1)),
+      Direction::East => Some(CellCoord::new(coord.x_pos + 1, coord.y_pos)),
+      Direction::West => Some(CellCoord::new(coord.x_pos - 1, coord.y_pos)),
+      _ => None,
     }
   }
 

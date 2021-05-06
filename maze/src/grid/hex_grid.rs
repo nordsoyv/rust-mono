@@ -194,6 +194,16 @@ impl Grid for HexGrid {
   }
 
   fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
+    if let Some(cell_coord) = self.get_cell_in_dir(coord, dir) {
+      if let Some(cell) = self.get_cell(cell_coord) {
+        return !cell.is_part_of_maze();
+      }
+    }
+
+    return false;
+  }
+
+  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord> {
     let mut target_x = coord.x_pos;
     let mut target_y = coord.y_pos;
 
@@ -232,24 +242,67 @@ impl Grid for HexGrid {
     }
 
     if target_x < 0 || target_x >= self.width || target_y < 0 || target_y >= self.height {
-      return false;
+      return None;
     }
-
-    if let Some(target_cell) = self.get_cell(CellCoord::new(target_x, target_y)) {
-      if !target_cell.is_part_of_maze() {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord {
-    todo!()
+    Some(CellCoord::new(target_x, target_y))
   }
 
   fn carve(&mut self, coord_start: CellCoord, dir: Direction) {
-    todo!()
+    let coord_end = self.get_cell_in_dir(coord_start, dir);
+    if coord_end.is_none() {
+      return;
+    }
+    let coord_end = coord_end.unwrap();
+    {
+      let mut start_cell = self.get_mut_cell_internal(coord_start).unwrap();
+      start_cell.part_of_maze = true;
+      match dir {
+        Direction::North => {
+          start_cell.north = Some(coord_end);
+        }
+        Direction::NorthWest => {
+          start_cell.north_west = Some(coord_end);
+        }
+        Direction::NorthEast => {
+          start_cell.north_east = Some(coord_end);
+        }
+        Direction::South => {
+          start_cell.south = Some(coord_end);
+        }
+        Direction::SouthWest => {
+          start_cell.south_west = Some(coord_end);
+        }
+        Direction::SouthEast => {
+          start_cell.south_east = Some(coord_end);
+        }
+        _ => {}
+      }
+    }
+    {
+      let mut end_cell = self.get_mut_cell_internal(coord_end).unwrap();
+      end_cell.part_of_maze = true;
+      match dir {
+        Direction::North => {
+          end_cell.south = Some(coord_start);
+        }
+        Direction::NorthWest => {
+          end_cell.south_east = Some(coord_start);
+        }
+        Direction::NorthEast => {
+          end_cell.south_west = Some(coord_start);
+        }
+        Direction::South => {
+          end_cell.north = Some(coord_start);
+        }
+        Direction::SouthWest => {
+          end_cell.north_east = Some(coord_start);
+        }
+        Direction::SouthEast => {
+          end_cell.north_west = Some(coord_start);
+        }
+        _ => {}
+      }
+    }
   }
 
   fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction> {

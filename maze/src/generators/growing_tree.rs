@@ -69,7 +69,7 @@ impl Generator for GrowingTreeGenerator {
     let random_dir = self.get_random(available_dirs.len());
     maze.carve(coord, available_dirs[random_dir]);
     let next_cell = maze.get_cell_in_dir(coord, available_dirs[random_dir]);
-    self.stack.push(next_cell);
+    self.stack.push(next_cell.unwrap());
   }
 
   fn done(&self) -> bool {

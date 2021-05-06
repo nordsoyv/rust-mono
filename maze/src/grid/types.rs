@@ -5,7 +5,7 @@ pub trait Grid {
   fn get_cell(&self, coord: CellCoord) -> Option<&dyn Cell>;
   fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut dyn Cell>;
   fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool;
-  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> CellCoord;
+  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord>;
   fn carve(&mut self, coord_start: CellCoord, dir: Direction);
   fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction>;
   fn draw(&self, canvas: &mut Canvas);
