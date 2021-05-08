@@ -71,9 +71,9 @@ impl HexCell {
     if self.north_west.is_none() {
       canvas.draw_line(x_fw as i32, y_m as i32, x_nw as i32, y_n as i32);
     }
-
-    if self.coord.x_pos == 1 && self.coord.y_pos == 0 {
-      canvas.fill_square(x_nw as i32, y_s as i32, size as i32, size as i32);
+    if let Some(c) = self.color {
+      canvas.set_fg_color(c);
+      canvas.fill_square(x_nw as i32, y_s as i32, size as i32, (b_size * 2.0) as i32);
     }
   }
 }
@@ -233,7 +233,7 @@ impl Grid for HexGrid {
         }
       }
       Direction::SouthEast => {
-        target_x -= 1;
+        target_x += 1;
         if !is_odd(coord.x_pos) {
           target_y -= 1;
         }
@@ -275,7 +275,9 @@ impl Grid for HexGrid {
         Direction::SouthEast => {
           start_cell.south_east = Some(coord_end);
         }
-        _ => {}
+        _ => {
+          panic!("unknown direction")
+        }
       }
     }
     {
@@ -300,7 +302,9 @@ impl Grid for HexGrid {
         Direction::SouthEast => {
           end_cell.north_west = Some(coord_start);
         }
-        _ => {}
+        _ => {
+          panic!("unknown direction")
+        }
       }
     }
   }
@@ -372,8 +376,8 @@ impl Grid for HexGrid {
 
   fn get_size_in_pixels(&self) -> (i32, i32) {
     (
-      self.width * self.cell_width as i32,
-      self.height * self.cell_height as i32,
+      (self.width * self.cell_width as i32) + (self.cell_width / 2.0) as i32,
+      (self.height * self.cell_height as i32) + (self.cell_height / 2.0) as i32,
     )
   }
 }

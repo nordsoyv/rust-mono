@@ -24,7 +24,7 @@ pub struct GrowingTreeGenerator {
 }
 
 impl Generator for GrowingTreeGenerator {
-  fn init(&mut self, maze: &mut dyn Grid) {
+  fn init(&mut self, maze: &mut Box<dyn Grid>) {
     let start_cell = CellCoord {
       x_pos: maze.get_width() / 2,
       y_pos: 0,
@@ -37,17 +37,13 @@ impl Generator for GrowingTreeGenerator {
     self.stack.push(start_cell);
   }
 
-  fn name(&self) -> &str {
-    "Growing Tree"
-  }
-
-  fn generate(&mut self, maze: &mut dyn Grid) {
+  fn generate(&mut self, maze: &mut Box<dyn Grid>) {
     while self.done == false {
       self.generate_step(maze);
     }
   }
 
-  fn generate_step(&mut self, maze: &mut dyn Grid) {
+  fn generate_step(&mut self, maze: &mut Box<dyn Grid>) {
     if self.stack.len() == 0 {
       self.done = true;
       return;
@@ -74,6 +70,10 @@ impl Generator for GrowingTreeGenerator {
 
   fn done(&self) -> bool {
     return self.done;
+  }
+
+  fn name(&self) -> &str {
+    "Growing Tree"
   }
 }
 

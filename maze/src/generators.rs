@@ -3,9 +3,9 @@ use crate::grid::types::Grid;
 pub mod growing_tree;
 
 pub trait Generator {
-  fn init(&mut self, maze: &mut dyn Grid);
-  fn generate(&mut self, maze: &mut dyn Grid);
-  fn generate_step(&mut self, maze: &mut dyn Grid);
+  fn init(&mut self, maze: &mut Box<dyn Grid>);
+  fn generate(&mut self, maze: &mut Box<dyn Grid>);
+  fn generate_step(&mut self, maze: &mut Box<dyn Grid>);
   fn done(&self) -> bool;
   fn name(&self) -> &str;
 }

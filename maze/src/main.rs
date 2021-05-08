@@ -6,9 +6,10 @@ use minifb::{Key, Menu, MouseMode, Window, WindowOptions};
 use canvas::Canvas;
 
 use crate::app_state::AppState;
-use crate::common::{CELL_ACTIVE_COLOR, MARGIN};
+use crate::common::{Direction, CELL_ACTIVE_COLOR, MARGIN};
 use crate::djikstra::Djikstra;
 use crate::grid::types::CellCoord;
+use std::cell::Cell;
 
 mod app_state;
 mod common;
@@ -199,7 +200,7 @@ fn main() {
 
   let mut window = create_window(&app_state);
   app_state.grid.init();
-  // app_state.generator.init(&mut app_state.grid);
+  app_state.generator.init(&mut app_state.grid);
   let mut canvas = Canvas::new(WIDTH, HEIGHT, 10);
 
   while window.is_open() && !window.is_key_down(Key::Escape) {

@@ -189,6 +189,9 @@ impl Canvas {
     assert!(start_y >= 0);
     assert!(width >= 0);
     assert!(height >= 0);
+
+    let start_x = start_x + self.x_offset + self.margin;
+    let start_y = start_y + self.y_offset - self.margin;
     let width = if start_x + width > self.width {
       self.width - start_x
     } else {
@@ -199,9 +202,8 @@ impl Canvas {
     } else {
       height
     };
-    let real_start_y = self.height - start_y - 1 - self.y_offset;
-    let start_point =
-      ((real_start_y - self.margin) * self.width) + (start_x + self.margin) + self.x_offset;
+    let real_start_y = self.height - start_y - 1;
+    let start_point = ((real_start_y) * self.width) + (start_x);
 
     for y_pos in 0..height {
       let line_start = start_point - (y_pos * self.width);

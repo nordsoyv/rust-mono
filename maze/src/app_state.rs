@@ -36,12 +36,11 @@ impl AppState {
   }
 
   pub fn generate_maze(&mut self) {
-    return;
-    // if !self.generator.done() {
-    //   for _ in 0..self.generate_steps {
-    //     self.generator.generate_step(&mut self.grid);
-    //   }
-    // }
+    if !self.generator.done() {
+      for _ in 0..self.generate_steps {
+        self.generator.generate_step(&mut self.grid);
+      }
+    }
   }
 
   pub fn get_maze_size(&self) -> (i32, i32) {
@@ -66,7 +65,7 @@ impl AppState {
     ));
     self.grid.init();
     self.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(self.difficulty)));
-    // self.generator.init(&mut self.grid);
+    self.generator.init(&mut self.grid);
   }
 
   // pub fn inset_smaller(&mut self) {
