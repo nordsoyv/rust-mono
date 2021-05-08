@@ -34,6 +34,7 @@ const MENU_NUM_CELLS_WIDTH_INC: usize = 14;
 const MENU_NUM_CELLS_WIDTH_DEC: usize = 15;
 const MENU_CELL_SIZE_INC: usize = 16;
 const MENU_CELL_SIZE_DEC: usize = 17;
+const MENU_GRID_TYPE: usize = 18;
 
 const WIDTH: i32 = 1000;
 const HEIGHT: i32 = 1000;
@@ -100,6 +101,11 @@ fn create_window(app_state: &AppState) -> Window {
   window.set_background_color(255, 0, 0);
 
   let mut menu = Menu::new("Main").unwrap();
+  menu
+    .add_item("Grid type", MENU_GRID_TYPE)
+    .enabled(true)
+    .shortcut(Key::M, 0)
+    .build();
   menu
     .add_item("New maze", MENU_NEW_MAZE)
     .enabled(true)
@@ -297,6 +303,10 @@ fn main() {
         }
         MENU_CELL_SIZE_DEC => {
           app_state.cell_size_smaller();
+        }
+        MENU_GRID_TYPE => {
+          app_state.change_grid_type();
+          app_state.generate_new_maze();
         }
         _ => println!("Unhandled menu command"),
       },

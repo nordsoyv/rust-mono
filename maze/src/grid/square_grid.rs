@@ -452,7 +452,17 @@ impl Grid for SquareGrid2D {
   }
 
   fn init(&mut self) {
-    todo!()
+    let entrance = CellCoord::new(self.width / 2, 0);
+    let exit = CellCoord::new(self.width / 2, self.height - 1);
+
+    self.get_mut_cell_internal(entrance).unwrap().bottom = Some(CellCoord {
+      x_pos: -1,
+      y_pos: -1,
+    });
+    self.get_mut_cell_internal(exit).unwrap().top = Some(CellCoord {
+      x_pos: -1,
+      y_pos: -1,
+    });
   }
 
   fn get_size_in_pixels(&self) -> (i32, i32) {

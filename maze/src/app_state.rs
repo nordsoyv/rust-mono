@@ -2,8 +2,15 @@ use crate::common::MARGIN;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
 use crate::grid::hex_grid::HexGrid;
+use crate::grid::square_grid::SquareGrid2D;
 use crate::grid::types::Grid;
 use crate::{HEIGHT, WIDTH};
+
+#[derive(PartialEq)]
+enum GridType {
+  Square,
+  Hex,
+}
 
 pub struct AppState {
   pub generator: Box<dyn Generator>,
@@ -16,6 +23,7 @@ pub struct AppState {
   pub num_cells_height: i32,
   pub cell_width: i32,
   pub cell_height: i32,
+  grid_type: GridType,
 }
 
 impl AppState {
@@ -32,6 +40,15 @@ impl AppState {
       num_cells_width: 10,
       cell_width: 20,
       cell_height: 20,
+      grid_type: GridType::Hex,
+    }
+  }
+
+  pub fn change_grid_type(&mut self) {
+    if self.grid_type == GridType::Hex {
+      self.grid_type = GridType::Square;
+    } else {
+      self.grid_type = GridType::Hex;
     }
   }
 
@@ -58,11 +75,24 @@ impl AppState {
   }
 
   pub fn generate_new_maze(&mut self) {
-    self.grid = Box::new(HexGrid::new(
-      self.num_cells_width,
-      self.num_cells_height,
-      self.cell_width,
-    ));
+    match self.grid_type {
+      GridType::Square => {
+        self.grid = Box::new(SquareGrid2D::new(
+          self.num_cells_width,
+          self.num_cells_height,
+          self.cell_width,
+          self.cell_inset,
+        ));
+      }
+      GridType::Hex => {
+        self.grid = Box::new(HexGrid::new(
+          self.num_cells_width,
+          self.num_cells_height,
+          self.cell_width,
+        ));
+      }
+    }
+
     self.grid.init();
     self.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(self.difficulty)));
     self.generator.init(&mut self.grid);
