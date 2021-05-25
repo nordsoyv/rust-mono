@@ -45,10 +45,9 @@ impl AppState {
   }
 
   pub fn change_grid_type(&mut self) {
-    if self.grid_type == GridType::Hex {
-      self.grid_type = GridType::Square;
-    } else {
-      self.grid_type = GridType::Hex;
+    match self.grid_type {
+      GridType::Square => self.grid_type = GridType::Hex,
+      GridType::Hex => self.grid_type = GridType::Square,
     }
   }
 
