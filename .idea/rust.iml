@@ -69,6 +69,7 @@
       <sourceFolder url="file://$MODULE_DIR$/wgpu-testing/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/canvas/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/canvas-test/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/maze-egui/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/advent/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
@@ -88,6 +89,7 @@
       <excludeFolder url="file://$MODULE_DIR$/wgpu-testing/target" />
       <excludeFolder url="file://$MODULE_DIR$/canvas/target" />
       <excludeFolder url="file://$MODULE_DIR$/canvas-test/target" />
+      <excludeFolder url="file://$MODULE_DIR$/maze-egui/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
