@@ -1,16 +1,16 @@
 [package]
-name = "maze-imgui"
+name = "wgpu-experiments"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-env_logger = "0.8"
-imgui = "0.7"
-imgui-wgpu = "0.15.1"
-imgui-winit-support = "0.7"
-log = "0.4"
-pixels = "0.3.0"
+image = "0.23"
 winit = "0.24"
-winit_input_helper = "0.9"
+cgmath = "0.18"
+env_logger = "0.8"
+log = "0.4"
+wgpu = "0.8"
+futures = "0.3"
+
