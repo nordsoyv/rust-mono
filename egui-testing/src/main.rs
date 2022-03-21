@@ -1,10 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use crate::egui::Key;
+
 use eframe::{egui, epi};
 
-use crate::epi::Frame;
+use crate::egui::Key;
 // hide console window on Windows in release
 use crate::epi::egui::Context;
+use crate::epi::Frame;
 
 #[derive(Default)]
 struct MyEguiApp {
@@ -41,6 +42,12 @@ impl OptionsWindow {
       ui.add(egui::Slider::new(&mut self.cell_size, 5..=20).text("Cell size"));
       ui.add(egui::Slider::new(&mut self.difficulty, 1..=50).text("Difficulty"));
       ui.add(egui::Slider::new(&mut self.speed, 1..=100).text("Speed"));
+      ui.vertical_centered(|ui| {
+        ui.button("Generate");
+      });
+      // ui.horizontal(|ui| {
+      //   ui.add_space(19.0);
+      // })
     });
   }
 }
