@@ -1,3 +1,9 @@
+
+struct Token {
+
+}
+
+
 #[cfg(test)]
 mod tests {
   #[test]
