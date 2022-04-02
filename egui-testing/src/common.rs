@@ -63,3 +63,9 @@ pub trait Grid {
   fn get_cell_size(&self) -> i32;
   fn get_margin(&self) -> i32;
 }
+
+#[derive(PartialEq, Debug)]
+pub enum GridType {
+  Square,
+  Hex,
+}
