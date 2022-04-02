@@ -1,4 +1,4 @@
-use eframe::egui::Context;
+use eframe::egui::{Color32, Context, Rect};
 
 use crate::Pos2;
 
@@ -36,7 +36,7 @@ pub trait Cell {
   fn get_coord(&self) -> CellCoord;
   fn is_part_of_maze(&self) -> bool;
   fn set_part_of_maze(&mut self, part: bool);
-  fn set_color(&mut self, color: Option<u32>);
+  fn set_color(&mut self, color: Option<Color32>);
   fn get_distance(&self) -> i32;
   fn set_distance(&mut self, dist: i32);
   fn get_neighbours(&self) -> Vec<CellCoord>;
@@ -53,6 +53,7 @@ pub trait Grid {
   fn carve(&mut self, coord_start: CellCoord, dir: Direction);
   fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction>;
   fn draw(&self) -> Vec<(Pos2, Pos2)>;
+  fn draw_background(&self) -> Vec<(Rect, Color32)>;
   fn set_cell_size(&mut self, cell_size: i32);
   fn get_width(&self) -> f32;
   fn init(&mut self);

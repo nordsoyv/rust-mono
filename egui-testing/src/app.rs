@@ -1,4 +1,4 @@
-use eframe::egui::{Color32, Context, Key, Sense, Stroke, Ui, Vec2};
+use eframe::egui::{Color32, Context, Key, Rounding, Sense, Stroke, Ui, Vec2};
 use eframe::{egui, Frame};
 
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
@@ -56,8 +56,13 @@ impl MyEguiApp {
       Vec2::new(ui.available_width(), ui.available_height()),
       Sense::hover(),
     );
-    let shape = Stroke::new(1.0, Color32::BLACK);
+
     let points = self.maze.draw();
+    let backgrounds = self.maze.draw_background();
+    let shape = Stroke::new(2.0, Color32::BLACK);
+    backgrounds
+      .into_iter()
+      .for_each(|(rect, color)| painter.rect(rect, Rounding::none(), color, Stroke::none()));
     points
       .into_iter()
       .for_each(|points| painter.line_segment([points.0, points.1], shape));

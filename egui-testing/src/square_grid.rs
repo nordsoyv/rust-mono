@@ -1,4 +1,4 @@
-use eframe::egui::Pos2;
+use eframe::egui::{Color32, Pos2, Rect};
 
 use crate::common::{Cell, CellCoord, Direction, Grid};
 
@@ -10,7 +10,7 @@ pub struct SquareCell {
   bottom: Option<CellCoord>,
   coord: CellCoord,
   part_of_maze: bool,
-  color: Option<u32>,
+  color: Option<Color32>,
   pub distance: i32,
 }
 
@@ -28,76 +28,79 @@ impl SquareCell {
     }
   }
 
-  // fn draw_background(
-  //   &self,
-  //   canvas: &mut Canvas,
-  //   cell_inset: i32,
-  //   cell_width: i32,
-  //   cell_height: i32,
-  // ) {
-  //   let color;
-  //   if self.distance > 0 {
-  //     let dist = (self.distance % (256 * 3)) as u32;
-  //     let part = dist as f32 / 3.0;
-  //     let blue = part as u32;
-  //     let remain = dist - blue;
-  //     let part = remain as f32 / 2.0;
-  //     let green = part as u32;
-  //     let remain = remain - green;
-  //     let red = remain;
-  //
-  //     // dbg!(dist, red, green, blue);
-  //     let red = red << 16;
-  //     let green = green << 8;
-  //
-  //     color = red | green | blue;
-  //   } else if self.color.is_some() {
-  //     color = self.color.unwrap()
-  //   } else {
-  //     return;
-  //   }
-  //   canvas.set_fg_color(color);
-  //   canvas.fill_square(
-  //     self.coord.x_pos * cell_width + cell_inset,
-  //     self.coord.y_pos * cell_height + cell_inset,
-  //     cell_width - cell_inset - cell_inset,
-  //     cell_height - cell_inset - cell_inset,
-  //   );
-  //   if cell_inset > 0 {
-  //     if self.top.is_some() {
-  //       canvas.fill_square(
-  //         ((self.coord.x_pos) * cell_width) + cell_inset,
-  //         ((self.coord.y_pos + 1) * cell_height) - cell_inset,
-  //         cell_width - cell_inset - cell_inset,
-  //         cell_inset,
-  //       );
-  //     }
-  //     if self.bottom.is_some() {
-  //       canvas.fill_square(
-  //         ((self.coord.x_pos) * cell_width) + cell_inset,
-  //         self.coord.y_pos * cell_height,
-  //         cell_width - cell_inset - cell_inset,
-  //         cell_inset,
-  //       );
-  //     }
-  //     if self.left.is_some() {
-  //       canvas.fill_square(
-  //         self.coord.x_pos * cell_width,
-  //         ((self.coord.y_pos) * cell_height) + cell_inset,
-  //         cell_inset,
-  //         cell_height - cell_inset - cell_inset,
-  //       );
-  //     }
-  //     if self.right.is_some() {
-  //       canvas.fill_square(
-  //         ((self.coord.x_pos + 1) * cell_width) - cell_inset,
-  //         ((self.coord.y_pos) * cell_height) + cell_inset,
-  //         cell_inset,
-  //         cell_height - cell_inset - cell_inset,
-  //       );
-  //     }
-  //   }
-  // }
+  fn draw_background(&self, cell_width: f32, cell_height: f32, margin: f32) -> (Rect, Color32) {
+    let color: Color32;
+    if self.distance > 0 {
+      let dist = (self.distance % (256 * 3)) as u32;
+      let part = dist as f32 / 3.0;
+      let blue = part as u32;
+      let remain = dist - blue;
+      let part = remain as f32 / 2.0;
+      let green = part as u32;
+      let remain = remain - green;
+      let red = remain;
+
+      // dbg!(dist, red, green, blue);
+      // let red = red << 16;
+      // let green = green << 8;
+      color = Color32::from_rgb(red as u8, green as u8, blue as u8);
+      // color = red | green | blue;
+    } else if self.color.is_some() {
+      color = self.color.unwrap()
+    } else {
+      return (Rect::NOTHING, Color32::TRANSPARENT);
+    }
+    let top_left = Pos2::new(
+      (self.coord.x_pos * cell_width) + margin,
+      (self.coord.y_pos * cell_height) + margin,
+    );
+    let bottom_right = Pos2::new(
+      ((self.coord.x_pos + 1.0) * (cell_width)) + margin,
+      ((self.coord.y_pos + 1.0) * (cell_height)) + margin,
+    );
+    let rect = Rect::from_min_max(top_left, bottom_right);
+    return (rect, color);
+    // canvas.fill_square(
+    //   self.coord.x_pos * cell_width + cell_inset,
+    //   self.coord.y_pos * cell_height + cell_inset,
+    //   cell_width - cell_inset - cell_inset,
+    //   cell_height - cell_inset - cell_inset,
+    // );
+    // if cell_inset > 0 {
+    //   if self.top.is_some() {
+    //     canvas.fill_square(
+    //       ((self.coord.x_pos) * cell_width) + cell_inset,
+    //       ((self.coord.y_pos + 1) * cell_height) - cell_inset,
+    //       cell_width - cell_inset - cell_inset,
+    //       cell_inset,
+    //     );
+    //   }
+    //   if self.bottom.is_some() {
+    //     canvas.fill_square(
+    //       ((self.coord.x_pos) * cell_width) + cell_inset,
+    //       self.coord.y_pos * cell_height,
+    //       cell_width - cell_inset - cell_inset,
+    //       cell_inset,
+    //     );
+    //   }
+    //   if self.left.is_some() {
+    //     canvas.fill_square(
+    //       self.coord.x_pos * cell_width,
+    //       ((self.coord.y_pos) * cell_height) + cell_inset,
+    //       cell_inset,
+    //       cell_height - cell_inset - cell_inset,
+    //     );
+    //   }
+    //   if self.right.is_some() {
+    //     canvas.fill_square(
+    //       ((self.coord.x_pos + 1) * cell_width) - cell_inset,
+    //       ((self.coord.y_pos) * cell_height) + cell_inset,
+    //       cell_inset,
+    //       cell_height - cell_inset - cell_inset,
+    //     );
+    //   }
+    // }
+  }
 
   pub fn draw(&self, _cell_inset: f32, cell_size: f32, margin: f32) -> Vec<(Pos2, Pos2)> {
     // self.draw_background(canvas, cell_inset, cell_size, cell_size);
@@ -246,7 +249,7 @@ impl Cell for SquareCell {
     self.part_of_maze = part
   }
 
-  fn set_color(&mut self, color: Option<u32>) {
+  fn set_color(&mut self, color: Option<Color32>) {
     self.color = color;
   }
 
@@ -478,6 +481,18 @@ impl Grid for SquareGrid2D {
       points.extend(cell.draw(self.cell_inset as f32, self.cell_size as f32, self.margin));
     }
     return points;
+  }
+
+  fn draw_background(&self) -> Vec<(Rect, Color32)> {
+    let mut backgrounds = vec![];
+    for cell in &self.cells {
+      backgrounds.push(cell.draw_background(
+        self.cell_size as f32,
+        self.cell_size as f32,
+        self.margin,
+      ));
+    }
+    return backgrounds;
   }
 
   fn set_cell_size(&mut self, cell_size: i32) {
