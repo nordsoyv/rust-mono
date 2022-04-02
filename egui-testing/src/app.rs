@@ -79,6 +79,7 @@ fn should_generate_new_maze(
     || options_window.cell_size != maze.get_cell_size()
     || options_window.margin != maze.get_margin()
     || options_window.difficulty != difficulty
+    || options_window.new_maze
 }
 
 impl eframe::App for MyEguiApp {
@@ -96,8 +97,8 @@ impl eframe::App for MyEguiApp {
         0,
         self.options_window.margin as f32,
       );
+      self.options_window.new_maze = false;
       maze.init();
-      // maze.carve(CellCoord::new(5.0, 5.0), Direction::North);
       self.maze = Box::new(maze);
       self.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(
         self.options_window.difficulty,
@@ -106,16 +107,16 @@ impl eframe::App for MyEguiApp {
     }
 
     if !self.generator.done() {
-      for _ in 0..10 {
+      for _ in 0..self.options_window.speed {
         self.generator.generate_step(&mut self.maze);
+        if self.generator.done() {
+          break;
+        }
       }
       if !self.generator.done() {
         ctx.request_repaint();
       }
     }
-
-    // self.grid.init();
-
     let response = egui::CentralPanel::default()
       .frame(self.custom_frame)
       .show(ctx, |ui| {

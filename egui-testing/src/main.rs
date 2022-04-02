@@ -4,6 +4,7 @@ mod app;
 mod common;
 mod generators;
 mod options_window;
+mod slider_with_text;
 mod square_grid;
 
 use crate::app::MyEguiApp;
