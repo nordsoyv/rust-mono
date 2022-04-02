@@ -24,7 +24,7 @@ impl OptionsWindow {
       speed: 1,
       difficulty: 1,
       take_screenshot: false,
-      margin: 0,
+      margin: 5,
     }
   }
 }

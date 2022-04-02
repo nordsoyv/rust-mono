@@ -62,7 +62,7 @@ impl MyEguiApp {
     let shape = Stroke::new(2.0, Color32::BLACK);
     backgrounds
       .into_iter()
-      .for_each(|(rect, color)| painter.rect(rect, Rounding::none(), color, Stroke::none()));
+      .for_each(|(rect, color)| painter.rect(rect, Rounding::default(), color, Stroke::none()));
     points
       .into_iter()
       .for_each(|points| painter.line_segment([points.0, points.1], shape));

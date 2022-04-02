@@ -108,6 +108,18 @@ impl SquareCell {
     // let margin = 5.0;
     let mut points = vec![];
     if self.top.is_none() {
+      let y_pos = (self.coord.y_pos + 1.0) * cell_size;
+      let p1 = Pos2::new(self.coord.x_pos * cell_size, y_pos);
+      let p2 = Pos2::new((self.coord.x_pos + 1.0) * cell_size, y_pos);
+      points.push((p1, p2));
+      // canvas.draw_line(
+      //   (self.coord.x_pos * cell_size) + cell_inset,
+      //   y_pos + cell_inset,
+      //   ((self.coord.x_pos + 1) * cell_size) - cell_inset,
+      //   y_pos + cell_inset,
+      // );
+    }
+    if self.bottom.is_none() {
       let y_pos = (self.coord.y_pos) * cell_size;
       let p1 = Pos2::new(self.coord.x_pos * cell_size, y_pos);
       let p2 = Pos2::new((self.coord.x_pos + 1.0) * cell_size, y_pos);
@@ -118,18 +130,6 @@ impl SquareCell {
       //   (y_pos) - cell_inset,
       //   ((self.coord.x_pos + 1) * cell_size) - cell_inset,
       //   (y_pos) - cell_inset,
-      // );
-    }
-    if self.bottom.is_none() {
-      let y_pos = (self.coord.y_pos + 1.0) * cell_size;
-      let p1 = Pos2::new(self.coord.x_pos * cell_size, y_pos);
-      let p2 = Pos2::new((self.coord.x_pos + 1.0) * cell_size, y_pos);
-      points.push((p1, p2));
-      // canvas.draw_line(
-      //   (self.coord.x_pos * cell_size) + cell_inset,
-      //   y_pos + cell_inset,
-      //   ((self.coord.x_pos + 1) * cell_size) - cell_inset,
-      //   y_pos + cell_inset,
       // );
     }
     if self.left.is_none() {
