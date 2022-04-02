@@ -9,7 +9,6 @@ pub struct OptionsWindow {
   pub cell_size: i32,
   pub difficulty: i32,
   pub speed: i32,
-  pub generate_new: bool,
   pub take_screenshot: bool,
   pub margin: i32,
 }
@@ -20,7 +19,6 @@ impl OptionsWindow {
       height: 10,
       width: 10,
       cell_size: 10,
-      generate_new: false,
       speed: 1,
       difficulty: 1,
       take_screenshot: false,
@@ -39,9 +37,6 @@ impl UiComponent for OptionsWindow {
       ui.add(egui::Slider::new(&mut self.speed, 1..=100).text("Speed"));
       ui.add(egui::Slider::new(&mut self.margin, 0..=10).text("Margin"));
       ui.horizontal(|ui| {
-        if ui.button("Generate").clicked() {
-          self.generate_new = true;
-        }
         if ui.button("Take screenshot").clicked() {
           self.take_screenshot = true;
         }

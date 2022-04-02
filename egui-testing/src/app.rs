@@ -69,11 +69,16 @@ impl MyEguiApp {
   }
 }
 
-fn should_generate_new_maze(options_window: &OptionsWindow, maze: &Box<dyn Grid>) -> bool {
+fn should_generate_new_maze(
+  options_window: &OptionsWindow,
+  maze: &Box<dyn Grid>,
+  difficulty: i32,
+) -> bool {
   options_window.width != maze.get_num_cells_horizontal()
     || options_window.height != maze.get_num_cells_vertical()
     || options_window.cell_size != maze.get_cell_size()
     || options_window.margin != maze.get_margin()
+    || options_window.difficulty != difficulty
 }
 
 impl eframe::App for MyEguiApp {
@@ -81,9 +86,9 @@ impl eframe::App for MyEguiApp {
     if ctx.input().key_pressed(Key::Escape) {
       frame.quit();
     }
-
+    let old_difficulty = self.options_window.difficulty;
     self.options_window.draw(ctx);
-    if should_generate_new_maze(&self.options_window, &self.maze) {
+    if should_generate_new_maze(&self.options_window, &self.maze, old_difficulty) {
       let mut maze = SquareGrid2D::new(
         self.options_window.width,
         self.options_window.height,
