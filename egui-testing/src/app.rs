@@ -1,12 +1,13 @@
 use eframe::egui::{Color32, Context, Key, Sense, Ui, Vec2};
 use eframe::{egui, Frame};
 
-use crate::common::GridType;
+use crate::djikstra::Djikstra;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
 use crate::grids::hex_grid::HexGrid;
 use crate::grids::square_grid::SquareGrid2D;
-use crate::{Grid, OptionsWindow, UiComponent};
+use crate::grids::{Grid, GridType};
+use crate::{OptionsWindow, UiComponent};
 
 fn save_image(bytes: &[u8], width: i32, height: i32) {
   //  let buffer = shared_buffer.lock().unwrap();
@@ -62,13 +63,6 @@ impl MyEguiApp {
 
     self.maze.draw_background(&painter);
     self.maze.draw(&painter);
-    // let shape = Stroke::new(1.0, Color32::BLACK);
-    // backgrounds
-    //   .into_iter()
-    //   .for_each(|(rect, color)| painter.rect_filled(rect, Rounding::default(), color));
-    // points
-    //   .into_iter()
-    //   .for_each(|points| painter.line_segment([points.0, points.1], shape));
   }
 }
 
@@ -142,6 +136,11 @@ impl eframe::App for MyEguiApp {
       }
       if !self.generator.done() {
         ctx.request_repaint();
+      }
+    }
+    if self.options_window.show_solution && self.generator.done() {
+      if !self.maze.has_solution() {
+        Djikstra::new().run(&mut self.maze);
       }
     }
     let response = egui::CentralPanel::default()

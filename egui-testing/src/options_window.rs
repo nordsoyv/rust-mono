@@ -1,7 +1,8 @@
 use eframe::egui;
 use eframe::egui::{Context, Widget};
 
-use crate::common::{GridType, UiComponent};
+use crate::common::UiComponent;
+use crate::grids::GridType;
 use crate::slider_with_text::SliderWithText;
 
 pub struct OptionsWindow {
@@ -55,6 +56,14 @@ impl UiComponent for OptionsWindow {
       SliderWithText::new("Difficulty:", &mut self.difficulty, 1..=50).ui(ui);
       SliderWithText::new("Speed:", &mut self.speed, 1..=100).ui(ui);
       SliderWithText::new("Margin:", &mut self.margin, 0..=10).ui(ui);
+      // ui.horizontal(|ui| {
+      //   if ui.button("Show solution").clicked() {
+      //     self.show_solution = true;
+      //   }
+      //   if ui.button("Clear").clicked() {
+      //     // self.new_maze = true;
+      //   }
+      // });
       ui.checkbox(&mut self.show_solution, "Show solution");
       ui.horizontal(|ui| {
         if ui.button("Take screenshot").clicked() {

@@ -1,6 +1,6 @@
+use crate::grids::{Cell, CellCoord, Direction, Grid};
 use eframe::egui::{Color32, Painter, Rounding, Stroke};
 
-use crate::common::{Cell, CellCoord, Direction, Grid};
 use crate::grids::square_cell::SquareCell;
 
 pub struct SquareGrid2D {
@@ -13,6 +13,7 @@ pub struct SquareGrid2D {
   entrance: CellCoord,
   exit: CellCoord,
   // pub cell_height: i32,
+  has_solution: bool,
 }
 
 impl SquareGrid2D {
@@ -38,6 +39,7 @@ impl SquareGrid2D {
       margin,
       entrance: CellCoord::new(-1.0, -1.0),
       exit: CellCoord::new(-1.0, -1.0),
+      has_solution: false,
     }
   }
 
@@ -279,5 +281,11 @@ impl Grid for SquareGrid2D {
 
   fn get_exit(&self) -> CellCoord {
     self.exit
+  }
+  fn has_solution(&self) -> bool {
+    self.has_solution
+  }
+  fn set_has_solution(&mut self, has_solution: bool) {
+    self.has_solution = has_solution;
   }
 }

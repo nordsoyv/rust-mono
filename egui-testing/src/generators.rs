@@ -1,4 +1,5 @@
-use crate::Grid;
+use crate::grids::Grid;
+
 pub mod growing_tree;
 
 pub trait Generator {

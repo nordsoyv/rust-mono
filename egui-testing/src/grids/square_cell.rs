@@ -1,4 +1,4 @@
-use crate::common::{Cell, CellCoord};
+use crate::grids::{Cell, CellCoord};
 use eframe::egui::{Color32, Pos2, Rect};
 
 #[derive(Clone, Copy, Debug)]
@@ -29,18 +29,7 @@ impl SquareCell {
 
   pub fn draw_background(&self, cell_width: f32, cell_height: f32, margin: f32) -> (Rect, Color32) {
     let color: Color32;
-    if self.distance > 0 {
-      let dist = (self.distance % (256 * 3)) as u32;
-      let part = dist as f32 / 3.0;
-      let blue = part as u32;
-      let remain = dist - blue;
-      let part = remain as f32 / 2.0;
-      let green = part as u32;
-      let remain = remain - green;
-      let red = remain;
-
-      color = Color32::from_rgb(red as u8, green as u8, blue as u8);
-    } else if self.color.is_some() {
+    if self.color.is_some() {
       color = self.color.unwrap()
     } else {
       return (Rect::NOTHING, Color32::TRANSPARENT);

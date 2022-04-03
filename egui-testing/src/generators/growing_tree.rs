@@ -2,9 +2,9 @@ use eframe::egui::Color32;
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::ThreadRng;
 
-use crate::common::CellCoord;
 use crate::generators::Generator;
-use crate::Grid;
+use crate::grids::{CellCoord, Grid};
+
 // use crate::grid::types::{CellCoord, Grid};
 pub const CELL_ACTIVE_COLOR: Color32 = Color32::from_rgb(255, 255, 0);
 #[allow(dead_code)]

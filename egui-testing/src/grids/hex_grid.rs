@@ -1,6 +1,6 @@
-use crate::common::{is_odd, Cell, CellCoord, Direction};
+use crate::common::is_odd;
 use crate::grids::hex_cell::HexCell;
-use crate::Grid;
+use crate::grids::{Cell, CellCoord, Direction, Grid};
 use eframe::egui::{Color32, Painter, Stroke};
 
 pub struct HexGrid {
@@ -15,6 +15,7 @@ pub struct HexGrid {
   margin: f32,
   entrance: CellCoord,
   exit: CellCoord,
+  has_solution: bool,
 }
 
 impl HexGrid {
@@ -41,6 +42,7 @@ impl HexGrid {
       margin,
       entrance: CellCoord::new(-1.0, -1.0),
       exit: CellCoord::new(-1.0, -1.0),
+      has_solution: false,
     }
   }
 
@@ -305,5 +307,12 @@ impl Grid for HexGrid {
 
   fn get_exit(&self) -> CellCoord {
     self.exit
+  }
+  fn has_solution(&self) -> bool {
+    self.has_solution
+  }
+
+  fn set_has_solution(&mut self, has_solution: bool) {
+    self.has_solution = has_solution;
   }
 }

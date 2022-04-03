@@ -1,4 +1,5 @@
-use crate::common::{is_odd, Cell, CellCoord};
+use crate::common::is_odd;
+use crate::grids::{Cell, CellCoord};
 use eframe::egui::{Color32, Pos2};
 
 #[derive(Clone, Copy, Debug)]
