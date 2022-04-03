@@ -14,6 +14,7 @@ pub struct OptionsWindow {
   pub new_maze: bool,
   pub margin: i32,
   pub grid_type: GridType,
+  pub show_solution: bool,
 }
 
 impl OptionsWindow {
@@ -28,6 +29,7 @@ impl OptionsWindow {
       new_maze: false,
       margin: 5,
       grid_type: GridType::Hex,
+      show_solution: false,
     }
   }
 }
@@ -53,6 +55,7 @@ impl UiComponent for OptionsWindow {
       SliderWithText::new("Difficulty:", &mut self.difficulty, 1..=50).ui(ui);
       SliderWithText::new("Speed:", &mut self.speed, 1..=100).ui(ui);
       SliderWithText::new("Margin:", &mut self.margin, 0..=10).ui(ui);
+      ui.checkbox(&mut self.show_solution, "Show solution");
       ui.horizontal(|ui| {
         if ui.button("Take screenshot").clicked() {
           self.take_screenshot = true;

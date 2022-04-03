@@ -4,8 +4,9 @@ use eframe::{egui, Frame};
 use crate::common::GridType;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
-use crate::hex_grid::HexGrid;
-use crate::{Grid, OptionsWindow, SquareGrid2D, UiComponent};
+use crate::grids::hex_grid::HexGrid;
+use crate::grids::square_grid::SquareGrid2D;
+use crate::{Grid, OptionsWindow, UiComponent};
 
 fn save_image(bytes: &[u8], width: i32, height: i32) {
   //  let buffer = shared_buffer.lock().unwrap();

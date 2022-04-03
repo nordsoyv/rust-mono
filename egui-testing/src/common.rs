@@ -60,10 +60,16 @@ pub trait Grid {
   fn get_num_cells_vertical(&self) -> i32;
   fn get_cell_size(&self) -> i32;
   fn get_margin(&self) -> i32;
+  fn get_entrance(&self) -> CellCoord;
+  fn get_exit(&self) -> CellCoord;
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum GridType {
   Square,
   Hex,
+}
+
+pub fn is_odd(num: f32) -> bool {
+  return (num as i32) & 1 != 0;
 }

@@ -3,15 +3,13 @@
 mod app;
 mod common;
 mod generators;
-mod hex_grid;
+mod grids;
 mod options_window;
 mod slider_with_text;
-mod square_grid;
 
 use crate::app::MyEguiApp;
 use crate::common::{Grid, UiComponent};
 use crate::options_window::OptionsWindow;
-use crate::square_grid::SquareGrid2D;
 
 fn main() {
   let app = MyEguiApp::new();
