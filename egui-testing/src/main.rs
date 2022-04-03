@@ -12,7 +12,6 @@ use crate::app::MyEguiApp;
 use crate::common::{Grid, UiComponent};
 use crate::options_window::OptionsWindow;
 use crate::square_grid::SquareGrid2D;
-use eframe::egui::Pos2;
 
 fn main() {
   let app = MyEguiApp::new();

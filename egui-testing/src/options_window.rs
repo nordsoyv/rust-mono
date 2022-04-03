@@ -35,12 +35,18 @@ impl OptionsWindow {
 impl UiComponent for OptionsWindow {
   fn draw(&mut self, ctx: &Context) {
     egui::SidePanel::right("Options").show(ctx, |ui| {
-      egui::ComboBox::from_label("Grid type")
-        .selected_text(format!("{:?}", self.grid_type))
-        .show_ui(ui, |ui| {
-          ui.selectable_value(&mut self.grid_type, GridType::Square, "Square");
-          ui.selectable_value(&mut self.grid_type, GridType::Hex, "Hex");
-        });
+      ui.horizontal(|ui| {
+        let response = ui.label("Grid type:");
+        ui.add_space(50.0 - response.rect.width());
+        egui::ComboBox::from_label("")
+          .selected_text(format!("{:?}", self.grid_type))
+          .width(135.0)
+          .show_ui(ui, |ui| {
+            ui.selectable_value(&mut self.grid_type, GridType::Square, "Square");
+            ui.selectable_value(&mut self.grid_type, GridType::Hex, "Hex");
+          });
+      });
+
       SliderWithText::new("Width:", &mut self.width, 10..=50).ui(ui);
       SliderWithText::new("Height:", &mut self.height, 10..=50).ui(ui);
       SliderWithText::new("Cell size:", &mut self.cell_size, 5..=20).ui(ui);

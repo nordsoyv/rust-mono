@@ -68,41 +68,27 @@ impl HexCell {
       let p1 = Pos2::new(x_ne, y_n);
       let p2 = Pos2::new(x_fe, y_m);
       points.push((p1, p2));
-
-      // canvas.draw_line(x_ne as i32, y_n as i32, x_fe as i32, y_m as i32);
     }
     if self.north_east.is_none() {
       let p1 = Pos2::new(x_fe, y_m);
       let p2 = Pos2::new(x_ne, y_s);
       points.push((p1, p2));
-
-      // canvas.draw_line(x_fe as i32, y_m as i32, x_ne as i32, y_s as i32);
     }
     if self.north.is_none() {
       let p1 = Pos2::new(x_ne, y_s);
       let p2 = Pos2::new(x_nw, y_s);
       points.push((p1, p2));
-      // canvas.draw_line(x_ne as i32, y_s as i32, x_nw as i32, y_s as i32);
     }
     if self.north_west.is_none() {
       let p1 = Pos2::new(x_fw, y_m);
       let p2 = Pos2::new(x_nw, y_s);
       points.push((p1, p2));
-
-      // canvas.draw_line(x_fw as i32, y_m as i32, x_nw as i32, y_s as i32);
     }
     if self.south_west.is_none() {
       let p1 = Pos2::new(x_fw, y_m);
       let p2 = Pos2::new(x_nw, y_n);
       points.push((p1, p2));
-
-      // canvas.draw_line(x_fw as i32, y_m as i32, x_nw as i32, y_n as i32);
     }
-    // if let Some(c) = self.color {
-    //   canvas.set_fg_color(c);
-    //   canvas.fill_square(x_nw as i32, y_s as i32, size as i32, (b_size * 2.0) as i32);
-    // }
-
     let new_points = points
       .into_iter()
       .map(|(p1, p2)| {

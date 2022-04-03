@@ -28,7 +28,9 @@ impl<'a, Num: emath::Numeric> Widget for &mut SliderWithText<'a, Num> {
     ui.horizontal(|ui| {
       let response = ui.label(text.text());
       ui.add_space(50.0 - response.rect.width());
-      response.union(ui.add(egui::Slider::new(*value, self.range.clone())));
+      let resp2 = ui.add(egui::Slider::new(*value, self.range.clone()));
+      // dbg!(resp2.rect);
+      response.union(resp2);
       response
     })
     .response
