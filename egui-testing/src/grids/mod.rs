@@ -72,4 +72,7 @@ pub trait Grid {
   fn has_solution(&self) -> bool;
   fn set_has_solution(&mut self, has_solution: bool);
   fn clear_solution(&mut self);
+  fn find_dead_ends(&mut self);
+  fn count_dead_ends(&self) -> usize;
+  fn remove_dead_end(&mut self);
 }

@@ -9,7 +9,6 @@ mod options_window;
 mod slider_with_text;
 
 use crate::app::MyEguiApp;
-use crate::common::UiComponent;
 use crate::options_window::OptionsWindow;
 
 fn main() {

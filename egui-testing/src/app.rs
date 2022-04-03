@@ -7,7 +7,7 @@ use crate::generators::Generator;
 use crate::grids::hex_grid::HexGrid;
 use crate::grids::square_grid::SquareGrid2D;
 use crate::grids::{Grid, GridType};
-use crate::{OptionsWindow, UiComponent};
+use crate::OptionsWindow;
 
 fn save_image(bytes: &[u8], width: i32, height: i32) {
   //  let buffer = shared_buffer.lock().unwrap();
@@ -95,7 +95,7 @@ impl eframe::App for MyEguiApp {
     }
     let old_difficulty = self.options_window.difficulty;
     let old_grid = self.options_window.grid_type;
-    self.options_window.draw(ctx);
+    self.options_window.draw(ctx, &self.maze);
     if should_generate_new_maze(&self.options_window, &self.maze, old_difficulty, old_grid) {
       let mut maze: Box<dyn Grid>;
       match self.options_window.grid_type {
@@ -131,6 +131,7 @@ impl eframe::App for MyEguiApp {
       for _ in 0..self.options_window.speed {
         self.generator.generate_step(&mut self.maze);
         if self.generator.done() {
+          self.maze.find_dead_ends();
           break;
         }
       }
@@ -147,6 +148,12 @@ impl eframe::App for MyEguiApp {
       if self.maze.has_solution() {
         self.maze.clear_solution();
       }
+    }
+    if self.options_window.remove_deadends && self.generator.done() {
+      self.maze.remove_dead_end();
+      self.maze.clear_solution();
+      self.options_window.remove_deadends = false;
+      self.maze.find_dead_ends();
     }
     let response = egui::CentralPanel::default()
       .frame(self.custom_frame)

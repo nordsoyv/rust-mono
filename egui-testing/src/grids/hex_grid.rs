@@ -16,6 +16,7 @@ pub struct HexGrid {
   entrance: CellCoord,
   exit: CellCoord,
   has_solution: bool,
+  dead_ends: Vec<CellCoord>,
 }
 
 impl HexGrid {
@@ -43,6 +44,7 @@ impl HexGrid {
       entrance: CellCoord::new(-1.0, -1.0),
       exit: CellCoord::new(-1.0, -1.0),
       has_solution: false,
+      dead_ends: vec![],
     }
   }
 
@@ -319,6 +321,54 @@ impl Grid for HexGrid {
     self.has_solution = false;
     for c in &mut self.cells {
       c.color = None;
+      c.distance = -1;
+    }
+  }
+  fn find_dead_ends(&mut self) {
+    let mut deadends = vec![];
+    for c in &self.cells {
+      let num_neighbours = c.get_neighbours().len();
+      if num_neighbours == 1 {
+        deadends.push(c.get_coord());
+      }
+    }
+    self.dead_ends = deadends;
+  }
+  fn count_dead_ends(&self) -> usize {
+    self.dead_ends.len()
+  }
+
+  fn remove_dead_end(&mut self) {
+    let mut wall_sets = vec![];
+    {
+      for cell_coord in &self.dead_ends {
+        let mut walled_neighbors = vec![];
+        let cell = self.get_cell_internal(*cell_coord).unwrap();
+        if cell.north.is_none() {
+          walled_neighbors.push(Direction::North);
+        }
+        if cell.north_east.is_none() {
+          walled_neighbors.push(Direction::NorthEast);
+        }
+        if cell.north_west.is_none() {
+          walled_neighbors.push(Direction::NorthWest);
+        }
+        if cell.south.is_none() {
+          walled_neighbors.push(Direction::South);
+        }
+        if cell.south_east.is_none() {
+          walled_neighbors.push(Direction::SouthEast);
+        }
+        if cell.south_west.is_none() {
+          walled_neighbors.push(Direction::SouthWest);
+        }
+        if walled_neighbors.len() > 0 {
+          wall_sets.push((cell_coord.clone(), walled_neighbors));
+        }
+      }
+    }
+    for (cell_coord, wall_set) in wall_sets {
+      self.carve(cell_coord, wall_set[0]);
     }
   }
 }

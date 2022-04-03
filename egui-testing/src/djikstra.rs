@@ -64,7 +64,7 @@ impl Djikstra {
         break;
       }
       let neighbours = {
-        let active_cell = grid.get_mut_cell(active_cell_coord).unwrap();
+        let active_cell = grid.get_cell(active_cell_coord).unwrap();
         active_cell.get_neighbours()
       };
 

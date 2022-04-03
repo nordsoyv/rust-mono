@@ -1,3 +1,4 @@
+use crate::grids::Direction::{East, North, South, West};
 use crate::grids::{Cell, CellCoord, Direction, Grid};
 use eframe::egui::{Color32, Painter, Rounding, Stroke};
 
@@ -14,6 +15,7 @@ pub struct SquareGrid2D {
   exit: CellCoord,
   // pub cell_height: i32,
   has_solution: bool,
+  dead_ends: Vec<CellCoord>,
 }
 
 impl SquareGrid2D {
@@ -40,6 +42,7 @@ impl SquareGrid2D {
       entrance: CellCoord::new(-1.0, -1.0),
       exit: CellCoord::new(-1.0, -1.0),
       has_solution: false,
+      dead_ends: vec![],
     }
   }
 
@@ -292,6 +295,48 @@ impl Grid for SquareGrid2D {
     self.has_solution = false;
     for c in &mut self.cells {
       c.color = None;
+      c.distance = -1;
+    }
+  }
+  fn find_dead_ends(&mut self) {
+    let mut deadends = vec![];
+    for c in &self.cells {
+      let num_neighbours = c.get_neighbours().len();
+      if num_neighbours == 1 {
+        deadends.push(c.get_coord());
+      }
+    }
+    self.dead_ends = deadends;
+  }
+  fn count_dead_ends(&self) -> usize {
+    self.dead_ends.len()
+  }
+
+  fn remove_dead_end(&mut self) {
+    let mut wall_sets = vec![];
+    {
+      for cell_coord in &self.dead_ends {
+        let mut walled_neighbors = vec![];
+        let cell = self.get_cell_internal(*cell_coord).unwrap();
+        if cell.top.is_none() {
+          walled_neighbors.push(North);
+        }
+        if cell.bottom.is_none() {
+          walled_neighbors.push(South);
+        }
+        if cell.left.is_none() {
+          walled_neighbors.push(West);
+        }
+        if cell.right.is_none() {
+          walled_neighbors.push(East);
+        }
+        if walled_neighbors.len() > 0 {
+          wall_sets.push((cell_coord.clone(), walled_neighbors));
+        }
+      }
+    }
+    for (cell_coord, wall_set) in wall_sets {
+      self.carve(cell_coord, wall_set[0]);
     }
   }
 }

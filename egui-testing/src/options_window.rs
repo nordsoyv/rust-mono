@@ -1,8 +1,7 @@
 use eframe::egui;
 use eframe::egui::{Context, Widget};
 
-use crate::common::UiComponent;
-use crate::grids::GridType;
+use crate::grids::{Grid, GridType};
 use crate::slider_with_text::SliderWithText;
 
 pub struct OptionsWindow {
@@ -16,6 +15,7 @@ pub struct OptionsWindow {
   pub margin: i32,
   pub grid_type: GridType,
   pub show_solution: bool,
+  pub remove_deadends: bool,
 }
 
 impl OptionsWindow {
@@ -31,12 +31,13 @@ impl OptionsWindow {
       margin: 5,
       grid_type: GridType::Hex,
       show_solution: false,
+      remove_deadends: false,
     }
   }
 }
 
-impl UiComponent for OptionsWindow {
-  fn draw(&mut self, ctx: &Context) {
+impl OptionsWindow {
+  pub fn draw(&mut self, ctx: &Context, maze: &Box<dyn Grid>) {
     egui::SidePanel::right("Options").show(ctx, |ui| {
       ui.horizontal(|ui| {
         let response = ui.label("Grid type:");
@@ -71,6 +72,12 @@ impl UiComponent for OptionsWindow {
         }
         if ui.button("New").clicked() {
           self.new_maze = true;
+        }
+      });
+      ui.horizontal(|ui| {
+        ui.label(format!("Deadends: {}", maze.count_dead_ends()));
+        if ui.button("Remove deadend").clicked() {
+          self.remove_deadends = true;
         }
       });
     });
