@@ -71,4 +71,5 @@ pub trait Grid {
   fn get_exit(&self) -> CellCoord;
   fn has_solution(&self) -> bool;
   fn set_has_solution(&mut self, has_solution: bool);
+  fn clear_solution(&mut self);
 }

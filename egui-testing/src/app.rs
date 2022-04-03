@@ -143,6 +143,11 @@ impl eframe::App for MyEguiApp {
         Djikstra::new().run(&mut self.maze);
       }
     }
+    if !self.options_window.show_solution && self.generator.done() {
+      if self.maze.has_solution() {
+        self.maze.clear_solution();
+      }
+    }
     let response = egui::CentralPanel::default()
       .frame(self.custom_frame)
       .show(ctx, |ui| {

@@ -315,4 +315,10 @@ impl Grid for HexGrid {
   fn set_has_solution(&mut self, has_solution: bool) {
     self.has_solution = has_solution;
   }
+  fn clear_solution(&mut self) {
+    self.has_solution = false;
+    for c in &mut self.cells {
+      c.color = None;
+    }
+  }
 }

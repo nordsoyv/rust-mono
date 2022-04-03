@@ -49,11 +49,17 @@ impl Djikstra {
     let mut active_distance;
     let mut active_cell_coord = exit;
     {
-      let mut active_cell = grid.get_mut_cell(exit).unwrap();
+      let active_cell = grid.get_mut_cell(exit).unwrap();
       active_distance = active_cell.get_distance();
       active_cell.set_color(Some(Color32::GOLD));
     }
+    let mut counter = 0;
     'outer_loop: loop {
+      counter += 1;
+      if counter > 10000 {
+        dbg!("Djikstra infinite loop!");
+        break;
+      }
       if active_cell_coord == entrance {
         break;
       }
