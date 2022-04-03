@@ -1,6 +1,4 @@
-use eframe::egui::{Color32, Context, Rect};
-
-use crate::Pos2;
+use eframe::egui::{Color32, Context, Painter};
 
 pub trait UiComponent {
   fn draw(&mut self, ctx: &Context);
@@ -52,8 +50,8 @@ pub trait Grid {
   fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord>;
   fn carve(&mut self, coord_start: CellCoord, dir: Direction);
   fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction>;
-  fn draw(&self) -> Vec<(Pos2, Pos2)>;
-  fn draw_background(&self) -> Vec<(Rect, Color32)>;
+  fn draw(&self, painter: &Painter);
+  fn draw_background(&self, painter: &Painter);
   fn set_cell_size(&mut self, cell_size: i32);
   fn get_width(&self) -> f32;
   fn init(&mut self);
@@ -64,7 +62,7 @@ pub trait Grid {
   fn get_margin(&self) -> i32;
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum GridType {
   Square,
   Hex,

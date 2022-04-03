@@ -1,4 +1,4 @@
-use eframe::egui::{Color32, Pos2, Rect};
+use eframe::egui::{Color32, Painter, Pos2, Rect, Rounding, Stroke};
 
 use crate::common::{Cell, CellCoord, Direction, Grid};
 
@@ -475,15 +475,18 @@ impl Grid for SquareGrid2D {
     return dirs;
   }
 
-  fn draw(&self) -> Vec<(Pos2, Pos2)> {
+  fn draw(&self, painter: &Painter) {
     let mut points = vec![];
+    let shape = Stroke::new(1.0, Color32::BLACK);
     for cell in &self.cells {
       points.extend(cell.draw(self.cell_inset as f32, self.cell_size as f32, self.margin));
     }
-    return points;
+    points
+      .into_iter()
+      .for_each(|points| painter.line_segment([points.0, points.1], shape));
   }
 
-  fn draw_background(&self) -> Vec<(Rect, Color32)> {
+  fn draw_background(&self, painter: &Painter) {
     let mut backgrounds = vec![];
     for cell in &self.cells {
       backgrounds.push(cell.draw_background(
@@ -492,7 +495,9 @@ impl Grid for SquareGrid2D {
         self.margin,
       ));
     }
-    return backgrounds;
+    backgrounds
+      .into_iter()
+      .for_each(|(rect, color)| painter.rect_filled(rect, Rounding::default(), color));
   }
 
   fn set_cell_size(&mut self, cell_size: i32) {

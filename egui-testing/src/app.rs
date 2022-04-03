@@ -1,8 +1,10 @@
-use eframe::egui::{Color32, Context, Key, Rounding, Sense, Stroke, Ui, Vec2};
+use eframe::egui::{Color32, Context, Key, Sense, Ui, Vec2};
 use eframe::{egui, Frame};
 
+use crate::common::GridType;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
+use crate::hex_grid::HexGrid;
 use crate::{Grid, OptionsWindow, SquareGrid2D, UiComponent};
 
 fn save_image(bytes: &[u8], width: i32, height: i32) {
@@ -35,7 +37,7 @@ pub struct MyEguiApp {
 
 impl MyEguiApp {
   pub fn new() -> MyEguiApp {
-    let maze = Box::new(SquareGrid2D::new(5, 5, 20, 0, 0.0));
+    let maze = Box::new(HexGrid::new(5, 5, 20, 5.0));
     // maze.carve(CellCoord::new(5.0, 5.0), Direction::North);
     MyEguiApp {
       options_window: OptionsWindow::new(),
@@ -57,15 +59,15 @@ impl MyEguiApp {
       Sense::hover(),
     );
 
-    let points = self.maze.draw();
-    let backgrounds = self.maze.draw_background();
-    let shape = Stroke::new(2.0, Color32::BLACK);
-    backgrounds
-      .into_iter()
-      .for_each(|(rect, color)| painter.rect(rect, Rounding::default(), color, Stroke::none()));
-    points
-      .into_iter()
-      .for_each(|points| painter.line_segment([points.0, points.1], shape));
+    self.maze.draw_background(&painter);
+    self.maze.draw(&painter);
+    // let shape = Stroke::new(1.0, Color32::BLACK);
+    // backgrounds
+    //   .into_iter()
+    //   .for_each(|(rect, color)| painter.rect_filled(rect, Rounding::default(), color));
+    // points
+    //   .into_iter()
+    //   .for_each(|points| painter.line_segment([points.0, points.1], shape));
   }
 }
 
@@ -73,13 +75,22 @@ fn should_generate_new_maze(
   options_window: &OptionsWindow,
   maze: &Box<dyn Grid>,
   difficulty: i32,
+  old_grid: GridType,
 ) -> bool {
-  options_window.width != maze.get_num_cells_horizontal()
-    || options_window.height != maze.get_num_cells_vertical()
-    || options_window.cell_size != maze.get_cell_size()
-    || options_window.margin != maze.get_margin()
-    || options_window.difficulty != difficulty
-    || options_window.new_maze
+  let width_changed = options_window.width != maze.get_num_cells_horizontal();
+
+  let height_changed = options_window.height != maze.get_num_cells_vertical();
+  let cell_size_changed = options_window.cell_size != maze.get_cell_size();
+  let maring_changed = options_window.margin != maze.get_margin();
+  let diff_changed = options_window.difficulty != difficulty;
+  let grid_type_changed = options_window.grid_type != old_grid;
+  options_window.new_maze
+    || width_changed
+    || height_changed
+    || cell_size_changed
+    || maring_changed
+    || diff_changed
+    || grid_type_changed
 }
 
 impl eframe::App for MyEguiApp {
@@ -88,18 +99,33 @@ impl eframe::App for MyEguiApp {
       frame.quit();
     }
     let old_difficulty = self.options_window.difficulty;
+    let old_grid = self.options_window.grid_type;
     self.options_window.draw(ctx);
-    if should_generate_new_maze(&self.options_window, &self.maze, old_difficulty) {
-      let mut maze = SquareGrid2D::new(
-        self.options_window.width,
-        self.options_window.height,
-        self.options_window.cell_size,
-        0,
-        self.options_window.margin as f32,
-      );
+    if should_generate_new_maze(&self.options_window, &self.maze, old_difficulty, old_grid) {
+      let mut maze: Box<dyn Grid>;
+      match self.options_window.grid_type {
+        GridType::Square => {
+          maze = Box::new(SquareGrid2D::new(
+            self.options_window.width,
+            self.options_window.height,
+            self.options_window.cell_size,
+            0,
+            self.options_window.margin as f32,
+          ));
+        }
+        GridType::Hex => {
+          maze = Box::new(HexGrid::new(
+            self.options_window.width,
+            self.options_window.height,
+            self.options_window.cell_size,
+            self.options_window.margin as f32,
+          ));
+        }
+      }
+
       self.options_window.new_maze = false;
       maze.init();
-      self.maze = Box::new(maze);
+      self.maze = maze;
       self.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(
         self.options_window.difficulty,
       )));
