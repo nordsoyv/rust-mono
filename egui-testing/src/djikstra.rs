@@ -17,7 +17,7 @@ impl Djikstra {
     start_cell.set_distance(0);
     let neighbours = start_cell.get_neighbours();
     for n in &neighbours {
-      if n.x_pos == -1.0 || n.y_pos == -1.0 {
+      if n.x_pos == -1 || n.y_pos == -1 {
         // marker for entrance and exit
         continue;
       }
@@ -33,7 +33,7 @@ impl Djikstra {
         (neighbours, active.get_distance())
       };
       for n in &neighbours {
-        if n.x_pos == -1.0 || n.y_pos == -1.0 {
+        if n.x_pos == -1 || n.y_pos == -1 {
           // marker for entrance and exit
           continue;
         }

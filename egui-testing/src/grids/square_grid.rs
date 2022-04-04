@@ -1,3 +1,4 @@
+use crate::common::{get_random_float, get_random_usize};
 use crate::grids::Direction::{East, North, South, West};
 use crate::grids::{Cell, CellCoord, Direction, Grid};
 use eframe::egui::{Color32, Painter, Rounding, Stroke};
@@ -29,7 +30,7 @@ impl SquareGrid2D {
     let mut cells = vec![];
     for y in 0..height {
       for x in 0..width {
-        cells.push(SquareCell::default(x as f32, y as f32));
+        cells.push(SquareCell::default(x, y));
       }
     }
     SquareGrid2D {
@@ -39,8 +40,8 @@ impl SquareGrid2D {
       cell_inset,
       cell_size,
       margin,
-      entrance: CellCoord::new(-1.0, -1.0),
-      exit: CellCoord::new(-1.0, -1.0),
+      entrance: CellCoord::new(-1, -1),
+      exit: CellCoord::new(-1, -1),
       has_solution: false,
       dead_ends: vec![],
     }
@@ -53,7 +54,7 @@ impl SquareGrid2D {
 
   #[allow(dead_code)]
   fn get_cell_internal(&self, coord: CellCoord) -> Option<&SquareCell> {
-    let index = coord.y_pos * self.width + coord.x_pos;
+    let index = coord.y_pos * self.width as i32 + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&self.cells[index as usize]);
     }
@@ -61,7 +62,7 @@ impl SquareGrid2D {
   }
 
   fn get_mut_cell_internal(&mut self, coord: CellCoord) -> Option<&mut SquareCell> {
-    let index = (coord.y_pos * self.width) + coord.x_pos;
+    let index = (coord.y_pos * self.width as i32) + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&mut self.cells[index as usize]);
     }
@@ -71,7 +72,7 @@ impl SquareGrid2D {
 
 impl Grid for SquareGrid2D {
   fn get_cell(&self, coord: CellCoord) -> Option<&dyn Cell> {
-    let index = coord.y_pos * self.width + coord.x_pos;
+    let index = coord.y_pos * self.width as i32 + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&self.cells[index as usize]);
     }
@@ -79,7 +80,7 @@ impl Grid for SquareGrid2D {
   }
 
   fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut dyn Cell> {
-    let index = (coord.y_pos * self.width as f32) + coord.x_pos;
+    let index = (coord.y_pos * self.width as i32) + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&mut self.cells[index as usize]);
     }
@@ -88,20 +89,20 @@ impl Grid for SquareGrid2D {
 
   fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
     let target_x = match dir {
-      Direction::West => coord.x_pos - 1.0,
-      Direction::East => coord.x_pos + 1.0,
+      Direction::West => coord.x_pos - 1,
+      Direction::East => coord.x_pos + 1,
       _ => coord.x_pos,
     };
     let target_y = match dir {
-      Direction::South => coord.y_pos - 1.0,
-      Direction::North => coord.y_pos + 1.0,
+      Direction::South => coord.y_pos - 1,
+      Direction::North => coord.y_pos + 1,
       _ => coord.y_pos,
     };
 
-    if target_x < 0.0
-      || target_x >= self.width as f32
-      || target_y < 0.0
-      || target_y >= self.height as f32
+    if target_x < 0
+      || target_x >= self.width as i32
+      || target_y < 0
+      || target_y >= self.height as i32
     {
       return false;
     }
@@ -117,37 +118,37 @@ impl Grid for SquareGrid2D {
 
   fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord> {
     match dir {
-      Direction::North => Some(CellCoord::new(coord.x_pos, coord.y_pos + 1.0)),
-      Direction::South => Some(CellCoord::new(coord.x_pos, coord.y_pos - 1.0)),
-      Direction::East => Some(CellCoord::new(coord.x_pos + 1.0, coord.y_pos)),
-      Direction::West => Some(CellCoord::new(coord.x_pos - 1.0, coord.y_pos)),
+      Direction::North => Some(CellCoord::new(coord.x_pos, coord.y_pos + 1)),
+      Direction::South => Some(CellCoord::new(coord.x_pos, coord.y_pos - 1)),
+      Direction::East => Some(CellCoord::new(coord.x_pos + 1, coord.y_pos)),
+      Direction::West => Some(CellCoord::new(coord.x_pos - 1, coord.y_pos)),
       _ => None,
     }
   }
 
   fn carve(&mut self, coord_start: CellCoord, dir: Direction) {
     let x_end = match dir {
-      Direction::West => coord_start.x_pos - 1.0,
-      Direction::East => coord_start.x_pos + 1.0,
+      Direction::West => coord_start.x_pos - 1,
+      Direction::East => coord_start.x_pos + 1,
       _ => coord_start.x_pos,
     };
     let y_end = match dir {
-      Direction::South => coord_start.y_pos - 1.0,
-      Direction::North => coord_start.y_pos + 1.0,
+      Direction::South => coord_start.y_pos - 1,
+      Direction::North => coord_start.y_pos + 1,
       _ => coord_start.y_pos,
     };
     let coord_end = CellCoord {
       x_pos: x_end,
       y_pos: y_end,
     };
-    if coord_start.x_pos < 0.0
-      || coord_end.x_pos < 0.0
-      || coord_start.y_pos < 0.0
-      || coord_end.y_pos < 0.0
-      || coord_start.x_pos > self.width
-      || coord_end.x_pos > self.width
-      || coord_start.y_pos > self.height
-      || coord_end.y_pos > self.height
+    if coord_start.x_pos < 0
+      || coord_end.x_pos < 0
+      || coord_start.y_pos < 0
+      || coord_end.y_pos < 0
+      || coord_start.x_pos > self.width as i32
+      || coord_end.x_pos > self.width as i32
+      || coord_start.y_pos > self.height as i32
+      || coord_end.y_pos > self.height as i32
     {
       return;
     }
@@ -242,16 +243,16 @@ impl Grid for SquareGrid2D {
   }
 
   fn init(&mut self) {
-    self.entrance = CellCoord::new(self.width / 2.0, 0.0);
-    self.exit = CellCoord::new(self.width / 2.0, self.height - 1.0);
+    self.entrance = CellCoord::new(self.width as i32 / 2, 0);
+    self.exit = CellCoord::new(self.width as i32 / 2, self.height as i32 - 1);
 
     self.get_mut_cell_internal(self.entrance).unwrap().bottom = Some(CellCoord {
-      x_pos: -1.0,
-      y_pos: -1.0,
+      x_pos: -1,
+      y_pos: -1,
     });
     self.get_mut_cell_internal(self.exit).unwrap().top = Some(CellCoord {
-      x_pos: -1.0,
-      y_pos: -1.0,
+      x_pos: -1,
+      y_pos: -1,
     });
   }
 
@@ -316,6 +317,9 @@ impl Grid for SquareGrid2D {
     let mut wall_sets = vec![];
     {
       for cell_coord in &self.dead_ends {
+        if get_random_float(10.0) < 8.0 {
+          continue;
+        }
         let mut walled_neighbors = vec![];
         let cell = self.get_cell_internal(*cell_coord).unwrap();
         if cell.top.is_none() {
@@ -336,7 +340,8 @@ impl Grid for SquareGrid2D {
       }
     }
     for (cell_coord, wall_set) in wall_sets {
-      self.carve(cell_coord, wall_set[0]);
+      let random = get_random_usize(wall_set.len());
+      self.carve(cell_coord, wall_set[random]);
     }
   }
 }

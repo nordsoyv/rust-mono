@@ -14,7 +14,7 @@ pub struct SquareCell {
 }
 
 impl SquareCell {
-  pub fn default(x: f32, y: f32) -> SquareCell {
+  pub fn default(x: i32, y: i32) -> SquareCell {
     SquareCell {
       bottom: None,
       left: None,
@@ -35,12 +35,12 @@ impl SquareCell {
       return (Rect::NOTHING, Color32::TRANSPARENT);
     }
     let top_left = Pos2::new(
-      (self.coord.x_pos * cell_width) + margin,
-      (self.coord.y_pos * cell_height) + margin,
+      (self.coord.x_pos as f32 * cell_width) as f32 + margin,
+      (self.coord.y_pos as f32 * cell_height) as f32 + margin,
     );
     let bottom_right = Pos2::new(
-      ((self.coord.x_pos + 1.0) * (cell_width)) + margin,
-      ((self.coord.y_pos + 1.0) * (cell_height)) + margin,
+      ((self.coord.x_pos as f32 + 1.0) * (cell_width)) + margin,
+      ((self.coord.y_pos as f32 + 1.0) * (cell_height)) + margin,
     );
     let rect = Rect::from_min_max(top_left, bottom_right);
     return (rect, color);
@@ -48,28 +48,30 @@ impl SquareCell {
 
   pub fn draw(&self, _cell_inset: f32, cell_size: f32, margin: f32) -> Vec<(Pos2, Pos2)> {
     let mut points = vec![];
+    let x_coord = self.coord.x_pos as f32;
+    let y_coord = self.coord.y_pos as f32;
     if self.top.is_none() {
-      let y_pos = (self.coord.y_pos + 1.0) * cell_size;
-      let p1 = Pos2::new(self.coord.x_pos * cell_size, y_pos);
-      let p2 = Pos2::new((self.coord.x_pos + 1.0) * cell_size, y_pos);
+      let y_pos = (y_coord + 1.0) * cell_size;
+      let p1 = Pos2::new(x_coord * cell_size, y_pos);
+      let p2 = Pos2::new((x_coord + 1.0) * cell_size, y_pos);
       points.push((p1, p2));
     }
     if self.bottom.is_none() {
-      let y_pos = (self.coord.y_pos) * cell_size;
-      let p1 = Pos2::new(self.coord.x_pos * cell_size, y_pos);
-      let p2 = Pos2::new((self.coord.x_pos + 1.0) * cell_size, y_pos);
+      let y_pos = y_coord * cell_size;
+      let p1 = Pos2::new(x_coord * cell_size, y_pos);
+      let p2 = Pos2::new((x_coord + 1.0) * cell_size, y_pos);
       points.push((p1, p2));
     }
     if self.left.is_none() {
-      let x_pos = self.coord.x_pos * cell_size;
-      let p1 = Pos2::new(x_pos, self.coord.y_pos * cell_size);
-      let p2 = Pos2::new(x_pos, (self.coord.y_pos + 1.0) * cell_size);
+      let x_pos = x_coord * cell_size;
+      let p1 = Pos2::new(x_pos, y_coord * cell_size);
+      let p2 = Pos2::new(x_pos, (y_coord + 1.0) * cell_size);
       points.push((p1, p2));
     }
     if self.right.is_none() {
-      let x_pos = (self.coord.x_pos + 1.0) * cell_size;
-      let p1 = Pos2::new(x_pos, self.coord.y_pos * cell_size);
-      let p2 = Pos2::new(x_pos, (self.coord.y_pos + 1.0) * cell_size);
+      let x_pos = (x_coord + 1.0) * cell_size;
+      let p1 = Pos2::new(x_pos, y_coord * cell_size);
+      let p2 = Pos2::new(x_pos, (y_coord + 1.0) * cell_size);
       points.push((p1, p2));
     }
     let new_points = points

@@ -18,7 +18,7 @@ pub struct HexCell {
 }
 
 impl HexCell {
-  pub fn default(x: f32, y: f32) -> HexCell {
+  pub fn default(x: i32, y: i32) -> HexCell {
     HexCell {
       north: None,
       north_east: None,

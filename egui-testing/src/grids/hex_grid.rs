@@ -1,4 +1,4 @@
-use crate::common::is_odd;
+use crate::common::{get_random_float, get_random_usize, is_odd};
 use crate::grids::hex_cell::HexCell;
 use crate::grids::{Cell, CellCoord, Direction, Grid};
 use eframe::egui::{Color32, Painter, Stroke};
@@ -24,7 +24,7 @@ impl HexGrid {
     let mut cells = vec![];
     for y in 0..height as i32 {
       for x in 0..width as i32 {
-        cells.push(HexCell::default(x as f32, y as f32));
+        cells.push(HexCell::default(x, y));
       }
     }
     let a_size: f32 = cell_size as f32 / 2.0;
@@ -41,22 +41,22 @@ impl HexGrid {
       a_size,
       b_size,
       margin,
-      entrance: CellCoord::new(-1.0, -1.0),
-      exit: CellCoord::new(-1.0, -1.0),
+      entrance: CellCoord::new(-1, -1),
+      exit: CellCoord::new(-1, -1),
       has_solution: false,
       dead_ends: vec![],
     }
   }
 
   fn get_mut_cell_internal(&mut self, coord: CellCoord) -> Option<&mut HexCell> {
-    let index = (coord.y_pos * self.width) + coord.x_pos;
+    let index = (coord.y_pos * self.width as i32) + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&mut self.cells[index as usize]);
     }
     return None;
   }
   fn get_cell_internal(&self, coord: CellCoord) -> Option<&HexCell> {
-    let index = (coord.y_pos * self.width) + coord.x_pos;
+    let index = (coord.y_pos * self.width as i32) + coord.x_pos;
     if (index as usize) < self.cells.len() {
       return Some(&self.cells[index as usize]);
     }
@@ -95,39 +95,43 @@ impl Grid for HexGrid {
 
     match dir {
       Direction::North => {
-        target_y += 1.0;
+        target_y += 1;
       }
       Direction::South => {
-        target_y -= 1.0;
+        target_y -= 1;
       }
       Direction::NorthWest => {
-        target_x -= 1.0;
+        target_x -= 1;
         if is_odd(coord.x_pos) {
-          target_y += 1.0;
+          target_y += 1;
         }
       }
       Direction::NorthEast => {
-        target_x += 1.0;
+        target_x += 1;
         if is_odd(coord.x_pos) {
-          target_y += 1.0;
+          target_y += 1;
         }
       }
       Direction::SouthWest => {
-        target_x -= 1.0;
+        target_x -= 1;
         if !is_odd(coord.x_pos) {
-          target_y -= 1.0;
+          target_y -= 1;
         }
       }
       Direction::SouthEast => {
-        target_x += 1.0;
+        target_x += 1;
         if !is_odd(coord.x_pos) {
-          target_y -= 1.0;
+          target_y -= 1;
         }
       }
       _ => {}
     }
 
-    if target_x < 0.0 || target_x >= self.width || target_y < 0.0 || target_y >= self.height {
+    if target_x < 0
+      || target_x >= self.width as i32
+      || target_y < 0
+      || target_y >= self.height as i32
+    {
       return None;
     }
     Some(CellCoord::new(target_x, target_y))
@@ -268,16 +272,16 @@ impl Grid for HexGrid {
   }
 
   fn init(&mut self) {
-    self.entrance = CellCoord::new(self.width / 2.0, 0.0);
-    self.exit = CellCoord::new(self.width / 2.0, self.height - 1.0);
+    self.entrance = CellCoord::new(self.width as i32 / 2, 0);
+    self.exit = CellCoord::new(self.width as i32 / 2, self.height as i32 - 1);
 
     self.get_mut_cell_internal(self.entrance).unwrap().south = Some(CellCoord {
-      x_pos: -1.0,
-      y_pos: -1.0,
+      x_pos: -1,
+      y_pos: -1,
     });
     self.get_mut_cell_internal(self.exit).unwrap().north = Some(CellCoord {
-      x_pos: -1.0,
-      y_pos: -1.0,
+      x_pos: -1,
+      y_pos: -1,
     });
   }
 
@@ -342,6 +346,9 @@ impl Grid for HexGrid {
     let mut wall_sets = vec![];
     {
       for cell_coord in &self.dead_ends {
+        if get_random_float(10.0) < 8.0 {
+          continue;
+        }
         let mut walled_neighbors = vec![];
         let cell = self.get_cell_internal(*cell_coord).unwrap();
         if cell.north.is_none() {
@@ -368,7 +375,8 @@ impl Grid for HexGrid {
       }
     }
     for (cell_coord, wall_set) in wall_sets {
-      self.carve(cell_coord, wall_set[0]);
+      let random = get_random_usize(wall_set.len());
+      self.carve(cell_coord, wall_set[random]);
     }
   }
 }

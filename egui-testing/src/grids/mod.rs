@@ -7,13 +7,13 @@ pub mod square_grid;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CellCoord {
-  pub x_pos: f32,
-  pub y_pos: f32,
+  pub x_pos: i32,
+  pub y_pos: i32,
 }
 
 impl CellCoord {
   #[allow(dead_code)]
-  pub fn new(x: f32, y: f32) -> CellCoord {
+  pub fn new(x: i32, y: i32) -> CellCoord {
     CellCoord { x_pos: x, y_pos: y }
   }
 }

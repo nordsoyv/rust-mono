@@ -1,6 +1,5 @@
+use crate::common::get_random_usize;
 use eframe::egui::Color32;
-use rand::distributions::{Distribution, Uniform};
-use rand::prelude::ThreadRng;
 
 use crate::generators::Generator;
 use crate::grids::{CellCoord, Grid};
@@ -20,16 +19,14 @@ pub enum Strategy {
 pub struct GrowingTreeGenerator {
   pub done: bool,
   stack: Vec<CellCoord>,
-  rng: ThreadRng,
-  random: Uniform<f32>,
   strategy: Strategy,
 }
 
 impl Generator for GrowingTreeGenerator {
   fn init(&mut self, maze: &mut Box<dyn Grid>) {
     let start_cell = CellCoord {
-      x_pos: maze.get_width() / 2.0,
-      y_pos: 0.0,
+      x_pos: (maze.get_width() / 2.0) as i32,
+      y_pos: 0,
     };
     maze.init();
     maze
@@ -64,7 +61,7 @@ impl Generator for GrowingTreeGenerator {
       self.stack.remove(next_cell_index);
       return;
     }
-    let random_dir = self.get_random(available_dirs.len());
+    let random_dir = get_random_usize(available_dirs.len());
     maze.carve(coord, available_dirs[random_dir]);
     let next_cell = maze.get_cell_in_dir(coord, available_dirs[random_dir]);
     self.stack.push(next_cell.unwrap());
@@ -84,18 +81,16 @@ impl GrowingTreeGenerator {
     GrowingTreeGenerator {
       done: false,
       stack: vec![],
-      rng: rand::thread_rng(),
-      random: Uniform::from(0f32..1f32),
       strategy,
     }
   }
 
   fn get_next_index(&mut self) -> usize {
     match self.strategy {
-      Strategy::Random => self.get_random(self.stack.len()),
+      Strategy::Random => get_random_usize(self.stack.len()),
       Strategy::First => 0,
       Strategy::FirstN(num) => {
-        let n = self.get_random(num as usize);
+        let n = get_random_usize(num as usize);
         if n >= self.stack.len() {
           self.stack.len() - 1
         } else {
@@ -104,7 +99,7 @@ impl GrowingTreeGenerator {
       }
       Strategy::Last => self.stack.len() - 1,
       Strategy::LastN(num) => {
-        let n = self.get_random(num as usize);
+        let n = get_random_usize(num as usize);
         let index: i32 = self.stack.len() as i32 - 1 - n as i32;
         if index < 0 {
           0
@@ -113,21 +108,14 @@ impl GrowingTreeGenerator {
         }
       }
       Strategy::LastAndRandom(num) => {
-        let n = self.get_random(num as usize);
+        let n = get_random_usize(num as usize);
         if n == 0 {
           // pick a random
-          self.get_random(self.stack.len())
+          get_random_usize(self.stack.len())
         } else {
           self.stack.len() - 1
         }
       }
     }
-  }
-
-  fn get_random(&mut self, max: usize) -> usize {
-    let d = self.random.sample(&mut self.rng);
-    let scaled = d * max as f32;
-    let scaled_int = scaled as usize;
-    return scaled_int;
   }
 }
