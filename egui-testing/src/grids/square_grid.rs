@@ -72,22 +72,20 @@ impl SquareGrid2D {
 
 impl Grid for SquareGrid2D {
   fn get_cell(&self, coord: CellCoord) -> Option<&dyn Cell> {
-    let index = coord.y_pos * self.width as i32 + coord.x_pos;
-    if (index as usize) < self.cells.len() {
-      return Some(&self.cells[index as usize]);
+    if let Some(c) = self.get_cell_internal(coord) {
+      return Some(c);
     }
-    return None;
+    None
   }
 
   fn get_mut_cell(&mut self, coord: CellCoord) -> Option<&mut dyn Cell> {
-    let index = (coord.y_pos * self.width as i32) + coord.x_pos;
-    if (index as usize) < self.cells.len() {
-      return Some(&mut self.cells[index as usize]);
+    if let Some(c) = self.get_mut_cell_internal(coord) {
+      return Some(c);
     }
-    return None;
+    None
   }
 
-  fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
+  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord> {
     let target_x = match dir {
       Direction::West => coord.x_pos - 1,
       Direction::East => coord.x_pos + 1,
@@ -104,26 +102,9 @@ impl Grid for SquareGrid2D {
       || target_y < 0
       || target_y >= self.height as i32
     {
-      return false;
+      return None;
     }
-
-    if let Some(target_cell) = self.get_cell(CellCoord::new(target_x, target_y)) {
-      if !target_cell.is_part_of_maze() {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord> {
-    match dir {
-      Direction::North => Some(CellCoord::new(coord.x_pos, coord.y_pos + 1)),
-      Direction::South => Some(CellCoord::new(coord.x_pos, coord.y_pos - 1)),
-      Direction::East => Some(CellCoord::new(coord.x_pos + 1, coord.y_pos)),
-      Direction::West => Some(CellCoord::new(coord.x_pos - 1, coord.y_pos)),
-      _ => None,
-    }
+    Some(CellCoord::new(target_x, target_y))
   }
 
   fn carve(&mut self, coord_start: CellCoord, dir: Direction) {
@@ -293,7 +274,7 @@ impl Grid for SquareGrid2D {
     self.has_solution = has_solution;
   }
   fn clear_solution(&mut self) {
-    self.has_solution = false;
+    self.set_has_solution(false);
     for c in &mut self.cells {
       c.color = None;
       c.distance = -1;

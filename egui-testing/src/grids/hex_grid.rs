@@ -79,16 +79,6 @@ impl Grid for HexGrid {
     None
   }
 
-  fn can_carve(&self, coord: CellCoord, dir: Direction) -> bool {
-    if let Some(cell_coord) = self.get_cell_in_dir(coord, dir) {
-      if let Some(cell) = self.get_cell(cell_coord) {
-        return !cell.is_part_of_maze();
-      }
-    }
-
-    return false;
-  }
-
   fn get_cell_in_dir(&self, coord: CellCoord, dir: Direction) -> Option<CellCoord> {
     let mut target_x = coord.x_pos;
     let mut target_y = coord.y_pos;
@@ -322,7 +312,7 @@ impl Grid for HexGrid {
     self.has_solution = has_solution;
   }
   fn clear_solution(&mut self) {
-    self.has_solution = false;
+    self.set_has_solution(false);
     for c in &mut self.cells {
       c.color = None;
       c.distance = -1;
