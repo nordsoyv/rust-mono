@@ -4,6 +4,8 @@ pub mod hex_cell;
 pub mod hex_grid;
 pub mod square_cell;
 pub mod square_grid;
+pub mod tri_cell;
+pub mod triangle_grid;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CellCoord {
@@ -35,6 +37,7 @@ pub enum Direction {
 pub enum GridType {
   Square,
   Hex,
+  Triangle,
 }
 
 pub trait Cell {

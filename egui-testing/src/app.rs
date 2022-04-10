@@ -6,6 +6,7 @@ use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
 use crate::grids::hex_grid::HexGrid;
 use crate::grids::square_grid::SquareGrid2D;
+use crate::grids::triangle_grid::TriangleGrid2D;
 use crate::grids::{Grid, GridType};
 use crate::OptionsWindow;
 
@@ -110,6 +111,14 @@ impl eframe::App for MyEguiApp {
         }
         GridType::Hex => {
           maze = Box::new(HexGrid::new(
+            self.options_window.width,
+            self.options_window.height,
+            self.options_window.cell_size,
+            self.options_window.margin as f32,
+          ));
+        }
+        GridType::Triangle => {
+          maze = Box::new(TriangleGrid2D::new(
             self.options_window.width,
             self.options_window.height,
             self.options_window.cell_size,

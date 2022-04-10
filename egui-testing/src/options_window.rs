@@ -48,6 +48,7 @@ impl OptionsWindow {
           .show_ui(ui, |ui| {
             ui.selectable_value(&mut self.grid_type, GridType::Square, "Square");
             ui.selectable_value(&mut self.grid_type, GridType::Hex, "Hex");
+            ui.selectable_value(&mut self.grid_type, GridType::Triangle, "Triangle");
           });
       });
 
@@ -57,14 +58,6 @@ impl OptionsWindow {
       SliderWithText::new("Difficulty:", &mut self.difficulty, 1..=50).ui(ui);
       SliderWithText::new("Speed:", &mut self.speed, 1..=100).ui(ui);
       SliderWithText::new("Margin:", &mut self.margin, 0..=10).ui(ui);
-      // ui.horizontal(|ui| {
-      //   if ui.button("Show solution").clicked() {
-      //     self.show_solution = true;
-      //   }
-      //   if ui.button("Clear").clicked() {
-      //     // self.new_maze = true;
-      //   }
-      // });
       ui.checkbox(&mut self.show_solution, "Show solution");
       ui.horizontal(|ui| {
         if ui.button("Take screenshot").clicked() {

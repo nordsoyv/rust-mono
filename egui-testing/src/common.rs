@@ -2,6 +2,10 @@ pub fn is_odd(num: i32) -> bool {
   return num & 1 != 0;
 }
 
+pub fn is_even(num: i32) -> bool {
+  return !is_odd(num);
+}
+
 pub fn get_random_float(max: f32) -> f32 {
   let d = rand::random::<f32>();
   return max * d;
