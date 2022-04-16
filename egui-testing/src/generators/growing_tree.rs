@@ -24,10 +24,8 @@ pub struct GrowingTreeGenerator {
 
 impl Generator for GrowingTreeGenerator {
   fn init(&mut self, maze: &mut Box<dyn Grid>) {
-    let start_cell = CellCoord {
-      x_pos: (maze.get_width() / 2.0) as i32,
-      y_pos: 0,
-    };
+    let start_cell = maze.get_entrance();
+
     maze.init();
     maze
       .get_mut_cell(start_cell)

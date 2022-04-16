@@ -40,6 +40,7 @@ impl Djikstra {
         if let Some(cell) = grid.get_mut_cell(*n) {
           if cell.get_distance() == -1 {
             cell.set_distance(distance + 1);
+            cell.set_color(Some(Color32::from_rgb(0, 0, ((distance + 1) * 4) as u8)));
             self.frontier.push(*n);
           }
         }
@@ -55,6 +56,7 @@ impl Djikstra {
     }
     let mut counter = 0;
     'outer_loop: loop {
+      //break;
       counter += 1;
       if counter > 10000 {
         dbg!("Djikstra infinite loop!");
@@ -80,6 +82,7 @@ impl Djikstra {
         }
       }
     }
+    dbg!(counter);
     grid.set_has_solution(true);
   }
 }
