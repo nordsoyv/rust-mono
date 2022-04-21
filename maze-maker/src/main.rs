@@ -14,5 +14,5 @@ use crate::options_window::OptionsWindow;
 fn main() {
   let app = MyEguiApp::new();
   let native_options = eframe::NativeOptions::default();
-  eframe::run_native("My egui app", native_options, Box::new(|_cc| Box::new(app)));
+  eframe::run_native("MazeMaker", native_options, Box::new(|_cc| Box::new(app)));
 }

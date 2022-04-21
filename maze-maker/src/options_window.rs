@@ -29,7 +29,7 @@ impl OptionsWindow {
       take_screenshot: false,
       new_maze: false,
       margin: 5,
-      grid_type: GridType::Hex,
+      grid_type: GridType::Square,
       show_solution: false,
       remove_deadends: false,
     }

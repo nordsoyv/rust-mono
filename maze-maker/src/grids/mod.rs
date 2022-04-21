@@ -1,5 +1,6 @@
 use eframe::egui::{Color32, Painter};
 
+pub mod cell_connection;
 pub mod hex_cell;
 pub mod hex_grid;
 pub mod square_cell;
