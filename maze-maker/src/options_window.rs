@@ -36,6 +36,13 @@ impl OptionsWindow {
       remove_deadends: false,
     }
   }
+
+  pub fn reset_flags(&mut self) {
+    self.take_screenshot = false;
+    self.remove_deadends = false;
+    self.print = false;
+    self.new_maze = false;
+  }
 }
 
 impl OptionsWindow {

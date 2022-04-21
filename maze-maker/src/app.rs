@@ -95,10 +95,7 @@ impl eframe::App for MyEguiApp {
     if ctx.input().key_pressed(Key::Escape) {
       frame.quit();
     }
-    self.options_window.print = false;
-    self.options_window.new_maze = false;
-    self.options_window.remove_deadends = false;
-    self.options_window.take_screenshot = false;
+    self.options_window.reset_flags();
 
     let old_difficulty = self.options_window.difficulty;
     let old_grid = self.options_window.grid_type;
