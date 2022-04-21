@@ -1,5 +1,6 @@
 use eframe::egui::{Color32, Context, Key, Sense, Ui, Vec2};
 use eframe::{egui, Frame};
+use std::process::Command;
 
 use crate::djikstra::Djikstra;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
@@ -94,6 +95,11 @@ impl eframe::App for MyEguiApp {
     if ctx.input().key_pressed(Key::Escape) {
       frame.quit();
     }
+    self.options_window.print = false;
+    self.options_window.new_maze = false;
+    self.options_window.remove_deadends = false;
+    self.options_window.take_screenshot = false;
+
     let old_difficulty = self.options_window.difficulty;
     let old_grid = self.options_window.grid_type;
     self.options_window.draw(ctx, &self.maze);
@@ -127,7 +133,6 @@ impl eframe::App for MyEguiApp {
         }
       }
 
-      self.options_window.new_maze = false;
       maze.init();
       self.maze = maze;
       self.generator = Box::new(GrowingTreeGenerator::new(Strategy::LastN(
@@ -161,7 +166,6 @@ impl eframe::App for MyEguiApp {
     if self.options_window.remove_deadends && self.generator.done() {
       self.maze.remove_dead_end();
       self.maze.clear_solution();
-      self.options_window.remove_deadends = false;
       self.maze.find_dead_ends();
     }
     let response = egui::CentralPanel::default()
@@ -169,13 +173,18 @@ impl eframe::App for MyEguiApp {
       .show(ctx, |ui| {
         self.draw_maze(ui);
       });
-    if self.options_window.take_screenshot {
+    if self.options_window.take_screenshot || self.options_window.print {
       frame.copy_pixels = Some(response.response.rect);
-      self.options_window.take_screenshot = false;
     }
   }
 
   fn get_pixel_data(&self, bytes: &[u8], width: i32, height: i32) {
     save_image(bytes, width, height);
+    if self.options_window.print {
+      Command::new("mspaint")
+        .args(&["/pt", "image.png"])
+        .output()
+        .expect("Failed to execute process");
+    }
   }
 }

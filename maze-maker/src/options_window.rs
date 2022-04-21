@@ -11,6 +11,7 @@ pub struct OptionsWindow {
   pub difficulty: i32,
   pub speed: i32,
   pub take_screenshot: bool,
+  pub print: bool,
   pub new_maze: bool,
   pub margin: i32,
   pub grid_type: GridType,
@@ -27,6 +28,7 @@ impl OptionsWindow {
       speed: 1,
       difficulty: 1,
       take_screenshot: false,
+      print: false,
       new_maze: false,
       margin: 5,
       grid_type: GridType::Square,
@@ -62,6 +64,9 @@ impl OptionsWindow {
       ui.horizontal(|ui| {
         if ui.button("Take screenshot").clicked() {
           self.take_screenshot = true;
+        }
+        if ui.button("Print").clicked() {
+          self.print = true;
         }
         if ui.button("New").clicked() {
           self.new_maze = true;
