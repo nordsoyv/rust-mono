@@ -58,6 +58,7 @@ impl OptionsWindow {
             ui.selectable_value(&mut self.grid_type, GridType::Square, "Square");
             ui.selectable_value(&mut self.grid_type, GridType::Hex, "Hex");
             ui.selectable_value(&mut self.grid_type, GridType::Triangle, "Triangle");
+            ui.selectable_value(&mut self.grid_type, GridType::Circle, "Circle");
           });
       });
       if self.grid_type != GridType::Triangle && self.width > 50 {
@@ -71,7 +72,13 @@ impl OptionsWindow {
           SliderWithText::new("Width:", &mut self.width, 10..=50).ui(ui);
         }
       }
-      SliderWithText::new("Height:", &mut self.height, 10..=50).ui(ui);
+      match self.grid_type {
+        GridType::Circle => {}
+        _ => {
+          SliderWithText::new("Height:", &mut self.height, 10..=50).ui(ui);
+        }
+      }
+
       SliderWithText::new("Cell size:", &mut self.cell_size, 5..=20).ui(ui);
       SliderWithText::new("Difficulty:", &mut self.difficulty, 1..=50).ui(ui);
       SliderWithText::new("Speed:", &mut self.speed, 1..=100).ui(ui);

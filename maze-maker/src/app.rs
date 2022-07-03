@@ -5,6 +5,7 @@ use std::process::Command;
 use crate::djikstra::Djikstra;
 use crate::generators::growing_tree::{GrowingTreeGenerator, Strategy};
 use crate::generators::Generator;
+use crate::grids::circle_grid::CircleGrid;
 use crate::grids::hex_grid::HexGrid;
 use crate::grids::square_grid::SquareGrid2D;
 use crate::grids::triangle_grid::TriangleGrid2D;
@@ -127,6 +128,13 @@ impl eframe::App for MyEguiApp {
             self.options_window.cell_size,
             self.options_window.margin as f32,
           ));
+        }
+        GridType::Circle => {
+          maze = Box::new(CircleGrid::new(
+            self.options_window.width,
+            self.options_window.cell_size,
+            self.options_window.margin,
+          ))
         }
       }
 

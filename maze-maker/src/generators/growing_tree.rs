@@ -27,11 +27,13 @@ impl Generator for GrowingTreeGenerator {
     let start_cell = maze.get_entrance();
 
     maze.init();
-    maze
-      .get_mut_cell(start_cell)
-      .unwrap()
-      .set_part_of_maze(true);
-    self.stack.push(start_cell);
+    let mut_cell = maze.get_mut_cell(start_cell);
+    if let Some(c) = mut_cell {
+      c.set_part_of_maze(true);
+      self.stack.push(start_cell);
+    } else {
+      self.done = true;
+    }
   }
 
   fn generate(&mut self, maze: &mut Box<dyn Grid>) {
