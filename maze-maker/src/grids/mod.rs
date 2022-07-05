@@ -33,6 +33,12 @@ pub enum Direction {
   SouthEast,
   SouthWest,
   West,
+  Inward1,
+  Inward2,
+  Outward1,
+  Outward2,
+  CCW,
+  CW,
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
@@ -73,8 +79,8 @@ pub trait Grid {
   fn get_allowed_directions(&self, coord: CellCoord) -> Vec<Direction>;
   fn draw(&self, painter: &Painter);
   fn draw_background(&self, painter: &Painter);
-  fn set_cell_size(&mut self, cell_size: i32);
-  fn get_width(&self) -> f32;
+  // fn set_cell_size(&mut self, cell_size: i32);
+  // fn get_width(&self) -> f32;
   fn init(&mut self);
   fn get_size_in_pixels(&self) -> (f32, f32);
   fn get_num_cells_horizontal(&self) -> i32;

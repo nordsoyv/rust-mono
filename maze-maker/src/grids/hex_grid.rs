@@ -242,23 +242,8 @@ impl Grid for HexGrid {
     }
     backgrounds
       .into_iter()
+      .filter(|p| p.2 != Color32::TRANSPARENT)
       .for_each(|(center, radius, color)| painter.circle_filled(center, radius, color));
-  }
-
-  fn set_cell_size(&mut self, cell_size: i32) {
-    self.cell_size = cell_size as f32;
-    let a_size: f32 = self.cell_size / 2.0;
-    let b_size: f32 = (self.cell_size * 3.0_f32.sqrt()) / 2.0;
-    let cell_width = self.cell_size * 2.0;
-    let cell_height = b_size * 2.0;
-    self.a_size = a_size;
-    self.b_size = b_size;
-    self.cell_width = cell_width;
-    self.cell_height = cell_height;
-  }
-
-  fn get_width(&self) -> f32 {
-    self.width
   }
 
   fn init(&mut self) {

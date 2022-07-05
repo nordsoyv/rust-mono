@@ -212,15 +212,8 @@ impl Grid for SquareGrid2D {
     }
     backgrounds
       .into_iter()
+      .filter(|p| p.1 != Color32::TRANSPARENT)
       .for_each(|(rect, color)| painter.rect_filled(rect, Rounding::default(), color));
-  }
-
-  fn set_cell_size(&mut self, cell_size: i32) {
-    self.cell_size = cell_size;
-  }
-
-  fn get_width(&self) -> f32 {
-    self.width
   }
 
   fn init(&mut self) {

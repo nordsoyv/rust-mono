@@ -73,7 +73,9 @@ impl OptionsWindow {
         }
       }
       match self.grid_type {
-        GridType::Circle => {}
+        GridType::Circle => {
+          self.height = self.width;
+        }
         _ => {
           SliderWithText::new("Height:", &mut self.height, 10..=50).ui(ui);
         }

@@ -193,15 +193,8 @@ impl Grid for TriangleGrid2D {
     }
     backgrounds
       .into_iter()
+      .filter(|p| p.2 != Color32::TRANSPARENT)
       .for_each(|(center, radius, color)| painter.circle_filled(center, radius, color));
-  }
-
-  fn set_cell_size(&mut self, cell_size: i32) {
-    self.cell_size = cell_size;
-  }
-
-  fn get_width(&self) -> f32 {
-    self.width
   }
 
   fn init(&mut self) {
