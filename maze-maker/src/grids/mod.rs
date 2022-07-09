@@ -1,6 +1,7 @@
 use eframe::egui::{Color32, Painter};
 
 pub mod cell_connection;
+pub mod circle_cell;
 pub mod circle_grid;
 pub mod hex_cell;
 pub mod hex_grid;
