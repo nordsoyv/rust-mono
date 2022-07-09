@@ -199,7 +199,6 @@ impl Grid for CircleGrid {
     {
       let mut end_cell = self.get_mut_cell_internal(coord_end).unwrap();
       end_cell.part_of_maze = true;
-      end_cell.set_color(Some(Color32::BLUE));
       match dir {
         Direction::CCW => {
           end_cell.cw = Some(coord_start);
@@ -291,7 +290,8 @@ impl Grid for CircleGrid {
 
   fn init(&mut self) {
     self.rings = vec![];
-    let mut segments = 4;
+    const INITIAL_SEGMENTS: i32 = 8;
+    let mut segments = INITIAL_SEGMENTS;
     for num_ring in 0..self.num_rings {
       let mut curr_ring = Ring { cells: vec![] };
       let circumference = self.cell_radius as f32 * (num_ring + 1) as f32 * 2.0 * PI;
@@ -319,6 +319,24 @@ impl Grid for CircleGrid {
 
     self.entrance = CellCoord::new(self.num_rings - 1, 0);
     self.exit = CellCoord::new(0, 0);
+    for segment in 0..INITIAL_SEGMENTS {
+      let cell1 = &self.rings[0].cells[segment as usize];
+      self.carve(cell1.coord, Direction::CCW);
+    }
+
+    {
+      // cell1.part_of_maze = false;
+      let cell1 = &self.rings[0].cells[0];
+      self.carve(cell1.coord, Direction::Outward1);
+    }
+    {
+      let cell1 = &self.rings[0].cells[0];
+      let cell2_ccord = self
+        .get_cell_in_dir(cell1.coord, Direction::Outward1)
+        .unwrap();
+      let cell2 = self.get_mut_cell(cell2_ccord).unwrap();
+      cell2.set_part_of_maze(false);
+    }
 
     self.get_mut_cell_internal(self.entrance).unwrap().outward_1 = Some(CellCoord {
       x_pos: -1,

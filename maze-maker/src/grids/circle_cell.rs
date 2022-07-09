@@ -40,7 +40,7 @@ impl CircleCell {
       outer_radius,
       start_arc,
       end_arc,
-      distance: 0,
+      distance: -1,
     }
   }
 
@@ -161,5 +161,9 @@ impl Cell for CircleCell {
       neighbours.push(self.outward_2.unwrap());
     }
     neighbours
+      .into_iter()
+      .filter(|c| c.x_pos >= 0 && c.y_pos >= 0)
+      .collect()
+    // neighbours
   }
 }

@@ -40,7 +40,7 @@ impl Djikstra {
         if let Some(cell) = grid.get_mut_cell(*n) {
           if cell.get_distance() == -1 {
             cell.set_distance(distance + 1);
-            cell.set_color(Some(Color32::from_rgb(0, 0, ((distance + 1) * 4) as u8)));
+            // cell.set_color(Some(Color32::from_rgb(0, 0, ((distance + 1) * 4) as u8)));
             self.frontier.push(*n);
           }
         }
