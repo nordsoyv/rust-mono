@@ -317,8 +317,8 @@ impl Grid for CircleGrid {
       cell.outward_2 = Some(CellCoord::new(-10, -10));
     }
 
-    self.entrance = CellCoord::new(self.num_rings - 1, 0);
-    self.exit = CellCoord::new(0, 0);
+    self.exit = CellCoord::new(self.num_rings - 1, 0);
+    self.entrance = CellCoord::new(0, 0);
     for segment in 0..INITIAL_SEGMENTS {
       let cell1 = &self.rings[0].cells[segment as usize];
       self.carve(cell1.coord, Direction::CCW);
@@ -338,7 +338,7 @@ impl Grid for CircleGrid {
       cell2.set_part_of_maze(false);
     }
 
-    self.get_mut_cell_internal(self.entrance).unwrap().outward_1 = Some(CellCoord {
+    self.get_mut_cell_internal(self.exit).unwrap().outward_1 = Some(CellCoord {
       x_pos: -1,
       y_pos: -1,
     });
