@@ -87,24 +87,24 @@ impl OptionsWindow {
         ui.label("Generator settings");
         SliderWithText::new("Difficulty:", &mut self.difficulty, 1..=50).ui(ui);
         SliderWithText::new("Speed:", &mut self.speed, 1..=100).ui(ui);
-        ui.checkbox(&mut self.show_solution, "Show solution");
-        ui.horizontal(|ui| {
-          if ui.button("Take screenshot").clicked() {
-            self.take_screenshot = true;
-          }
-          if ui.button("Print").clicked() {
-            self.print = true;
-          }
-          if ui.button("New").clicked() {
-            self.new_maze = true;
-          }
-        });
-        ui.horizontal(|ui| {
-          ui.label(format!("Deadends: {}", maze.count_dead_ends()));
-          if ui.button("Remove deadend").clicked() {
-            self.remove_deadends = true;
-          }
-        });
+      });
+      ui.checkbox(&mut self.show_solution, "Show solution");
+      ui.horizontal(|ui| {
+        if ui.button("Take screenshot").clicked() {
+          self.take_screenshot = true;
+        }
+        if ui.button("Print").clicked() {
+          self.print = true;
+        }
+        if ui.button("New").clicked() {
+          self.new_maze = true;
+        }
+      });
+      ui.horizontal(|ui| {
+        ui.label(format!("Deadends: {}", maze.count_dead_ends()));
+        if ui.button("Remove deadend").clicked() {
+          self.remove_deadends = true;
+        }
       });
     });
   }
