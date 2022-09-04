@@ -8,6 +8,9 @@ mod debug_text;
 pub const HEIGHT: f32 = 720.0;
 pub const WIDTH: f32 = 1280.0;
 
+const MAX_PLAYER_VELOCITY: f32 = 30.0;
+const MAX_BULLET_VELOCITY: f32 = 50.0;
+
 fn gamepad_system(
   gamepads: Res<Gamepads>,
   button_inputs: Res<Input<GamepadButton>>,
@@ -73,7 +76,9 @@ pub struct Acceleration(Vec3);
 
 #[derive(Reflect, Component, Default)]
 #[reflect(Component)]
-pub struct Player;
+pub struct Player {
+  pub shooting_timer: Timer,
+}
 
 fn spawn_camera(mut commands: Commands) {
   commands.spawn_bundle(Camera3dBundle {
@@ -103,26 +108,28 @@ fn spawn_basic_scene(
       transform: Transform::from_xyz(10.0, 0.0, 0.0),
       ..default()
     })
-    .insert(Player)
+    .insert(Player {
+      shooting_timer: Timer::from_seconds(0.01, false),
+    })
     .insert(Acceleration(Vec3::ZERO))
     .insert(Velocity(Vec3::ZERO))
     .insert(Name::new("Player"));
-  commands
-    .spawn_bundle(PbrBundle {
-      mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-      material: materials.add(StandardMaterial {
-        emissive: Color::rgb(47.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
-        perceptual_roughness: 0.7,
-        reflectance: 7.5,
-        ..default()
-      }),
-      transform: Transform::from_xyz(0.0, 0.5, 0.0),
-      ..default()
-    })
-    .insert(Tower {
-      shooting_timer: Timer::from_seconds(1.0, true),
-    })
-    .insert(Name::new("Tower"));
+  // commands
+  //   .spawn_bundle(PbrBundle {
+  //     mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+  //     material: materials.add(StandardMaterial {
+  //       emissive: Color::rgb(47.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
+  //       perceptual_roughness: 0.7,
+  //       reflectance: 7.5,
+  //       ..default()
+  //     }),
+  //     transform: Transform::from_xyz(0.0, 0.5, 0.0),
+  //     ..default()
+  //   })
+  //   .insert(Tower {
+  //     shooting_timer: Timer::from_seconds(1.0, true),
+  //   })
+  //   .insert(Name::new("Tower"));
   commands
     .spawn_bundle(PointLightBundle {
       point_light: PointLight {
@@ -136,22 +143,42 @@ fn spawn_basic_scene(
     .insert(Name::new("Light"));
 }
 
-fn tower_shooting(
+fn player_shooting(
   mut commands: Commands,
+  mut players: Query<(&mut Player, &Transform)>,
+  time: Res<Time>,
+  gamepads: Res<Gamepads>,
+  axes: Res<Axis<GamepadAxis>>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  mut towers: Query<&mut Tower>,
-  time: Res<Time>,
 ) {
-  for mut tower in &mut towers {
-    tower.shooting_timer.tick(time.delta());
-    if tower.shooting_timer.just_finished() {
-      let spawn_transform =
-        Transform::from_xyz(0.0, 0.7, 0.6).with_rotation(Quat::from_rotation_y(-PI / 2.0));
+  let mut right_stick_x = 0.0;
+  let mut right_stick_y = 0.0;
+  for gamepad in gamepads.iter().cloned() {
+    right_stick_x = axes
+      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickX))
+      .unwrap();
+    right_stick_y = axes
+      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickY))
+      .unwrap();
+  }
+  let shooting_dir = Vec3::new(right_stick_x, right_stick_y, 0.0);
+
+  // let mut p: Player;
+  for (mut p, transform) in &mut players {
+    p.shooting_timer.tick(time.delta());
+    if p.shooting_timer.finished() && shooting_dir.length() > 0.3 {
+      // dbg!("Shooting");
+      p.shooting_timer = Timer::from_seconds(0.1, false);
+      let shooting_dir_angle = shooting_dir.angle_between(Vec3::new(10.0, 0.0, 0.0));
+      let spawn_transform = Transform::from_translation(transform.translation)
+        .with_rotation(Quat::from_rotation_z(shooting_dir_angle));
+      // Transform::from_xyz(0.0, 0.7, 0.6).with_rotation(Quat::from_rotation_y(-PI / 2.0));
+
       commands
         .spawn_bundle(PbrBundle {
           mesh: meshes.add(Mesh::from(shape::UVSphere {
-            radius: 0.1,
+            radius: 0.5,
             ..default()
           })),
           // material: materials.add(Color::rgb(0.87, 0.44, 0.42).into()),
@@ -161,14 +188,13 @@ fn tower_shooting(
             reflectance: 9.5,
             ..default()
           }),
-
           transform: spawn_transform,
           ..default()
         })
         .insert(Lifetime {
           timer: Timer::from_seconds(2.5, false),
         })
-        .insert(Velocity(Vec3::new(1.0, 0.0, 0.0)))
+        .insert(Velocity(shooting_dir.normalize() * MAX_BULLET_VELOCITY))
         .insert(Name::new("Bullet"));
     }
   }
@@ -195,8 +221,6 @@ fn update_movers(mut movers: Query<(&Velocity, &mut Transform)>, time: Res<Time>
   }
 }
 
-const MAX_PLAYER_VELOCITY: f32 = 30.0;
-
 fn move_player(
   mut players: Query<(&mut Velocity, &Player)>,
   gamepads: Res<Gamepads>,
@@ -212,9 +236,14 @@ fn move_player(
       .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY))
       .unwrap();
   }
+  let vec_a = Vec3::new(left_stick_x, left_stick_y, 0.0);
+
   for (mut vel, _player) in &mut players {
-    let vec_a = Vec3::new(left_stick_x, left_stick_y, 0.0);
-    vel.0 = vec_a * MAX_PLAYER_VELOCITY;
+    if vec_a.length() > 0.2 {
+      vel.0 = vec_a * MAX_PLAYER_VELOCITY;
+    } else {
+      vel.0 = Vec3::ZERO;
+    }
   }
 }
 
@@ -242,10 +271,10 @@ fn main() {
     .register_type::<Acceleration>()
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_basic_scene)
-    .add_system(tower_shooting)
     .add_system(bullet_despawn)
     .add_system(update_movers)
     .add_system(move_player)
+    .add_system(player_shooting)
     .add_system(bevy::window::close_on_esc)
     .run();
 }
