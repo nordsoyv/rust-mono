@@ -1,112 +1,202 @@
-use crate::debug_text::{debug, DebugTextPlugin, DebugTextType};
-use bevy::diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
-
+use bevy_inspector_egui::WorldInspectorPlugin;
+use std::f32::consts::PI;
 mod debug_text;
 
-#[derive(Component)]
-struct Person;
+pub const HEIGHT: f32 = 720.0;
+pub const WIDTH: f32 = 1280.0;
 
-#[derive(Component)]
-struct Name(String);
+// fn gamepad_system(
+//   gamepads: Res<Gamepads>,
+//   button_inputs: Res<Input<GamepadButton>>,
+//   button_axes: Res<Axis<GamepadButton>>,
+//   axes: Res<Axis<GamepadAxis>>,
+// ) {
+//   for gamepad in gamepads.iter().cloned() {
+//     if button_inputs.just_pressed(GamepadButton::new(gamepad, GamepadButtonType::South)) {
+//       info!("{:?} just pressed South", gamepad);
+//     } else if button_inputs.just_released(GamepadButton::new(gamepad, GamepadButtonType::South)) {
+//       info!("{:?} just released South", gamepad);
+//     }
+//
+//     let right_trigger = button_axes
+//       .get(GamepadButton::new(
+//         gamepad,
+//         GamepadButtonType::RightTrigger2,
+//       ))
+//       .unwrap();
+//     if right_trigger.abs() > 0.01 {
+//       info!("{:?} RightTrigger2 value is {}", gamepad, right_trigger);
+//     }
+//
+//     let left_stick_x = axes
+//       .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
+//       .unwrap();
+//     let left_stick_y = axes
+//       .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY))
+//       .unwrap();
+//     let right_stick_x = axes
+//       .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickX))
+//       .unwrap();
+//     let right_stick_y = axes
+//       .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickY))
+//       .unwrap();
+//     let gamepad_info = format!(
+//       "{:+.4} {:+.4}, {:+.4} {:+.4}",
+//       left_stick_x, left_stick_y, right_stick_x, right_stick_y
+//     );
+//     debug(DebugTextType::GamePad, gamepad_info);
+//   }
+// }
 
-struct GreetTimer(Timer);
-
-fn add_people(mut commands: Commands) {
-  commands.spawn_bundle(Camera2dBundle::default());
-  commands
-    .spawn()
-    .insert(Person)
-    .insert(Name("Elaina Proctor".to_string()));
-  commands
-    .spawn()
-    .insert(Person)
-    .insert(Name("Renzo Hume".to_string()));
-  commands
-    .spawn()
-    .insert(Person)
-    .insert(Name("Zayna Nieves".to_string()));
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Tower {
+  pub shooting_timer: Timer,
 }
 
-fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Name, With<Person>>) {
-  if timer.0.tick(time.delta()).just_finished() {
-    for name in query.iter() {
-      println!("hello {}!", name.0);
-    }
-  }
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Lifetime {
+  pub timer: Timer,
 }
 
-pub struct HelloPlugin;
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct Velocity(Vec3);
 
-impl Plugin for HelloPlugin {
-  fn build(&self, app: &mut App) {
-    app
-      .insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
-      .add_startup_system(add_people)
-      .add_system(greet_people);
-  }
+fn spawn_camera(mut commands: Commands) {
+  commands.spawn_bundle(Camera3dBundle {
+    // transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+    transform: Transform::from_xyz(-0.0, 20.0, -10.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ..default()
+  });
 }
 
-fn gamepad_system(
-  gamepads: Res<Gamepads>,
-  button_inputs: Res<Input<GamepadButton>>,
-  button_axes: Res<Axis<GamepadButton>>,
-  axes: Res<Axis<GamepadAxis>>,
+fn spawn_basic_scene(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-  for gamepad in gamepads.iter().cloned() {
-    if button_inputs.just_pressed(GamepadButton::new(gamepad, GamepadButtonType::South)) {
-      info!("{:?} just pressed South", gamepad);
-    } else if button_inputs.just_released(GamepadButton::new(gamepad, GamepadButtonType::South)) {
-      info!("{:?} just released South", gamepad);
-    }
+  // commands
+  //   .spawn_bundle(PbrBundle {
+  //     mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
+  //     material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+  //     ..default()
+  //   })
+  //   .insert(Name::new("Ground"));
+  commands
+    .spawn_bundle(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+      material: materials.add(StandardMaterial {
+        emissive: Color::rgb(47.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
+        perceptual_roughness: 0.7,
+        reflectance: 7.5,
+        ..default()
+      }),
+      transform: Transform::from_xyz(0.0, 0.5, 0.0),
+      ..default()
+    })
+    .insert(Tower {
+      shooting_timer: Timer::from_seconds(1.0, true),
+    })
+    .insert(Name::new("Tower"));
+  commands
+    .spawn_bundle(PointLightBundle {
+      point_light: PointLight {
+        intensity: 1500.0,
+        shadows_enabled: true,
+        ..default()
+      },
+      transform: Transform::from_xyz(4.0, 8.0, 4.0),
+      ..default()
+    })
+    .insert(Name::new("Light"));
+}
 
-    let right_trigger = button_axes
-      .get(GamepadButton::new(
-        gamepad,
-        GamepadButtonType::RightTrigger2,
-      ))
-      .unwrap();
-    if right_trigger.abs() > 0.01 {
-      info!("{:?} RightTrigger2 value is {}", gamepad, right_trigger);
-    }
+fn tower_shooting(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  mut towers: Query<&mut Tower>,
+  time: Res<Time>,
+) {
+  for mut tower in &mut towers {
+    tower.shooting_timer.tick(time.delta());
+    if tower.shooting_timer.just_finished() {
+      let spawn_transform =
+        Transform::from_xyz(0.0, 0.7, 0.6).with_rotation(Quat::from_rotation_y(-PI / 2.0));
+      commands
+        .spawn_bundle(PbrBundle {
+          mesh: meshes.add(Mesh::from(shape::UVSphere {
+            radius: 0.1,
+            ..default()
+          })),
+          // material: materials.add(Color::rgb(0.87, 0.44, 0.42).into()),
+          material: materials.add(StandardMaterial {
+            emissive: Color::rgb(47.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0),
+            perceptual_roughness: 0.7,
+            reflectance: 9.5,
+            ..default()
+          }),
 
-    let left_stick_x = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
-      .unwrap();
-    let left_stick_y = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY))
-      .unwrap();
-    let right_stick_x = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickX))
-      .unwrap();
-    let right_stick_y = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickY))
-      .unwrap();
-    let gamepad_info = format!(
-      "{:+.4} {:+.4}, {:+.4} {:+.4}",
-      left_stick_x, left_stick_y, right_stick_x, right_stick_y
-    );
-    debug(DebugTextType::GamePad, gamepad_info);
+          transform: spawn_transform,
+          ..default()
+        })
+        .insert(Lifetime {
+          timer: Timer::from_seconds(2.5, false),
+        })
+        .insert(Velocity(Vec3::new(1.0, 0.0, 0.0)))
+        .insert(Name::new("Bullet"));
+    }
   }
 }
 
-fn fps_update_system(diagnostics: Res<Diagnostics>) {
-  if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
-    if let Some(average) = fps.average() {
-      let fps_info = format!("{average:.2}");
-      debug(DebugTextType::Fps, fps_info);
+fn bullet_despawn(
+  mut commands: Commands,
+  mut bullets: Query<(Entity, &mut Lifetime)>,
+  time: Res<Time>,
+) {
+  for (entity, mut lifetime) in &mut bullets {
+    lifetime.timer.tick(time.delta());
+    if lifetime.timer.just_finished() {
+      commands.entity(entity).despawn_recursive();
     }
+  }
+}
+
+fn update_movers(mut movers: Query<(&Velocity, &mut Transform)>, time: Res<Time>) {
+  let elapsed = time.delta_seconds();
+  for (vel, mut transform) in &mut movers {
+    let scaled_vel = vel.0 * elapsed;
+    transform.translation += scaled_vel;
   }
 }
 
 fn main() {
   App::new()
+    // .insert_resource(WgpuSettings {
+    //   features: WgpuFeatures::POLYGON_MODE_LINE,
+    //   ..default()
+    // })
+    .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+    .insert_resource(WindowDescriptor {
+      width: WIDTH,
+      height: HEIGHT,
+      title: "Twin stick shooter".to_string(),
+      resizable: false,
+      ..Default::default()
+    })
+    // .add_plugin(WireframePlugin)
+    // .add_system(gamepad_system)
     .add_plugins(DefaultPlugins)
-    .add_plugin(HelloPlugin)
-    .add_plugin(DebugTextPlugin)
-    .add_plugin(FrameTimeDiagnosticsPlugin::default())
-    .add_system(gamepad_system)
-    .add_system(fps_update_system)
+    .add_plugin(WorldInspectorPlugin::new())
+    .register_type::<Tower>()
+    .add_startup_system(spawn_camera)
+    .add_startup_system(spawn_basic_scene)
+    .add_system(tower_shooting)
+    .add_system(bullet_despawn)
+    .add_system(update_movers)
     .add_system(bevy::window::close_on_esc)
     .run();
 }
