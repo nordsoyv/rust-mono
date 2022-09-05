@@ -9,6 +9,7 @@ pub const HEIGHT: f32 = 720.0;
 pub const WIDTH: f32 = 1280.0;
 
 const MAX_PLAYER_VELOCITY: f32 = 30.0;
+const MAX_ENEMY_VELOCITY: f32 = 15.0;
 const MAX_BULLET_VELOCITY: f32 = 50.0;
 
 fn gamepad_system(
@@ -80,9 +81,21 @@ pub struct Player {
   pub shooting_timer: Timer,
 }
 
+#[derive(Reflect, Component, Default)]
+#[reflect(Component)]
+pub struct EnemySpawner {
+  pub spawn_timer: Timer,
+}
+
+#[derive(Reflect, Component, Copy, Clone, Default)]
+#[reflect(Component)]
+pub enum Enemy {
+  #[default]
+  Seeker,
+}
+
 fn spawn_camera(mut commands: Commands) {
   commands.spawn_bundle(Camera3dBundle {
-    // transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
     transform: Transform::from_xyz(0.0, -20.0, 40.0).looking_at(Vec3::ZERO, Vec3::Y),
     ..default()
   });
@@ -111,25 +124,26 @@ fn spawn_basic_scene(
     .insert(Player {
       shooting_timer: Timer::from_seconds(0.01, false),
     })
-    .insert(Acceleration(Vec3::ZERO))
     .insert(Velocity(Vec3::ZERO))
     .insert(Name::new("Player"));
-  // commands
-  //   .spawn_bundle(PbrBundle {
-  //     mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-  //     material: materials.add(StandardMaterial {
-  //       emissive: Color::rgb(47.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
-  //       perceptual_roughness: 0.7,
-  //       reflectance: 7.5,
-  //       ..default()
-  //     }),
-  //     transform: Transform::from_xyz(0.0, 0.5, 0.0),
-  //     ..default()
-  //   })
-  //   .insert(Tower {
-  //     shooting_timer: Timer::from_seconds(1.0, true),
-  //   })
-  //   .insert(Name::new("Tower"));
+  commands
+    .spawn_bundle(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Cube {
+        size: 0.2,
+        ..default()
+      })),
+      material: materials.add(StandardMaterial {
+        emissive: Color::rgb(255.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
+        perceptual_roughness: 0.7,
+        reflectance: 7.5,
+        ..default()
+      }),
+      transform: Transform::from_xyz(40.0, 0.0, 0.0),
+      ..default()
+    })
+    .insert(Enemy::Seeker)
+    .insert(Velocity(Vec3::ZERO))
+    .insert(Name::new("Enemy"));
   commands
     .spawn_bundle(PointLightBundle {
       point_light: PointLight {
@@ -141,6 +155,12 @@ fn spawn_basic_scene(
       ..default()
     })
     .insert(Name::new("Light"));
+  commands
+    .spawn()
+    .insert(EnemySpawner {
+      spawn_timer: Timer::from_seconds(1.0, true),
+    })
+    .insert(Name::new("EnemySpawner"));
 }
 
 fn player_shooting(
@@ -221,6 +241,25 @@ fn update_movers(mut movers: Query<(&Velocity, &mut Transform)>, time: Res<Time>
   }
 }
 
+fn move_enemies(
+  mut enemies: Query<(&Enemy, &mut Velocity, &Transform)>,
+  players: Query<(&Player, &Transform)>,
+) {
+  let mut player_location = Vec3::ZERO;
+  for (_player, location) in &players {
+    player_location = location.translation;
+  }
+  for (enemy, mut vel, transform) in &mut enemies {
+    match enemy {
+      Enemy::Seeker => {
+        let dir_to_player = (player_location - transform.translation).normalize();
+        vel.0 = dir_to_player * MAX_ENEMY_VELOCITY;
+      }
+      _ => todo!(),
+    }
+  }
+}
+
 fn move_player(
   mut players: Query<(&mut Velocity, &Player)>,
   gamepads: Res<Gamepads>,
@@ -247,6 +286,38 @@ fn move_player(
   }
 }
 
+fn spawn_enemies(
+  mut commands: Commands,
+  mut spawners: Query<&mut EnemySpawner>,
+  time: Res<Time>,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+  for (mut spawner) in &mut spawners {
+    spawner.spawn_timer.tick(time.delta());
+    if spawner.spawn_timer.just_finished() {
+      commands
+        .spawn_bundle(PbrBundle {
+          mesh: meshes.add(Mesh::from(shape::Cube {
+            size: 0.2,
+            ..default()
+          })),
+          material: materials.add(StandardMaterial {
+            emissive: Color::rgb(255.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
+            perceptual_roughness: 0.7,
+            reflectance: 7.5,
+            ..default()
+          }),
+          transform: Transform::from_xyz(40.0, 0.0, 0.0),
+          ..default()
+        })
+        .insert(Enemy::Seeker)
+        .insert(Velocity(Vec3::ZERO))
+        .insert(Name::new("Enemy"));
+    }
+  }
+}
+
 fn main() {
   App::new()
     // .insert_resource(WgpuSettings {
@@ -268,13 +339,16 @@ fn main() {
     .add_plugin(DebugTextPlugin)
     .register_type::<Tower>()
     .register_type::<Velocity>()
-    .register_type::<Acceleration>()
+    .register_type::<Enemy>()
+    .register_type::<Player>()
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_basic_scene)
     .add_system(bullet_despawn)
     .add_system(update_movers)
     .add_system(move_player)
+    .add_system(move_enemies)
     .add_system(player_shooting)
+    .add_system(spawn_enemies)
     .add_system(bevy::window::close_on_esc)
     .run();
 }
