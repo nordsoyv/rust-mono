@@ -1,98 +1,19 @@
-use crate::debug_text::{debug, DebugTextPlugin, DebugTextType};
+use crate::collision_plugin::CollisionPlugin;
+use crate::components::{Enemy, EnemySpawner, Lifetime, Player, Velocity};
+use crate::debug_text::DebugTextPlugin;
+use crate::enemy_plugin::EnemyPlugin;
+use crate::player_plugin::PlayerPlugin;
 use bevy::prelude::*;
 use bevy_inspector_egui::WorldInspectorPlugin;
-use std::f32::consts::PI;
 
+mod collision_plugin;
+mod components;
 mod debug_text;
+mod enemy_plugin;
+mod player_plugin;
 
 pub const HEIGHT: f32 = 720.0;
 pub const WIDTH: f32 = 1280.0;
-
-const MAX_PLAYER_VELOCITY: f32 = 30.0;
-const MAX_ENEMY_VELOCITY: f32 = 15.0;
-const MAX_BULLET_VELOCITY: f32 = 50.0;
-
-fn gamepad_system(
-  gamepads: Res<Gamepads>,
-  button_inputs: Res<Input<GamepadButton>>,
-  button_axes: Res<Axis<GamepadButton>>,
-  axes: Res<Axis<GamepadAxis>>,
-) {
-  for gamepad in gamepads.iter().cloned() {
-    if button_inputs.just_pressed(GamepadButton::new(gamepad, GamepadButtonType::South)) {
-      info!("{:?} just pressed South", gamepad);
-    } else if button_inputs.just_released(GamepadButton::new(gamepad, GamepadButtonType::South)) {
-      info!("{:?} just released South", gamepad);
-    }
-
-    let right_trigger = button_axes
-      .get(GamepadButton::new(
-        gamepad,
-        GamepadButtonType::RightTrigger2,
-      ))
-      .unwrap();
-    if right_trigger.abs() > 0.01 {
-      info!("{:?} RightTrigger2 value is {}", gamepad, right_trigger);
-    }
-
-    let left_stick_x = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
-      .unwrap();
-    let left_stick_y = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY))
-      .unwrap();
-    let right_stick_x = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickX))
-      .unwrap();
-    let right_stick_y = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickY))
-      .unwrap();
-    let gamepad_info = format!(
-      "{:+.4} {:+.4}, {:+.4} {:+.4}",
-      left_stick_x, left_stick_y, right_stick_x, right_stick_y
-    );
-    debug(DebugTextType::GamePad, gamepad_info);
-  }
-}
-
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct Tower {
-  pub shooting_timer: Timer,
-}
-
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct Lifetime {
-  pub timer: Timer,
-}
-
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct Velocity(Vec3);
-
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct Acceleration(Vec3);
-
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct Player {
-  pub shooting_timer: Timer,
-}
-
-#[derive(Reflect, Component, Default)]
-#[reflect(Component)]
-pub struct EnemySpawner {
-  pub spawn_timer: Timer,
-}
-
-#[derive(Reflect, Component, Copy, Clone, Default)]
-#[reflect(Component)]
-pub enum Enemy {
-  #[default]
-  Seeker,
-}
 
 fn spawn_camera(mut commands: Commands) {
   commands.spawn_bundle(Camera3dBundle {
@@ -127,24 +48,6 @@ fn spawn_basic_scene(
     .insert(Velocity(Vec3::ZERO))
     .insert(Name::new("Player"));
   commands
-    .spawn_bundle(PbrBundle {
-      mesh: meshes.add(Mesh::from(shape::Cube {
-        size: 0.2,
-        ..default()
-      })),
-      material: materials.add(StandardMaterial {
-        emissive: Color::rgb(255.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
-        perceptual_roughness: 0.7,
-        reflectance: 7.5,
-        ..default()
-      }),
-      transform: Transform::from_xyz(40.0, 0.0, 0.0),
-      ..default()
-    })
-    .insert(Enemy::Seeker)
-    .insert(Velocity(Vec3::ZERO))
-    .insert(Name::new("Enemy"));
-  commands
     .spawn_bundle(PointLightBundle {
       point_light: PointLight {
         intensity: 1500.0,
@@ -158,79 +61,9 @@ fn spawn_basic_scene(
   commands
     .spawn()
     .insert(EnemySpawner {
-      spawn_timer: Timer::from_seconds(1.0, true),
+      spawn_timer: Timer::from_seconds(0.5, true),
     })
     .insert(Name::new("EnemySpawner"));
-}
-
-fn player_shooting(
-  mut commands: Commands,
-  mut players: Query<(&mut Player, &Transform)>,
-  time: Res<Time>,
-  gamepads: Res<Gamepads>,
-  axes: Res<Axis<GamepadAxis>>,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-  let mut right_stick_x = 0.0;
-  let mut right_stick_y = 0.0;
-  for gamepad in gamepads.iter().cloned() {
-    right_stick_x = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickX))
-      .unwrap();
-    right_stick_y = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::RightStickY))
-      .unwrap();
-  }
-  let shooting_dir = Vec3::new(right_stick_x, right_stick_y, 0.0);
-
-  // let mut p: Player;
-  for (mut p, transform) in &mut players {
-    p.shooting_timer.tick(time.delta());
-    if p.shooting_timer.finished() && shooting_dir.length() > 0.3 {
-      // dbg!("Shooting");
-      p.shooting_timer = Timer::from_seconds(0.1, false);
-      let shooting_dir_angle = shooting_dir.angle_between(Vec3::new(10.0, 0.0, 0.0));
-      let spawn_transform = Transform::from_translation(transform.translation)
-        .with_rotation(Quat::from_rotation_z(shooting_dir_angle));
-      // Transform::from_xyz(0.0, 0.7, 0.6).with_rotation(Quat::from_rotation_y(-PI / 2.0));
-
-      commands
-        .spawn_bundle(PbrBundle {
-          mesh: meshes.add(Mesh::from(shape::UVSphere {
-            radius: 0.5,
-            ..default()
-          })),
-          // material: materials.add(Color::rgb(0.87, 0.44, 0.42).into()),
-          material: materials.add(StandardMaterial {
-            emissive: Color::rgb(47.0 / 255.0, 255.0 / 255.0, 0.0 / 255.0),
-            perceptual_roughness: 0.7,
-            reflectance: 9.5,
-            ..default()
-          }),
-          transform: spawn_transform,
-          ..default()
-        })
-        .insert(Lifetime {
-          timer: Timer::from_seconds(2.5, false),
-        })
-        .insert(Velocity(shooting_dir.normalize() * MAX_BULLET_VELOCITY))
-        .insert(Name::new("Bullet"));
-    }
-  }
-}
-
-fn bullet_despawn(
-  mut commands: Commands,
-  mut bullets: Query<(Entity, &mut Lifetime)>,
-  time: Res<Time>,
-) {
-  for (entity, mut lifetime) in &mut bullets {
-    lifetime.timer.tick(time.delta());
-    if lifetime.timer.just_finished() {
-      commands.entity(entity).despawn_recursive();
-    }
-  }
 }
 
 fn update_movers(mut movers: Query<(&Velocity, &mut Transform)>, time: Res<Time>) {
@@ -238,83 +71,6 @@ fn update_movers(mut movers: Query<(&Velocity, &mut Transform)>, time: Res<Time>
   for (vel, mut transform) in &mut movers {
     let scaled_vel = vel.0 * elapsed;
     transform.translation += scaled_vel;
-  }
-}
-
-fn move_enemies(
-  mut enemies: Query<(&Enemy, &mut Velocity, &Transform)>,
-  players: Query<(&Player, &Transform)>,
-) {
-  let mut player_location = Vec3::ZERO;
-  for (_player, location) in &players {
-    player_location = location.translation;
-  }
-  for (enemy, mut vel, transform) in &mut enemies {
-    match enemy {
-      Enemy::Seeker => {
-        let dir_to_player = (player_location - transform.translation).normalize();
-        vel.0 = dir_to_player * MAX_ENEMY_VELOCITY;
-      }
-      _ => todo!(),
-    }
-  }
-}
-
-fn move_player(
-  mut players: Query<(&mut Velocity, &Player)>,
-  gamepads: Res<Gamepads>,
-  axes: Res<Axis<GamepadAxis>>,
-) {
-  let mut left_stick_x = 0.0;
-  let mut left_stick_y = 0.0;
-  for gamepad in gamepads.iter().cloned() {
-    left_stick_x = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
-      .unwrap();
-    left_stick_y = axes
-      .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY))
-      .unwrap();
-  }
-  let vec_a = Vec3::new(left_stick_x, left_stick_y, 0.0);
-
-  for (mut vel, _player) in &mut players {
-    if vec_a.length() > 0.2 {
-      vel.0 = vec_a * MAX_PLAYER_VELOCITY;
-    } else {
-      vel.0 = Vec3::ZERO;
-    }
-  }
-}
-
-fn spawn_enemies(
-  mut commands: Commands,
-  mut spawners: Query<&mut EnemySpawner>,
-  time: Res<Time>,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-  for (mut spawner) in &mut spawners {
-    spawner.spawn_timer.tick(time.delta());
-    if spawner.spawn_timer.just_finished() {
-      commands
-        .spawn_bundle(PbrBundle {
-          mesh: meshes.add(Mesh::from(shape::Cube {
-            size: 0.2,
-            ..default()
-          })),
-          material: materials.add(StandardMaterial {
-            emissive: Color::rgb(255.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0),
-            perceptual_roughness: 0.7,
-            reflectance: 7.5,
-            ..default()
-          }),
-          transform: Transform::from_xyz(40.0, 0.0, 0.0),
-          ..default()
-        })
-        .insert(Enemy::Seeker)
-        .insert(Velocity(Vec3::ZERO))
-        .insert(Name::new("Enemy"));
-    }
   }
 }
 
@@ -333,22 +89,17 @@ fn main() {
       ..Default::default()
     })
     // .add_plugin(WireframePlugin)
-    .add_system(gamepad_system)
+    // .add_system(gamepad_system)
     .add_plugins(DefaultPlugins)
     .add_plugin(WorldInspectorPlugin::new())
     .add_plugin(DebugTextPlugin)
-    .register_type::<Tower>()
+    .add_plugin(PlayerPlugin)
+    .add_plugin(EnemyPlugin)
+    .add_plugin(CollisionPlugin)
     .register_type::<Velocity>()
-    .register_type::<Enemy>()
-    .register_type::<Player>()
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_basic_scene)
-    .add_system(bullet_despawn)
     .add_system(update_movers)
-    .add_system(move_player)
-    .add_system(move_enemies)
-    .add_system(player_shooting)
-    .add_system(spawn_enemies)
     .add_system(bevy::window::close_on_esc)
     .run();
 }
