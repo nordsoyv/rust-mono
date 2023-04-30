@@ -74,6 +74,7 @@
       <sourceFolder url="file://$MODULE_DIR$/sil/sil-lexer/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/maze-maker/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/twin-stick/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dice-game/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/advent/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-bench/target" />
       <excludeFolder url="file://$MODULE_DIR$/cdl-service/cdl-core/target" />
@@ -98,6 +99,7 @@
       <excludeFolder url="file://$MODULE_DIR$/sil/target" />
       <excludeFolder url="file://$MODULE_DIR$/maze-maker/target" />
       <excludeFolder url="file://$MODULE_DIR$/twin-stick/target" />
+      <excludeFolder url="file://$MODULE_DIR$/dice-game/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
