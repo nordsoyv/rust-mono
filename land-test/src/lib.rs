@@ -1,9 +1,19 @@
 use std::iter;
+use std::time::Instant;
+use chrono::NaiveTime;
+use egui::FontDefinitions;
+use egui_demo_lib::DemoWindows;
+use egui_wgpu_backend::RenderPass;
+use egui_winit_platform::{Platform, PlatformDescriptor};
+use wgpu::Instance;
 use winit::{
   event::*,
   event_loop::{ControlFlow, EventLoop},
   window::{WindowBuilder, Window},
 };
+
+const INITIAL_WIDTH: u32 = (1920 / 4) * 3;
+const INITIAL_HEIGHT: u32 = (1080 / 4) * 3;
 
 struct State {
   surface: wgpu::Surface,
@@ -12,6 +22,10 @@ struct State {
   config: wgpu::SurfaceConfiguration,
   size: winit::dpi::PhysicalSize<u32>,
   window: Window,
+  egui_rpass : RenderPass,
+  demo_app : DemoWindows,
+  start_time : NaiveTime,
+  egui_platform: Platform
 }
 
 impl State {
@@ -76,6 +90,20 @@ impl State {
     };
     surface.configure(&device, &config);
 
+    let  platform = Platform::new(PlatformDescriptor {
+      physical_height: INITIAL_HEIGHT,
+      physical_width: INITIAL_WIDTH,
+      scale_factor: window.scale_factor(),
+      font_definitions: FontDefinitions::default(),
+      style: Default::default()
+    });
+
+
+    let  egui_rpass = RenderPass::new(&device, surface_format, 1);
+    // Display the demo application that ships with egui.
+    let  demo_app = egui_demo_lib::DemoWindows::default();
+    let start_time = chrono::Local::now().time();
+
     Self {
       surface,
       device,
@@ -83,6 +111,11 @@ impl State {
       config,
       size,
       window,
+      demo_app,
+      egui_rpass,
+      start_time,
+      egui_platform: platform,
+
     }
   }
 
@@ -104,13 +137,21 @@ impl State {
     false
   }
 
-  fn update(&mut self) {}
+  fn update(&mut self) {
+    self.egui_platform.update_time(
+      (chrono::Local::now().time() - self.start_time).num_milliseconds() as f64 / 1000.0,
+    );
+    self.egui_platform.begin_frame();
+    self.demo_app.ui(&self.egui_platform.context());
+  }
 
   fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
     let output = self.surface.get_current_texture()?;
     let view = output
       .texture
       .create_view(&wgpu::TextureViewDescriptor::default());
+    let full_output = self.egui_platform.end_frame(Some(&self.window));
+    let paint_jobs = self.egui_platform.context().tessellate(full_output.shapes);
 
     let mut encoder = self
       .device
@@ -137,10 +178,41 @@ impl State {
         depth_stencil_attachment: None,
       });
     }
+    let tdelta = full_output.textures_delta;
+    self.egui_rpass
+      .add_textures(&self.device, &self.queue, &tdelta)
+      .expect("Failed to add textures");
+
+
+
+    let screen_descriptor = egui_wgpu_backend::ScreenDescriptor {
+      physical_width: self.size.width,
+      physical_height: self.size.height,
+      scale_factor: self.window.scale_factor() as f32,
+    };
+    self.egui_rpass
+      .update_buffers(&self.device, &self.queue, &paint_jobs, &screen_descriptor);
+
+    self.egui_rpass
+      .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
+      .unwrap();
+
+
+
+
+
+
 
     self.queue.submit(iter::once(encoder.finish()));
-    output.present();
 
+
+
+
+
+    output.present();
+    self.egui_rpass
+      .remove_textures(tdelta)
+      .expect("Failed to remove textures");
     Ok(())
   }
 }
@@ -150,13 +222,25 @@ pub async fn run() {
 
   let event_loop = EventLoop::new();
   let window = WindowBuilder::new()
+    .with_decorations(true)
+    .with_resizable(true)
+    .with_title("Landscape example")
+    .with_inner_size(winit::dpi::PhysicalSize {
+      height: INITIAL_HEIGHT,
+      width: INITIAL_WIDTH,
+    })
     .build(&event_loop)
     .unwrap();
 
   // State::new uses async code, so we're going to wait for it to finish
   let mut state = State::new(window).await;
 
+
+  // We use the egui_wgpu_backend crate as the render backend.
+
+
   event_loop.run(move |event, _, control_flow| {
+    state.egui_platform.handle_event(&event);
     match event {
       Event::WindowEvent {
         ref event,
