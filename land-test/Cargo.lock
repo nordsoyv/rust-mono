@@ -860,7 +860,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "land-test"
+name = "land_test"
 version = "0.1.0"
 dependencies = [
  "chrono",

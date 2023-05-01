@@ -1,11 +1,9 @@
 use std::iter;
-use std::time::Instant;
 use chrono::NaiveTime;
 use egui::FontDefinitions;
 use egui_demo_lib::DemoWindows;
 use egui_wgpu_backend::RenderPass;
 use egui_winit_platform::{Platform, PlatformDescriptor};
-use wgpu::Instance;
 use winit::{
   event::*,
   event_loop::{ControlFlow, EventLoop},
@@ -291,3 +289,4 @@ pub async fn run() {
     }
   });
 }
+
