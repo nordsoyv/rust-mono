@@ -18,6 +18,9 @@ pub struct State {
   config: wgpu::SurfaceConfiguration,
   pub size: winit::dpi::PhysicalSize<u32>,
   window: Window,
+  render_pipeline: wgpu::RenderPipeline,
+
+
   egui_rpass: RenderPass,
   demo_app: DemoWindows,
   start_time: NaiveTime,
@@ -83,7 +86,55 @@ impl State {
     };
     surface.configure(&device, &config);
 
-    let platform = Platform::new(PlatformDescriptor {
+    let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+
+    let render_pipeline_layout =
+        device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+          label: Some("Render Pipeline Layout"),
+          bind_group_layouts: &[],
+          push_constant_ranges: &[],
+        });
+
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+      label: Some("Render Pipeline"),
+      layout: Some(&render_pipeline_layout),
+      vertex: wgpu::VertexState {
+        module: &shader,
+        entry_point: "vs_main", // 1.
+        buffers: &[], // 2.
+      },
+      fragment: Some(wgpu::FragmentState { // 3.
+        module: &shader,
+        entry_point: "fs_main",
+        targets: &[Some(wgpu::ColorTargetState { // 4.
+          format: config.format,
+          blend: Some(wgpu::BlendState::REPLACE),
+          write_mask: wgpu::ColorWrites::ALL,
+        })],
+      }),
+      primitive: wgpu::PrimitiveState {
+        topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+        strip_index_format: None,
+        front_face: wgpu::FrontFace::Ccw, // 2.
+        cull_mode: Some(wgpu::Face::Back),
+        // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+        polygon_mode: wgpu::PolygonMode::Fill,
+        // Requires Features::DEPTH_CLIP_CONTROL
+        unclipped_depth: false,
+        // Requires Features::CONSERVATIVE_RASTERIZATION
+        conservative: false,
+      },
+
+      depth_stencil: None, // 1.
+      multisample: wgpu::MultisampleState {
+        count: 1, // 2.
+        mask: !0, // 3.
+        alpha_to_coverage_enabled: false, // 4.
+      },
+      multiview: None, // 5.
+    });
+
+    let egui_platform = Platform::new(PlatformDescriptor {
       physical_height: INITIAL_HEIGHT,
       physical_width: INITIAL_WIDTH,
       scale_factor: window.scale_factor(),
@@ -95,7 +146,7 @@ impl State {
     let egui_rpass = RenderPass::new(&device, surface_format, 1);
 
     // Display the demo application that ships with egui.
-    let demo_app = egui_demo_lib::DemoWindows::default();
+    let demo_app = DemoWindows::default();
     let start_time = chrono::Local::now().time();
     Self {
       surface,
@@ -104,10 +155,11 @@ impl State {
       config,
       size,
       window,
+      render_pipeline,
       start_time,
       demo_app,
       egui_rpass,
-      egui_platform: platform,
+      egui_platform,
     }
   }
 
@@ -124,7 +176,7 @@ impl State {
     }
   }
 
-  pub fn input(&mut self, event: &WindowEvent) -> bool {
+  pub fn input(&mut self, _event: &WindowEvent) -> bool {
     false
   }
 
@@ -146,8 +198,10 @@ impl State {
     let view = output
       .texture
       .create_view(&wgpu::TextureViewDescriptor::default());
+    // EGUI Start
     let full_output = self.egui_platform.end_frame(Some(&self.window));
     let paint_jobs = self.egui_platform.context().tessellate(full_output.shapes);
+    // EGUI END
 
     let mut encoder = self
       .device
@@ -156,7 +210,7 @@ impl State {
       });
 
     {
-      let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+      let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
         label: Some("Render Pass"),
         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
           view: &view,
@@ -173,7 +227,12 @@ impl State {
         })],
         depth_stencil_attachment: None,
       });
+      render_pass.set_pipeline(&self.render_pipeline);
+      render_pass.draw(0..3,0..1);
     }
+
+
+    // EGUI
     let tdelta = full_output.textures_delta;
     self.egui_rpass
       .add_textures(&self.device, &self.queue, &tdelta)
@@ -188,9 +247,11 @@ impl State {
     self.egui_rpass
       .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
       .unwrap();
+    // EGUI END
     self.queue.submit(iter::once(encoder.finish()));
     output.present();
 
+    // EGUI Cleanup
     self.egui_rpass
       .remove_textures(tdelta)
       .expect("Failed to remove textures");
