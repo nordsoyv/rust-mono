@@ -6,31 +6,28 @@ use egui_wgpu_backend::RenderPass;
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use winit::{
   event::*,
-  event_loop::{ControlFlow, EventLoop},
-  window::{WindowBuilder, Window},
+  window::{Window},
 };
+use crate::constants::{INITIAL_HEIGHT, INITIAL_WIDTH};
 
-const INITIAL_WIDTH: u32 = (1920 / 4) * 3;
-const INITIAL_HEIGHT: u32 = (1080 / 4) * 3;
 
-struct State {
+pub struct State {
   surface: wgpu::Surface,
   device: wgpu::Device,
   queue: wgpu::Queue,
   config: wgpu::SurfaceConfiguration,
-  size: winit::dpi::PhysicalSize<u32>,
+  pub size: winit::dpi::PhysicalSize<u32>,
   window: Window,
-  egui_rpass : RenderPass,
-  demo_app : DemoWindows,
-  start_time : NaiveTime,
-  egui_platform: Platform
+  egui_rpass: RenderPass,
+  demo_app: DemoWindows,
+  start_time: NaiveTime,
+  pub egui_platform: Platform,
 }
 
 impl State {
   // Creating some of the wgpu types requires async code
-  async fn new(window: Window) -> Self {
+  pub async fn new(window: Window) -> Self {
     let size = window.inner_size();
-
     // The instance is a handle to our GPU
     // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -58,8 +55,6 @@ impl State {
         &wgpu::DeviceDescriptor {
           label: None,
           features: wgpu::Features::empty(),
-          // WebGL doesn't support all of wgpu's features, so if
-          // we're building for the web we'll have to disable some.
           limits: wgpu::Limits::default(),
         },
         // Some(&std::path::Path::new("trace")), // Trace path
@@ -88,20 +83,20 @@ impl State {
     };
     surface.configure(&device, &config);
 
-    let  platform = Platform::new(PlatformDescriptor {
+    let platform = Platform::new(PlatformDescriptor {
       physical_height: INITIAL_HEIGHT,
       physical_width: INITIAL_WIDTH,
       scale_factor: window.scale_factor(),
       font_definitions: FontDefinitions::default(),
-      style: Default::default()
+      style: Default::default(),
     });
 
 
-    let  egui_rpass = RenderPass::new(&device, surface_format, 1);
-    // Display the demo application that ships with egui.
-    let  demo_app = egui_demo_lib::DemoWindows::default();
-    let start_time = chrono::Local::now().time();
+    let egui_rpass = RenderPass::new(&device, surface_format, 1);
 
+    // Display the demo application that ships with egui.
+    let demo_app = egui_demo_lib::DemoWindows::default();
+    let start_time = chrono::Local::now().time();
     Self {
       surface,
       device,
@@ -109,11 +104,10 @@ impl State {
       config,
       size,
       window,
+      start_time,
       demo_app,
       egui_rpass,
-      start_time,
       egui_platform: platform,
-
     }
   }
 
@@ -130,12 +124,16 @@ impl State {
     }
   }
 
-  #[allow(unused_variables)]
-  fn input(&mut self, event: &WindowEvent) -> bool {
+  pub fn input(&mut self, event: &WindowEvent) -> bool {
     false
   }
 
-  fn update(&mut self) {
+  pub fn egui_input(&mut self, event: &Event<()>)-> bool{
+      self.egui_platform.handle_event(&event);
+      false
+  }
+
+  pub fn update(&mut self) {
     self.egui_platform.update_time(
       (chrono::Local::now().time() - self.start_time).num_milliseconds() as f64 / 1000.0,
     );
@@ -143,7 +141,7 @@ impl State {
     self.demo_app.ui(&self.egui_platform.context());
   }
 
-  fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+  pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
     let output = self.surface.get_current_texture()?;
     let view = output
       .texture
@@ -180,9 +178,6 @@ impl State {
     self.egui_rpass
       .add_textures(&self.device, &self.queue, &tdelta)
       .expect("Failed to add textures");
-
-
-
     let screen_descriptor = egui_wgpu_backend::ScreenDescriptor {
       physical_width: self.size.width,
       physical_height: self.size.height,
@@ -190,103 +185,15 @@ impl State {
     };
     self.egui_rpass
       .update_buffers(&self.device, &self.queue, &paint_jobs, &screen_descriptor);
-
     self.egui_rpass
       .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
       .unwrap();
-
-
-
-
-
-
-
     self.queue.submit(iter::once(encoder.finish()));
-
-
-
-
-
     output.present();
+
     self.egui_rpass
       .remove_textures(tdelta)
       .expect("Failed to remove textures");
     Ok(())
   }
 }
-
-pub async fn run() {
-  env_logger::init();
-
-  let event_loop = EventLoop::new();
-  let window = WindowBuilder::new()
-    .with_decorations(true)
-    .with_resizable(true)
-    .with_title("Landscape example")
-    .with_inner_size(winit::dpi::PhysicalSize {
-      height: INITIAL_HEIGHT,
-      width: INITIAL_WIDTH,
-    })
-    .build(&event_loop)
-    .unwrap();
-
-  // State::new uses async code, so we're going to wait for it to finish
-  let mut state = State::new(window).await;
-
-
-  // We use the egui_wgpu_backend crate as the render backend.
-
-
-  event_loop.run(move |event, _, control_flow| {
-    state.egui_platform.handle_event(&event);
-    match event {
-      Event::WindowEvent {
-        ref event,
-        window_id,
-      } if window_id == state.window().id() => {
-        if !state.input(event) {
-          // UPDATED!
-          match event {
-            WindowEvent::CloseRequested
-            | WindowEvent::KeyboardInput {
-              input:
-              KeyboardInput {
-                state: ElementState::Pressed,
-                virtual_keycode: Some(VirtualKeyCode::Escape),
-                ..
-              },
-              ..
-            } => *control_flow = ControlFlow::Exit,
-            WindowEvent::Resized(physical_size) => {
-              state.resize(*physical_size);
-            }
-            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-              // new_inner_size is &&mut so w have to dereference it twice
-              state.resize(**new_inner_size);
-            }
-            _ => {}
-          }
-        }
-      }
-      Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-        state.update();
-        match state.render() {
-          Ok(_) => {}
-          // Reconfigure the surface if it's lost or outdated
-          Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => state.resize(state.size),
-          // The system is out of memory, we should probably quit
-          Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-
-          Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-        }
-      }
-      Event::RedrawEventsCleared => {
-        // RedrawRequested will only trigger once, unless we manually
-        // request it.
-        state.window().request_redraw();
-      }
-      _ => {}
-    }
-  });
-}
-
