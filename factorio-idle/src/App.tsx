@@ -1,43 +1,12 @@
-import {useState} from 'react'
+import React, { useState} from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-
-//@ts-ignore
-import init, {greet, init_game, tick} from 'game-core';
-// Don't worry if vscode told you can't find game-core
-// It's because you're using a local crate
-// after yarn dev, wasm-pack plugin will install game-core for you
-
-init().then(() => {
-    console.log('init wasm-pack');
-    greet('from vite!');
-    init_game();
-    let a = tick(1);
-    console.log(a);
-    a = tick(1);
-    console.log(a);
-    a = tick(1);
-    console.log(a);
-    a = tick(1);
-    console.log(a);
-    a = tick(1);
-    console.log(a);
-    a = tick(1);
-    console.log(a);
-});
-
-// const useGame= () => {
-//   const [gameState, setGameState] = useState<Game>()
-//   setInterval(()=> {
-//     let gs = tick(1);
-//   })
-// }
+import {GameState} from 'game-core';
 
 
-function App() {
+export function App({gameState}: { gameState: GameState | null }) {
     const [count, setCount] = useState(0)
-
     return (
         <>
             <div>
@@ -53,6 +22,7 @@ function App() {
                 <button onClick={() => setCount((count) => count + 1)}>
                     count is {count}
                 </button>
+                {gameState && gameState.counter}
                 <p>
                     Edit <code>src/App.tsx</code> and save to test HMR
                 </p>
@@ -63,5 +33,3 @@ function App() {
         </>
     )
 }
-
-export default App

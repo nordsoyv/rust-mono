@@ -27,16 +27,16 @@ pub fn greet(name: &str) {
     alert(&format!("Hello,{}!", name));
 }
 
-#[wasm_bindgen]
-pub fn tick(ms: i32) -> JsValue {
-    let next_state = game::tick(ms);
-    //  JsValue::from_serde
-    let a =JsValue::from_serde(&next_state).unwrap();
-    a
-   // serde_wasm_bindgen::to_value(&next_state).unwrap()
-}
-
-#[wasm_bindgen]
-pub fn init_game() {
-    game::init()
-}
+// #[wasm_bindgen]
+// pub fn tick(ms: i32) -> JsValue {
+//     let next_state = game::tick(ms);
+//     //  JsValue::from_serde
+//     let a =JsValue::from_serde(&next_state).unwrap();
+//     a
+//    // serde_wasm_bindgen::to_value(&next_state).unwrap()
+// }
+//
+// #[wasm_bindgen]
+// pub fn init_game() {
+//     game::init()
+// }
