@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-//import {GameState} from "game-core";
 import { App } from './App.tsx';
 import { GameState } from '../game-core/pkg/game_core';
+import {CssBaseline, ThemeProvider} from "@mui/material";
+import {theme} from './theme';
 
 function useForceUpdate() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_value, setValue] = useState(0); // integer state
   return () => setValue((value) => ++value); // update the state to force render
 }
@@ -20,7 +22,11 @@ export const GameStateContext = ({ gameState }: { gameState: GameState }) => {
 
   return (
     <React.StrictMode>
-      <App gameState={gameState} />
+      <ThemeProvider theme={theme}>
+        <CssBaseline/>
+        <App gameState={gameState} />
+      </ThemeProvider>
+
     </React.StrictMode>
   );
 };
