@@ -1,24 +1,26 @@
-import React from "react";
-import {GameState} from "game-core";
+import React, {useEffect, useState} from "react";
+//import {GameState} from "game-core";
 import {App} from "./App.tsx";
+import {GameState} from "../game-core/pkg/game_core";
 
-export class GameStateContext extends React.Component<{ gameState: GameState | null }, {}> {
 
-    constructor(props: { gameState: GameState | null }) {
-        super(props);
-    }
-    componentDidMount() {
+function useForceUpdate(){
+    const [_value, setValue] = useState(0); // integer state
+    return () => setValue(value => ++value); // update the state to force render
+}
+export const GameStateContext = ({gameState}: {gameState:GameState})=> {
+    const forceUpdate = useForceUpdate()
+    useEffect(()=> {
         setInterval(() => {
-            if (this.props.gameState != null) {
-                this.props.gameState.tick(1);
-                this.forceUpdate()
+            if (gameState != null) {
+                gameState.tick(1);
+                forceUpdate();
             }
         }, 100)
-    }
 
-    render() {
-        return <React.StrictMode>
-            <App gameState={this.props.gameState}/>
-        </React.StrictMode>
-    }
+    },[])
+
+    return <React.StrictMode>
+        <App gameState={gameState}/>
+    </React.StrictMode>
 }
