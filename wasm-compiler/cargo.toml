@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "cli_args",
+    "csl",
+]
