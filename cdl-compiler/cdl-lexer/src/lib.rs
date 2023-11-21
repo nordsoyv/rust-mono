@@ -1,4 +1,5 @@
 use anyhow::Result;
+use anyhow::anyhow;
 use logos::Logos;
 
 #[derive(Logos, Debug, PartialEq)]
@@ -32,11 +33,37 @@ enum TokenLexer {
   #[token(",")]
   Comma,
 
+  #[token("+")]
+  Plus,
+  #[token("-")]
+  Minus,
+  #[token("/")]
+  Div,
+  #[token("*")]
+  Mul,
+  #[token("#")]
+  Hash,
+  #[token("%")]
+  Percent,
+  #[token("!=")]
+  NotEqual,
+  #[token("<")]
+  LessThan,
+  #[token(">")]
+  MoreThan,
+  #[token("<=")]
+  LessThanOrEqual,
+  #[token(">=")]
+  MoreThanOrEqual,
+
   #[regex(r"-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?", |lex| lex.slice().parse::<f64>().unwrap())]
   Number(f64),
 
   #[regex(r#""([^"\\]|\\["\\bnfrt]|u[a-fA-F0-9]{4})*""#, |lex| lex.slice().to_owned())]
   String(String),
+
+  #[regex("([a-zA-Z])*", |lex| lex.slice().to_owned())]
+  Identifier(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -50,89 +77,172 @@ pub enum TokenKind {
   ParenClose,
   Colon,
   Comma,
-  Number,
-  String,
+  Number(f64),
+  String(String),
+  Plus,
+  Minus,
+  Div,
+  Mul,
+  Hash,
+  Percent,
+  NotEqual,
+  LessThan,
+  LessThanOrEqual,
+  MoreThan,
+  MoreThanOrEqual,
+  Identifier(String),
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
   kind: TokenKind,
-  text: Option<String>,
   start_pos: usize,
   end_pos: usize,
 }
 
+
 pub fn lex(text: &str) -> Result<Vec<Token>> {
   let mut lexer = TokenLexer::lexer(text);
+  let mut tokens: Vec<Token> = vec![];
 
-  let mut tokens = vec![];
-  while let Some(token) = lexer.next() {
-    match token {
-      Ok(TokenLexer::Bool(value)) => {
-        tokens.push(Token {
-          start_pos: lexer.span().start,
-          end_pos: lexer.span().end,
-          kind: TokenKind::Boolean(value),
-          text: None,
-        });
-      },
-      Ok(TokenLexer::BraceClose) => {
-        tokens.push(Token {
-          start_pos: lexer.span().start,
-          end_pos: lexer.span().end,
-          kind: TokenKind::BraceClose,
-          text: None,
-        });
-      },
-      Ok(TokenLexer::BraceOpen) => {
-        tokens.push(Token {
-          start_pos: lexer.span().start,
-          end_pos: lexer.span().end,
-          kind: TokenKind::BraceOpen,
-          text: None,
-        });
-      },
-      Ok(TokenLexer::BracketOpen) => {
-        tokens.push(Token {
-          start_pos: lexer.span().start,
-          end_pos: lexer.span().end,
-          kind: TokenKind::BracketOpen,
-          text: None,
-        });
-      },
-      Ok(TokenLexer::BracketClose) => {
-        tokens.push(Token {
-          start_pos: lexer.span().start,
-          end_pos: lexer.span().end,
-          kind: TokenKind::BracketClose,
-          text: None,
-        });
-      },
-      Ok(TokenLexer::ParenOpen) => {
-        tokens.push(Token {
-          start_pos: lexer.span().start,
-          end_pos: lexer.span().end,
-          kind: TokenKind::ParenOpen,
-          text: None,
-        });
-      },
-      Ok(TokenLexer::ParenClose) => {
-        tokens.push(Token {
-          start_pos: lexer.span().start,
-          end_pos: lexer.span().end,
-          kind: TokenKind::ParenClose,
-          text: None,
-        });
-      },
-      _ => panic!(),
+  while let Some(lex_result) = lexer.next() {
+    if lex_result.is_err() {
+      return Err(anyhow!(format!("Unknown token \"{}\"", lexer.slice())));
     }
+    let token = lex_result.unwrap();
+    let span = lexer.span();
+    tokens.push(match token {
+      TokenLexer::Bool(b) => Token {
+        kind: TokenKind::Boolean(b),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::BraceOpen => Token {
+        kind: TokenKind::BraceOpen,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::BraceClose => Token {
+        kind: TokenKind::BraceClose,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::BracketOpen => Token {
+        kind: TokenKind::BracketOpen,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::BracketClose => Token {
+        kind: TokenKind::BracketClose,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::ParenOpen => Token {
+        kind: TokenKind::ParenOpen,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::ParenClose => Token {
+        kind: TokenKind::ParenClose,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Colon => Token {
+        kind: TokenKind::Colon,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Comma => Token {
+        kind: TokenKind::Comma,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Plus => Token {
+        kind: TokenKind::Plus,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Minus => Token {
+        kind: TokenKind::Minus,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Div => Token {
+        kind: TokenKind::Div,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Mul => Token {
+        kind: TokenKind::Mul,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Hash => Token {
+        kind: TokenKind::Hash,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Percent => Token {
+        kind: TokenKind::Percent,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::NotEqual => Token {
+        kind: TokenKind::NotEqual,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::LessThan => Token {
+        kind: TokenKind::LessThan,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::MoreThan => Token {
+        kind: TokenKind::MoreThan,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::LessThanOrEqual => Token {
+        kind: TokenKind::LessThanOrEqual,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::MoreThanOrEqual => Token {
+        kind: TokenKind::MoreThanOrEqual,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Number(n) => Token {
+        kind: TokenKind::Number(n),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::String(s) => Token {
+        kind: TokenKind::String(s),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Identifier(i) => Token {
+        kind: TokenKind::Identifier(i),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+    });
   }
-  Ok(tokens)
+  return Ok(tokens);
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn gives_error() {
+    let tokens = lex("&&&&");
+    assert!(tokens.is_err());
+    let err = tokens.unwrap_err();
+    assert_eq!(format!("{}", err), "Unknown token \"&\"");
+  }
 
   #[test]
   fn can_parse_booleans() {
@@ -143,7 +253,6 @@ mod tests {
         kind: TokenKind::Boolean(true),
         start_pos: 0,
         end_pos: 4,
-        text: None
       }
     );
     assert_eq!(
@@ -152,11 +261,10 @@ mod tests {
         kind: TokenKind::Boolean(false),
         start_pos: 5,
         end_pos: 10,
-        text: None
       }
     );
   }
-  
+
   #[test]
   fn can_parse_brackets() {
     let tokens = lex("( { [ ) } ]").unwrap();
@@ -166,7 +274,6 @@ mod tests {
         kind: TokenKind::ParenOpen,
         start_pos: 0,
         end_pos: 1,
-        text: None
       }
     );
     assert_eq!(
@@ -175,7 +282,6 @@ mod tests {
         kind: TokenKind::BraceOpen,
         start_pos: 2,
         end_pos: 3,
-        text: None
       }
     );
     assert_eq!(
@@ -184,7 +290,6 @@ mod tests {
         kind: TokenKind::BracketOpen,
         start_pos: 4,
         end_pos: 5,
-        text: None
       }
     );
     assert_eq!(
@@ -193,7 +298,6 @@ mod tests {
         kind: TokenKind::ParenClose,
         start_pos: 6,
         end_pos: 7,
-        text: None
       }
     );
     assert_eq!(
@@ -202,7 +306,6 @@ mod tests {
         kind: TokenKind::BraceClose,
         start_pos: 8,
         end_pos: 9,
-        text: None
       }
     );
     assert_eq!(
@@ -211,9 +314,7 @@ mod tests {
         kind: TokenKind::BracketClose,
         start_pos: 10,
         end_pos: 11,
-        text: None
       }
     );
   }
-  
 }
