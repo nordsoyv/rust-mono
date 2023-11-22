@@ -1,5 +1,5 @@
-use anyhow::Result;
 use anyhow::anyhow;
+use anyhow::Result;
 use logos::Logos;
 
 #[derive(Logos, Debug, PartialEq)]
@@ -8,6 +8,9 @@ enum TokenLexer {
   #[token("false", |_| false)]
   #[token("true", |_| true)]
   Bool(bool),
+
+  #[token("\n")]
+  EOL,
 
   #[token("{")]
   BraceOpen,
@@ -37,7 +40,7 @@ enum TokenLexer {
   Plus,
   #[token("-")]
   Minus,
-  #[token("/")]
+  #[token("/",priority = 2)]
   Div,
   #[token("*")]
   Mul,
@@ -59,16 +62,28 @@ enum TokenLexer {
   #[regex(r"-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?", |lex| lex.slice().parse::<f64>().unwrap())]
   Number(f64),
 
-  #[regex(r#""([^"\\]|\\["\\bnfrt]|u[a-fA-F0-9]{4})*""#, |lex| lex.slice().to_owned())]
+  #[regex(r#""(?:[^"]|\\")*""#, |lex| lex.slice().to_owned())]
+  #[regex(r#"'(?:[^']|\\')*'"#, |lex| lex.slice().to_owned())]
   String(String),
 
-  #[regex("([a-zA-Z])*", |lex| lex.slice().to_owned())]
+  #[regex("_?[a-zA-Z0-9_\\-\\.]*", |lex| lex.slice().to_owned())]
   Identifier(String),
+  #[regex("@[a-zA-Z0-9_\\-\\.]*", |lex| lex.slice()[1..].to_owned())]
+  Reference(String),
+  #[regex("#[0-9a-fA-F]{6}", |lex| lex.slice()[1..].to_owned())]
+  Color(String),
+
+  #[regex("//[^\n]*", |lex| lex.slice().to_owned())]
+  LineComment(String),
+
+  #[regex(r#"/\*(?:[^*]|\*[^/])*\*/"#, |lex| lex.slice().to_owned())]
+  MultiLineComment(String),  
 }
 
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
   Boolean(bool),
+  EOL,
   BraceOpen,
   BraceClose,
   BracketOpen,
@@ -91,6 +106,10 @@ pub enum TokenKind {
   MoreThan,
   MoreThanOrEqual,
   Identifier(String),
+  Reference(String),
+  Color(String),
+  LineComment(String),
+  MultiLineComment(String),  
 }
 
 #[derive(Debug, PartialEq)]
@@ -99,7 +118,6 @@ pub struct Token {
   start_pos: usize,
   end_pos: usize,
 }
-
 
 pub fn lex(text: &str) -> Result<Vec<Token>> {
   let mut lexer = TokenLexer::lexer(text);
@@ -114,6 +132,11 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
     tokens.push(match token {
       TokenLexer::Bool(b) => Token {
         kind: TokenKind::Boolean(b),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::EOL => Token {
+        kind: TokenKind::EOL,
         start_pos: span.start,
         end_pos: span.end,
       },
@@ -227,6 +250,26 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
         start_pos: span.start,
         end_pos: span.end,
       },
+      TokenLexer::Reference(r) => Token {
+        kind: TokenKind::Reference(r.to_owned()),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::Color(c) => Token {
+        kind: TokenKind::Color(c.to_owned()),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::LineComment(l) => Token {
+        kind: TokenKind::LineComment(l.to_owned()),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
+      TokenLexer::MultiLineComment(l) => Token {
+        kind: TokenKind::MultiLineComment(l.to_owned()),
+        start_pos: span.start,
+        end_pos: span.end,
+      },
     });
   }
   return Ok(tokens);
@@ -243,6 +286,226 @@ mod tests {
     let err = tokens.unwrap_err();
     assert_eq!(format!("{}", err), "Unknown token \"&\"");
   }
+
+  #[test]
+  fn can_parse_strings() {
+    let tokens = lex("\"hello \"");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::String("\"hello \"".to_owned()),
+        start_pos: 0,
+        end_pos: 8
+      }
+    );
+  }
+  #[test]
+  fn can_parse_mixed_strings() {
+    let tokens = lex("\"'hello' \"");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::String("\"'hello' \"".to_owned()),
+        start_pos: 0,
+        end_pos: 10
+      }
+    );
+  }
+  #[test]
+  fn can_parse_multiline_strings() {
+    let tokens = lex("\"hello\n\n world \"");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::String("\"hello\n\n world \"".to_owned()),
+        start_pos: 0,
+        end_pos: 16
+      }
+    );
+  }
+
+  #[test]
+  fn can_parse_quote_strings() {
+    let tokens = lex("'hello '");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::String("'hello '".to_owned()),
+        start_pos: 0,
+        end_pos: 8
+      }
+    );
+  }
+
+  #[test]
+  fn can_parse_quote_multiline_strings() {
+    let tokens = lex("'hello\n\n world '");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::String("'hello\n\n world '".to_owned()),
+        start_pos: 0,
+        end_pos: 16
+      }
+    );
+  }
+
+
+  #[test]
+  fn can_parse_identifiers() {
+    let tokens = lex("hello another1 with.dot _with_underscore-and3245");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::Identifier("hello".to_owned()),
+        start_pos: 0,
+        end_pos: 5
+      }
+    );
+    assert_eq!(
+      res[1],
+      Token {
+        kind: TokenKind::Identifier("another1".to_owned()),
+        start_pos: 6,
+        end_pos: 14
+      }
+    );
+    assert_eq!(
+      res[2],
+      Token {
+        kind: TokenKind::Identifier("with.dot".to_owned()),
+        start_pos: 15,
+        end_pos: 23
+      }
+    );
+    assert_eq!(
+      res[3],
+      Token {
+        kind: TokenKind::Identifier("_with_underscore-and3245".to_owned()),
+        start_pos: 24,
+        end_pos: 48
+      }
+    );
+  }
+  #[test]
+  fn can_parse_line_comments() {
+    let tokens = lex("// hello comment");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::LineComment("// hello comment".to_owned()),
+        start_pos: 0,
+        end_pos: 16
+      }
+    );
+  }
+  
+  #[test]
+  fn can_parse_multiline_comments() {
+    let tokens = lex("/* hello  \n\n comment */");  
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::MultiLineComment("/* hello  \n\n comment */".to_owned()),
+        start_pos: 0,
+        end_pos: 23
+      }
+    );
+  }
+
+  #[test]
+  fn can_parse_eol() {
+    let tokens = lex("hello\nanother1\n");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[1],
+      Token {
+        kind: TokenKind::EOL,
+        start_pos: 5,
+        end_pos: 6
+      }
+    );
+
+    assert_eq!(
+      res[3],
+      Token {
+        kind: TokenKind::EOL,
+        start_pos: 14,
+        end_pos: 15
+      }
+    );
+  }
+
+  #[test]
+  fn can_parse_reference() {
+    let tokens = lex("@hello @another1 @with.dot");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::Reference("hello".to_owned()),
+        start_pos: 0,
+        end_pos: 6
+      }
+    );
+    assert_eq!(
+      res[1],
+      Token {
+        kind: TokenKind::Reference("another1".to_owned()),
+        start_pos: 7,
+        end_pos: 16
+      }
+    );
+    assert_eq!(
+      res[2],
+      Token {
+        kind: TokenKind::Reference("with.dot".to_owned()),
+        start_pos: 17,
+        end_pos: 26
+      }
+    );
+  }
+  #[test]
+  fn can_parse_color() {
+    let tokens = lex("#112233 #acFF23");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::Color("112233".to_owned()),
+        start_pos: 0,
+        end_pos: 7
+      }
+    );
+    assert_eq!(
+      res[1],
+      Token {
+        kind: TokenKind::Color("acFF23".to_owned()),
+        start_pos: 8,
+        end_pos: 15
+      }
+    );
+  }
+  
 
   #[test]
   fn can_parse_booleans() {
