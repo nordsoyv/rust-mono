@@ -14,8 +14,7 @@ config hub {
   table revenue = custom.Historical_Revenue  // historical revenue custom table.
   table new = custom.Account_2
   table ejournal = custom.eJournal
-
-
+  
 // config report cr {
 //   currentPeriod: InMonth(survey:interview_start,-1,0)
 //   previousPeriod: InMonth(survey:interview_start,-13,-11)

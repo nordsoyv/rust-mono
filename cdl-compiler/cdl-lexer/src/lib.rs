@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use anyhow::Result;
 use logos::Logos;
+use logos::Span;
 
 #[derive(Logos, Debug, PartialEq)]
 #[logos(skip r"[ \t\f]+")] // Ignore this regex pattern between tokens
@@ -125,13 +126,27 @@ pub struct Token<'a> {
   end_pos: usize,
 }
 
-fn get_line_number_from_position(text: &str, position: usize) -> (usize, usize) {
+#[derive(Debug, Default)]
+pub struct Location {
+  start_line: usize,
+  start_pos: usize,
+  end_line: usize,
+  end_pos: usize,
+}
+
+pub fn get_location_from_position(text: &str, position: Span) -> Location {
+  let mut location = Location::default();
   let mut line_number = 1;
   let mut line_pos = 1;
   let mut curr_pos = 0;
   for char in text.chars() {
-    if curr_pos == position {
-      return (line_number, line_pos);
+    if curr_pos == position.start {
+      location.start_line = line_number;
+      location.start_pos = line_pos;
+    }
+    if curr_pos == position.end {
+      location.end_line = line_number;
+      location.end_pos = line_pos;
     }
     if char == '\n' {
       line_number += 1;
@@ -140,7 +155,7 @@ fn get_line_number_from_position(text: &str, position: usize) -> (usize, usize) 
     curr_pos += 1;
     line_pos += 1;
   }
-  (0, 0)
+  location
 }
 
 pub fn lex(text: &str) -> Result<Vec<Token>> {
@@ -149,11 +164,11 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
 
   while let Some(lex_result) = lexer.next() {
     if lex_result.is_err() {
-      let (line_number, line_pos) = get_line_number_from_position(text, lexer.span().start);
+      let location = get_location_from_position(text, lexer.span());
       return Err(anyhow!(format!(
         "[{}:{}]: Unknown token \"{}\"",
-        line_number,
-        line_pos,
+        location.start_line,
+        location.end_line,
         lexer.slice(),
       )));
     }
@@ -517,7 +532,7 @@ mod tests {
       }
     );
   }
-  
+
   #[test]
   fn can_parse_color() {
     let tokens = lex("#112233 #acFF23");
@@ -619,10 +634,10 @@ mod tests {
   fn can_parse_large_file() {
     let file = include_str!("../test_script/test.cdl");
     let tokens = lex(file);
-    if tokens.is_err(){
-    dbg!(&tokens);
+    if tokens.is_err() {
+      dbg!(&tokens);
     }
-    
+
     assert!(tokens.is_ok());
     let res = tokens.unwrap();
     assert_eq!(24539, res.len());
