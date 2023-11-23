@@ -10,6 +10,7 @@ enum TokenLexer<'a> {
   Bool(bool),
 
   #[token("\n")]
+  #[token("\r\n")]
   EOL,
 
   #[token("{")]
@@ -48,6 +49,8 @@ enum TokenLexer<'a> {
   Hash,
   #[token("%")]
   Percent,
+  #[token("=")]
+  Equal,
   #[token("!=")]
   NotEqual,
   #[token("<")]
@@ -68,10 +71,10 @@ enum TokenLexer<'a> {
 
   #[regex("_?[a-zA-Z0-9_\\-\\.]*", |lex| lex.slice())]
   Identifier(&'a str),
-  
+
   #[regex("@[a-zA-Z0-9_\\-\\.]*", |lex| &lex.slice()[1..])]
   Reference(&'a str),
-  
+
   #[regex("#[0-9a-fA-F]{6}", |lex| &lex.slice()[1..])]
   Color(&'a str),
 
@@ -79,7 +82,7 @@ enum TokenLexer<'a> {
   LineComment(&'a str),
 
   #[regex(r#"/\*(?:[^*]|\*[^/])*\*/"#, |lex| lex.slice())]
-  MultiLineComment(&'a str),  
+  MultiLineComment(&'a str),
 }
 
 #[derive(Debug, PartialEq)]
@@ -101,6 +104,7 @@ pub enum TokenKind<'a> {
   Div,
   Mul,
   Hash,
+  Equal,
   Percent,
   NotEqual,
   LessThan,
@@ -111,7 +115,7 @@ pub enum TokenKind<'a> {
   Reference(&'a str),
   Color(&'a str),
   LineComment(&'a str),
-  MultiLineComment(&'a str),  
+  MultiLineComment(&'a str),
 }
 
 #[derive(Debug, PartialEq)]
@@ -121,13 +125,37 @@ pub struct Token<'a> {
   end_pos: usize,
 }
 
+fn get_line_number_from_position(text: &str, position: usize) -> (usize, usize) {
+  let mut line_number = 1;
+  let mut line_pos = 1;
+  let mut curr_pos = 0;
+  for char in text.chars() {
+    if curr_pos == position {
+      return (line_number, line_pos);
+    }
+    if char == '\n' {
+      line_number += 1;
+      line_pos = 0;
+    }
+    curr_pos += 1;
+    line_pos += 1;
+  }
+  (0, 0)
+}
+
 pub fn lex(text: &str) -> Result<Vec<Token>> {
   let mut lexer = TokenLexer::lexer(text);
   let mut tokens: Vec<Token> = vec![];
 
   while let Some(lex_result) = lexer.next() {
     if lex_result.is_err() {
-      return Err(anyhow!(format!("Unknown token \"{}\"", lexer.slice())));
+      let (line_number, line_pos) = get_line_number_from_position(text, lexer.span().start);
+      return Err(anyhow!(format!(
+        "[{}:{}]: Unknown token \"{}\"",
+        line_number,
+        line_pos,
+        lexer.slice(),
+      )));
     }
     let token = lex_result.unwrap();
     let span = lexer.span();
@@ -212,6 +240,11 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
         start_pos: span.start,
         end_pos: span.end,
       },
+      TokenLexer::Equal => Token {
+        kind: TokenKind::Equal,
+        start_pos: span.start,
+        end_pos: span.end,
+      },
       TokenLexer::NotEqual => Token {
         kind: TokenKind::NotEqual,
         start_pos: span.start,
@@ -286,7 +319,7 @@ mod tests {
     let tokens = lex("&&&&");
     assert!(tokens.is_err());
     let err = tokens.unwrap_err();
-    assert_eq!(format!("{}", err), "Unknown token \"&\"");
+    assert_eq!(format!("{}", err), "[1:1]: Unknown token \"&\"");
   }
 
   #[test]
@@ -362,7 +395,6 @@ mod tests {
     );
   }
 
-
   #[test]
   fn can_parse_identifiers() {
     let tokens = lex("hello another1 with.dot _with_underscore-and3245");
@@ -415,10 +447,10 @@ mod tests {
       }
     );
   }
-  
+
   #[test]
   fn can_parse_multiline_comments() {
-    let tokens = lex("/* hello  \n\n comment */");  
+    let tokens = lex("/* hello  \n\n comment */");
     assert!(tokens.is_ok());
     let res = tokens.unwrap();
     assert_eq!(
@@ -485,6 +517,7 @@ mod tests {
       }
     );
   }
+  
   #[test]
   fn can_parse_color() {
     let tokens = lex("#112233 #acFF23");
@@ -507,7 +540,6 @@ mod tests {
       }
     );
   }
-  
 
   #[test]
   fn can_parse_booleans() {
@@ -581,5 +613,18 @@ mod tests {
         end_pos: 11,
       }
     );
+  }
+
+  #[test]
+  fn can_parse_large_file() {
+    let file = include_str!("../test_script/test.cdl");
+    let tokens = lex(file);
+    if tokens.is_err(){
+    dbg!(&tokens);
+    }
+    
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(24539, res.len());
   }
 }
