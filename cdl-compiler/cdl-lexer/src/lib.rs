@@ -1,7 +1,29 @@
 use anyhow::anyhow;
 use anyhow::Result;
+use logos::Lexer;
 use logos::Logos;
 use logos::Span;
+use std::rc::Rc;
+
+
+fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
+  let slice = lex.slice();
+  let rc : Rc<str> = slice.into();
+  return rc;
+}
+
+fn to_rcstr_skip1(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
+  let slice = &lex.slice()[1..];
+  let rc : Rc<str> = slice.into();
+  return rc;
+}
+
+
+// fn mega(lex: &mut Lexerer<Token>) -> Option<u64> {
+//   let slice = lex.slice();
+//   let n: u64 = slice[..slice.len() - 1].parse().ok()?; // skip 'm'
+//   Some(n * 1_000_000)
+// }
 
 #[derive(Logos, Debug, PartialEq)]
 #[logos(skip r"[ \t\f]+")] // Ignore this regex pattern between tokens
@@ -66,24 +88,24 @@ enum TokenLexer {
   #[regex(r"-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?", |lex| lex.slice().parse::<f64>().unwrap())]
   Number(f64),
 
-  #[regex(r#""(?:[^"]|\\")*""#, |lex| lex.slice().to_owned())]
-  #[regex(r#"'(?:[^']|\\')*'"#, |lex| lex.slice().to_owned())]
-  String(String),
+  #[regex(r#""(?:[^"]|\\")*""#, to_rcstr)]
+  #[regex(r#"'(?:[^']|\\')*'"#, to_rcstr)]
+  String(Rc<str>),
+ 
+  #[regex("_?[a-zA-Z0-9_\\-\\.]*", to_rcstr)]
+  Identifier(Rc<str>),
 
-  #[regex("_?[a-zA-Z0-9_\\-\\.]*", |lex| lex.slice().to_owned())]
-  Identifier(String),
+  #[regex("@[a-zA-Z0-9_\\-\\.]*", to_rcstr_skip1)]
+  Reference(Rc<str>),
 
-  #[regex("@[a-zA-Z0-9_\\-\\.]*", |lex| lex.slice()[1..].to_owned())]
-  Reference(String),
+  #[regex("#[0-9a-fA-F]{6}", to_rcstr_skip1)]
+  Color(Rc<str>),
 
-  #[regex("#[0-9a-fA-F]{6}", |lex| lex.slice()[1..].to_owned())]
-  Color(String),
+  #[regex("//[^\n]*", to_rcstr)]
+  LineComment(Rc<str>),
 
-  #[regex("//[^\n]*", |lex| lex.slice().to_owned())]
-  LineComment(String),
-
-  #[regex(r#"/\*(?:[^*]|\*[^/])*\*/"#, |lex| lex.slice().to_owned())]
-  MultiLineComment(String),
+  #[regex(r#"/\*(?:[^*]|\*[^/])*\*/"#, to_rcstr)]
+  MultiLineComment(Rc<str>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -99,7 +121,7 @@ pub enum TokenKind {
   Colon,
   Comma,
   Number(f64),
-  String(String),
+  String(Rc<str>),
   Plus,
   Minus,
   Div,
@@ -112,11 +134,11 @@ pub enum TokenKind {
   LessThanOrEqual,
   MoreThan,
   MoreThanOrEqual,
-  Identifier(String),
-  Reference(String),
-  Color(String),
-  LineComment(String),
-  MultiLineComment(String),
+  Identifier(Rc<str>),
+  Reference(Rc<str>),
+  Color(Rc<str>),
+  LineComment(Rc<str>),
+  MultiLineComment(Rc<str>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -291,7 +313,7 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
         end_pos: span.end,
       },
       TokenLexer::String(s) => Token {
-        kind: TokenKind::String(s),
+        kind: TokenKind::String(s.clone()),
         start_pos: span.start,
         end_pos: span.end,
       },
@@ -345,7 +367,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("\"hello \"".to_owned()),
+        kind: TokenKind::String("\"hello \"".into()),
         start_pos: 0,
         end_pos: 8
       }
@@ -359,7 +381,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("\"'hello' \"".to_owned()),
+        kind: TokenKind::String("\"'hello' \"".into()),
         start_pos: 0,
         end_pos: 10
       }
@@ -373,7 +395,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("\"hello\n\n world \"".to_owned()),
+        kind: TokenKind::String("\"hello\n\n world \"".into()),
         start_pos: 0,
         end_pos: 16
       }
@@ -388,7 +410,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("'hello '".to_owned()),
+        kind: TokenKind::String("'hello '".into()),
         start_pos: 0,
         end_pos: 8
       }
@@ -403,7 +425,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("'hello\n\n world '".to_owned()),
+        kind: TokenKind::String("'hello\n\n world '".into()),
         start_pos: 0,
         end_pos: 16
       }
@@ -418,7 +440,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::Identifier("hello".to_owned()),
+        kind: TokenKind::Identifier("hello".into()),
         start_pos: 0,
         end_pos: 5
       }
@@ -426,7 +448,7 @@ mod tests {
     assert_eq!(
       res[1],
       Token {
-        kind: TokenKind::Identifier("another1".to_owned()),
+        kind: TokenKind::Identifier("another1".into()),
         start_pos: 6,
         end_pos: 14
       }
@@ -434,7 +456,7 @@ mod tests {
     assert_eq!(
       res[2],
       Token {
-        kind: TokenKind::Identifier("with.dot".to_owned()),
+        kind: TokenKind::Identifier("with.dot".into()),
         start_pos: 15,
         end_pos: 23
       }
@@ -442,7 +464,7 @@ mod tests {
     assert_eq!(
       res[3],
       Token {
-        kind: TokenKind::Identifier("_with_underscore-and3245".to_owned()),
+        kind: TokenKind::Identifier("_with_underscore-and3245".into()),
         start_pos: 24,
         end_pos: 48
       }
@@ -456,7 +478,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::LineComment("// hello comment".to_owned()),
+        kind: TokenKind::LineComment("// hello comment".into()),
         start_pos: 0,
         end_pos: 16
       }
@@ -471,7 +493,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::MultiLineComment("/* hello  \n\n comment */".to_owned()),
+        kind: TokenKind::MultiLineComment("/* hello  \n\n comment */".into()),
         start_pos: 0,
         end_pos: 23
       }
@@ -510,7 +532,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::Reference("hello".to_owned()),
+        kind: TokenKind::Reference("hello".into()),
         start_pos: 0,
         end_pos: 6
       }
@@ -518,7 +540,7 @@ mod tests {
     assert_eq!(
       res[1],
       Token {
-        kind: TokenKind::Reference("another1".to_owned()),
+        kind: TokenKind::Reference("another1".into()),
         start_pos: 7,
         end_pos: 16
       }
@@ -526,7 +548,7 @@ mod tests {
     assert_eq!(
       res[2],
       Token {
-        kind: TokenKind::Reference("with.dot".to_owned()),
+        kind: TokenKind::Reference("with.dot".into()),
         start_pos: 17,
         end_pos: 26
       }
@@ -541,7 +563,7 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::Color("112233".to_owned()),
+        kind: TokenKind::Color("112233".into()),
         start_pos: 0,
         end_pos: 7
       }
@@ -549,7 +571,7 @@ mod tests {
     assert_eq!(
       res[1],
       Token {
-        kind: TokenKind::Color("acFF23".to_owned()),
+        kind: TokenKind::Color("acFF23".into()),
         start_pos: 8,
         end_pos: 15
       }
