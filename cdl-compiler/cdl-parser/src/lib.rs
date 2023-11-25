@@ -1,6 +1,6 @@
-use std::{cell::RefCell};
+use std::{cell::RefCell, rc::Rc};
 
-use anyhow::{anyhow, Result};
+use anyhow::{ Result};
 use cdl_lexer::{lex, Token, TokenKind};
 
 type NodeRef = usize;
@@ -20,9 +20,9 @@ impl Parser {
     None
   }
 
-  fn get_next_token(&self) -> Option<&Token> {
-    if self.curr_token + 1 < self.tokens.len() {
-      return Some(&self.tokens[self.curr_token + 1]);
+  fn get_next_token(&self, num : usize) -> Option<&Token> {
+    if self.curr_token + num < self.tokens.len() {
+      return Some(&self.tokens[self.curr_token + num]);
     }
     None
   }
@@ -30,15 +30,19 @@ impl Parser {
   fn eat_token(&mut self) {
     self.curr_token += 1;
   }
-
+  
+  fn eat_tokens(&mut self, num :usize) {
+    self.curr_token += num;
+  }
   fn add_node(&self, n: Node) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
     nodes.push(n);
     return nodes.len() - 1;
   }
 
-  fn parse(&mut self) {
-    self.parse_top_level();
+  fn parse(&mut self) -> Result<()> {
+    self.parse_top_level()?;
+    Ok(())
   }
   
   fn is_tokens_left(&self) -> bool {
@@ -47,27 +51,28 @@ impl Parser {
 
   fn parse_top_level(&mut self) -> Result<()> {
     while self.is_tokens_left() {
-      if let Some((nodeRef, eaten)) =  self.try_parse_title(&self.tokens[self.curr_token..]) {
-        self.curr_token += eaten;
+      if let Some(_node_ref) =  self.try_parse_title() {
+        continue;
       }
     }
-
-
-   
     Ok(())
   }
 
-  fn try_parse_title(&self, tokens: &[Token]) -> Option<(NodeRef, usize)> {
-    if tokens[0].kind != TokenKind::Identifier("title".to_string()) {
+  fn try_parse_title(&mut self) -> Option<NodeRef> {
+    let curr_token = self.get_current_token()?;
+    let token_1 = self.get_next_token(1)?;
+    let token_2 = self.get_next_token(2)?;
+    
+    if curr_token.kind != TokenKind::Identifier("title".into()) {
       return None;
     }
-    if let TokenKind::String(title) = &tokens[1].kind  {
-      if tokens[2].kind == TokenKind::EOL {
-        let nodeRef = self.add_node(Node::Title(title.to_string()));
-        return Some((nodeRef, 3));
+    if let TokenKind::String(title) = &token_1.kind  {
+      if token_2.kind == TokenKind::EOL {
+        let node_ref = self.add_node(Node::Title(title.clone()));
+        self.eat_tokens(3);
+        return Some(node_ref);
       }
     }
-    
     return None;
   }
 }
@@ -79,7 +84,7 @@ pub fn parse_text(text: &str) -> Result<Ast> {
     nodes: RefCell::new(Vec::new()),
     tokens: tokens,
   };
-  parser.parse();
+  let _ = parser.parse();
 
   Ok(Ast {
     nodes: parser.nodes.take(),
@@ -96,7 +101,7 @@ pub struct Ast {
 #[derive(Debug)]
 pub enum Node {
   Entity,
-  Title(String),
+  Title(Rc<str>),
 }
 
 #[cfg(test)]
