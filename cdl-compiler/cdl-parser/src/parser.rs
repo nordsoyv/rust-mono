@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use cdl_lexer::Token;
 
 use crate::{ast_nodes::{AstTitleNode, AstEntityNode}, types::NodeRef};
+use crate::ast_nodes::Parsable;
 use anyhow::Result;
 #[derive(Debug)]
 pub enum Node {
@@ -75,7 +76,8 @@ impl Parser {
     };
     self.add_node(Node::Entity(root_node));
     while self.is_tokens_left() {
-      if let Some(node_ref) = AstTitleNode::try_parse(self, root_node_ref) {
+      if let Some(_) = AstTitleNode::can_parse(self) {
+        let node_ref = AstTitleNode::parse( self, root_node_ref)?;
         self.add_child_to_node(root_node_ref, node_ref);
         continue;
       }
