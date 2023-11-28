@@ -34,6 +34,7 @@ impl Parser {
     None
   }
 
+  #[allow(dead_code)]
   fn eat_token(&mut self) {
     self.curr_token += 1;
   }
@@ -76,7 +77,7 @@ impl Parser {
     };
     self.add_node(Node::Entity(root_node));
     while self.is_tokens_left() {
-      if let Some(_) = AstTitleNode::can_parse(self) {
+      if AstTitleNode::can_parse(self) {
         let node_ref = AstTitleNode::parse( self, root_node_ref)?;
         self.add_child_to_node(root_node_ref, node_ref);
         continue;

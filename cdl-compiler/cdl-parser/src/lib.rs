@@ -40,8 +40,8 @@ mod tests {
 
   #[test]
   fn can_parse_title() {
-    let ast = parse_text("title \"title\"\n");
-    dbg!(&ast);
+    let ast = parse_text("title \"dashboard title\"\n");
     assert!(ast.is_ok());
+    dbg!(&ast.unwrap());
   }
 }
