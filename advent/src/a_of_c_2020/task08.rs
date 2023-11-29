@@ -1,6 +1,6 @@
 use crate::task::Task;
 use crate::util::read_file;
-use crate::a_of_c_2020::task08::Cmd::{Jmp, Nop};
+use crate::a_of_c_2020::task08::Cmd::Jmp;
 
 pub struct Task08A {}
 
@@ -20,7 +20,7 @@ impl Task for Task08B {
     game.read_program_from_string(&read_file("./res/2020/task08.txt"));
     for com_num in 0..game.commands.len() {
       match &game.commands[com_num] {
-        Cmd::Nop(arg) => {
+        Cmd::Nop(_arg) => {
           game.change_nop_to_jmp(com_num);
           let value = game.run();
           match value {
@@ -32,7 +32,7 @@ impl Task for Task08B {
           }
           game.change_jmp_to_nop(com_num);
         }
-        Cmd::Jmp(arg) => {
+        Cmd::Jmp(_arg) => {
           game.change_jmp_to_nop(com_num);
           let value = game.run();
           match value {

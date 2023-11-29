@@ -1,4 +1,4 @@
-use std::{fs};
+use std::fs;
 
 pub type IntCode = Vec<i32>;
 
@@ -59,7 +59,7 @@ impl IntCodeMachine {
       match digits[digits.len() - 2 - param_num] {
         0 => ParameterMode::Position,
         1 => ParameterMode::Immediate,
-        _ => panic!(format!("Unknown parameter mode {:?} , param {}", digits, param_num))
+        _ => panic!("Unknown parameter mode {:?} , param {}", digits, param_num)
       }
     } else {
       ParameterMode::Position
@@ -170,7 +170,7 @@ impl IntCodeMachine {
           size: 1,
         }
       }
-      _ => panic!(format!("Unknown code {}", op))
+      _ => panic!("Unknown code {}", op)
     }
   }
 

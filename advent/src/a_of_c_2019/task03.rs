@@ -72,11 +72,14 @@ impl Segment {
       {
         let mut length = self.total_length + o.total_length;
         length += o.start_y - self.start_y;
-        length += self.start_x -o.start_x;
-        return Some((Pos {
-          y: self.start_x,
-          x: o.start_y,
-        }, length ));
+        length += self.start_x - o.start_x;
+        return Some((
+          Pos {
+            y: self.start_x,
+            x: o.start_y,
+          },
+          length,
+        ));
       }
       return None; //tmp
     } else if self.start_y == self.end_y {
@@ -94,16 +97,17 @@ impl Segment {
         let mut length = self.total_length + o.total_length;
         length += o.start_x - self.start_x;
         length += self.start_y - o.start_y;
-        return Some((Pos {
-          y: self.start_y,
-          x: o.start_x,
-        }, length));
+        return Some((
+          Pos {
+            y: self.start_y,
+            x: o.start_x,
+          },
+          length,
+        ));
       }
       return None;
     } else {
-      panic!(format!(
-        "Found segment that was neither horizontal or vertical"
-      ));
+      panic!("Found segment that was neither horizontal or vertical");
     }
   }
 }
@@ -159,7 +163,6 @@ impl Wire {
     best
   }
 
-
   fn create(&mut self, def: &str) {
     let mut curr_x = 0;
     let mut curr_y = 0;
@@ -173,26 +176,46 @@ impl Wire {
     for d in defs {
       match d.0 {
         "U" => {
-          self.segments
-            .push(Segment::new(curr_x, curr_x, curr_y, curr_y + d.1, total_length));
+          self.segments.push(Segment::new(
+            curr_x,
+            curr_x,
+            curr_y,
+            curr_y + d.1,
+            total_length,
+          ));
           curr_y += d.1;
           total_length += d.1.abs();
         }
         "D" => {
-          self.segments
-            .push(Segment::new(curr_x, curr_x, curr_y, curr_y - d.1, total_length));
+          self.segments.push(Segment::new(
+            curr_x,
+            curr_x,
+            curr_y,
+            curr_y - d.1,
+            total_length,
+          ));
           curr_y -= d.1;
           total_length += d.1.abs();
         }
         "L" => {
-          self.segments
-            .push(Segment::new(curr_x, curr_x - d.1, curr_y, curr_y, total_length));
+          self.segments.push(Segment::new(
+            curr_x,
+            curr_x - d.1,
+            curr_y,
+            curr_y,
+            total_length,
+          ));
           curr_x -= d.1;
           total_length += d.1.abs();
         }
         "R" => {
-          self.segments
-            .push(Segment::new(curr_x, curr_x + d.1, curr_y, curr_y, total_length ));
+          self.segments.push(Segment::new(
+            curr_x,
+            curr_x + d.1,
+            curr_y,
+            curr_y,
+            total_length,
+          ));
           curr_x += d.1;
           total_length += d.1.abs();
         }
@@ -239,7 +262,6 @@ impl Task for Task03B {
   }
 }
 
-
 #[test]
 fn intersect_test01() {
   let wire_string_1 = "R75,D30,R83,U83,L12,D49,R71,U7,L72";
@@ -285,5 +307,5 @@ fn intersect_short_test02() {
   let mut w2 = Wire { segments: vec![] };
   w2.create(wire_string_2);
   let _best = w1.intersect_shortest(w2);
-//  assert_eq!(best, 410) WRONG, dont care :)
+  //  assert_eq!(best, 410) WRONG, dont care :)
 }
