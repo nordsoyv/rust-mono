@@ -1,16 +1,18 @@
 use std::cell::RefCell;
 
-use cdl_lexer::Token;
+use cdl_lexer::{Token, TokenKind};
 
-use crate::{ast_nodes::{AstTitleNode, AstEntityNode}, types::NodeRef};
 use crate::ast_nodes::Parsable;
-use anyhow::Result;
+use crate::{
+  ast_nodes::{AstEntityNode, AstTitleNode},
+  types::NodeRef,
+};
+use anyhow::{anyhow, Result};
 #[derive(Debug)]
 pub enum Node {
   Title(AstTitleNode),
   Entity(AstEntityNode),
 }
-
 
 #[derive(Debug)]
 pub struct Parser {
@@ -35,13 +37,28 @@ impl Parser {
   }
 
   #[allow(dead_code)]
-  fn eat_token(&mut self) {
+  pub fn eat_token(&mut self) {
     self.curr_token += 1;
   }
 
   pub fn eat_tokens(&mut self, num: usize) {
     self.curr_token += num;
   }
+
+  pub fn eat_token_of_type(&mut self, kind: TokenKind) -> Result<()> {
+    let current_token = self
+      .get_current_token()
+      .ok_or(anyhow!(format!("Expected {:?}, found EOF", kind)))?;
+    if current_token.kind != kind {
+      return Err(anyhow!(format!(
+        "Expected {:?}, found {:?}",
+        kind, current_token.kind
+      )));
+    }
+    self.eat_token();
+    Ok(())
+  }
+
   pub fn add_node(&self, n: Node) {
     let mut nodes = self.nodes.borrow_mut();
     nodes.push(n);
@@ -53,6 +70,26 @@ impl Parser {
 
   pub fn parse(&mut self) -> Result<NodeRef> {
     Ok(self.parse_top_level()?)
+  }
+
+  pub fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {
+    let mut num_tokens = 0;
+    loop {
+      let curr_token = self.get_next_token(num_tokens);
+      if curr_token.is_some() {
+        let curr_token = curr_token.unwrap();
+        if curr_token.kind == kind {
+          num_tokens += 1;
+        } else {
+          break;
+        }
+      }
+    }
+    if num_tokens > 0 {
+      let end_token = self.curr_token + num_tokens;
+      return &self.tokens[self.curr_token..end_token];
+    }
+    return &[];
   }
 
   fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
@@ -78,8 +115,26 @@ impl Parser {
     self.add_node(Node::Entity(root_node));
     while self.is_tokens_left() {
       if AstTitleNode::can_parse(self) {
-        let node_ref = AstTitleNode::parse( self, root_node_ref)?;
+        let node_ref = AstTitleNode::parse(self, root_node_ref)?;
         self.add_child_to_node(root_node_ref, node_ref);
+        continue;
+      }
+      if AstEntityNode::can_parse(self) {
+        let node_ref = AstEntityNode::parse(self, root_node_ref)?;
+        self.add_child_to_node(root_node_ref, node_ref);
+        continue;
+      }
+      let curr_token = self.get_current_token().unwrap();;
+      if curr_token.kind == TokenKind::EOL {
+        self.eat_token();
+        continue;
+      }
+      if curr_token.kind == TokenKind::LineComment {
+        self.eat_token();
+        continue;
+      }
+      if curr_token.kind == TokenKind::MultiLineComment {
+        self.eat_token();
         continue;
       }
     }

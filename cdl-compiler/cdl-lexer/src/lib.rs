@@ -5,25 +5,17 @@ use logos::Logos;
 use logos::Span;
 use std::rc::Rc;
 
-
 fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
   let slice = lex.slice();
-  let rc : Rc<str> = slice.into();
+  let rc: Rc<str> = slice.into();
   return rc;
 }
 
 fn to_rcstr_skip1(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
   let slice = &lex.slice()[1..];
-  let rc : Rc<str> = slice.into();
+  let rc: Rc<str> = slice.into();
   return rc;
 }
-
-
-// fn mega(lex: &mut Lexerer<Token>) -> Option<u64> {
-//   let slice = lex.slice();
-//   let n: u64 = slice[..slice.len() - 1].parse().ok()?; // skip 'm'
-//   Some(n * 1_000_000)
-// }
 
 #[derive(Logos, Debug, PartialEq)]
 #[logos(skip r"[ \t\f]+")] // Ignore this regex pattern between tokens
@@ -91,7 +83,7 @@ enum TokenLexer {
   #[regex(r#""(?:[^"]|\\")*""#, to_rcstr)]
   #[regex(r#"'(?:[^']|\\')*'"#, to_rcstr)]
   String(Rc<str>),
- 
+
   #[regex("_?[a-zA-Z0-9_\\-\\.]*", to_rcstr)]
   Identifier(Rc<str>),
 
@@ -121,7 +113,7 @@ pub enum TokenKind {
   Colon,
   Comma,
   Number(f64),
-  String(Rc<str>),
+  String,
   Plus,
   Minus,
   Div,
@@ -134,18 +126,18 @@ pub enum TokenKind {
   LessThanOrEqual,
   MoreThan,
   MoreThanOrEqual,
-  Identifier(Rc<str>),
-  Reference(Rc<str>),
-  Color(Rc<str>),
-  LineComment(Rc<str>),
-  MultiLineComment(Rc<str>),
+  Identifier,
+  Reference,
+  Color,
+  LineComment,
+  MultiLineComment,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
   pub kind: TokenKind,
-  pub start_pos: usize,
-  pub end_pos: usize,
+  pub pos: Span,
+  pub text: Option<Rc<str>>,
 }
 
 #[derive(Debug, Default)]
@@ -199,148 +191,148 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
     tokens.push(match token {
       TokenLexer::Bool(b) => Token {
         kind: TokenKind::Boolean(b),
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::EOL => Token {
         kind: TokenKind::EOL,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::BraceOpen => Token {
         kind: TokenKind::BraceOpen,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::BraceClose => Token {
         kind: TokenKind::BraceClose,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::BracketOpen => Token {
         kind: TokenKind::BracketOpen,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::BracketClose => Token {
         kind: TokenKind::BracketClose,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::ParenOpen => Token {
         kind: TokenKind::ParenOpen,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::ParenClose => Token {
         kind: TokenKind::ParenClose,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Colon => Token {
         kind: TokenKind::Colon,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Comma => Token {
         kind: TokenKind::Comma,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Plus => Token {
         kind: TokenKind::Plus,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Minus => Token {
         kind: TokenKind::Minus,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Div => Token {
         kind: TokenKind::Div,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Mul => Token {
         kind: TokenKind::Mul,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Hash => Token {
         kind: TokenKind::Hash,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Percent => Token {
         kind: TokenKind::Percent,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Equal => Token {
         kind: TokenKind::Equal,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::NotEqual => Token {
         kind: TokenKind::NotEqual,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::LessThan => Token {
         kind: TokenKind::LessThan,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::MoreThan => Token {
         kind: TokenKind::MoreThan,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::LessThanOrEqual => Token {
         kind: TokenKind::LessThanOrEqual,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::MoreThanOrEqual => Token {
         kind: TokenKind::MoreThanOrEqual,
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::Number(n) => Token {
         kind: TokenKind::Number(n),
-        start_pos: span.start,
-        end_pos: span.end,
+        pos: span,
+        text: None,
       },
       TokenLexer::String(s) => Token {
-        kind: TokenKind::String(s.clone()),
-        start_pos: span.start,
-        end_pos: span.end,
+        kind: TokenKind::String,
+        pos: span,
+        text: Some(s.clone()),
       },
       TokenLexer::Identifier(i) => Token {
-        kind: TokenKind::Identifier(i),
-        start_pos: span.start,
-        end_pos: span.end,
+        kind: TokenKind::Identifier,
+        pos: span,
+        text: Some(i.clone()),
       },
       TokenLexer::Reference(r) => Token {
-        kind: TokenKind::Reference(r),
-        start_pos: span.start,
-        end_pos: span.end,
+        kind: TokenKind::Reference,
+        pos: span,
+        text: Some(r.clone()),
       },
       TokenLexer::Color(c) => Token {
-        kind: TokenKind::Color(c),
-        start_pos: span.start,
-        end_pos: span.end,
+        kind: TokenKind::Color,
+        pos: span,
+        text: Some(c.clone()),
       },
       TokenLexer::LineComment(l) => Token {
-        kind: TokenKind::LineComment(l),
-        start_pos: span.start,
-        end_pos: span.end,
+        kind: TokenKind::LineComment,
+        pos: span,
+        text: Some(l.clone()),
       },
       TokenLexer::MultiLineComment(l) => Token {
-        kind: TokenKind::MultiLineComment(l),
-        start_pos: span.start,
-        end_pos: span.end,
+        kind: TokenKind::MultiLineComment,
+        pos: span,
+        text: Some(l.clone()),
       },
     });
   }
@@ -367,9 +359,9 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("\"hello \"".into()),
-        start_pos: 0,
-        end_pos: 8
+        kind: TokenKind::String,
+        text: Some("\"hello \"".into()),
+        pos: 0..8
       }
     );
   }
@@ -381,9 +373,9 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("\"'hello' \"".into()),
-        start_pos: 0,
-        end_pos: 10
+        kind: TokenKind::String,
+        text: Some("\"'hello' \"".into()),
+        pos: 0..10
       }
     );
   }
@@ -395,9 +387,9 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("\"hello\n\n world \"".into()),
-        start_pos: 0,
-        end_pos: 16
+        kind: TokenKind::String,
+        text: Some("\"hello\n\n world \"".into()),
+        pos: 0..16
       }
     );
   }
@@ -410,9 +402,9 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("'hello '".into()),
-        start_pos: 0,
-        end_pos: 8
+        kind: TokenKind::String,
+        text: Some("'hello '".into()),
+        pos: 0..8
       }
     );
   }
@@ -425,9 +417,9 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::String("'hello\n\n world '".into()),
-        start_pos: 0,
-        end_pos: 16
+        kind: TokenKind::String,
+        text: Some("'hello\n\n world '".into()),
+        pos: 0..16
       }
     );
   }
@@ -440,33 +432,33 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::Identifier("hello".into()),
-        start_pos: 0,
-        end_pos: 5
+        kind: TokenKind::Identifier,
+        text: Some("hello".into()),
+        pos: 0..5
       }
     );
     assert_eq!(
       res[1],
       Token {
-        kind: TokenKind::Identifier("another1".into()),
-        start_pos: 6,
-        end_pos: 14
+        kind: TokenKind::Identifier,
+        text: Some("another1".into()),
+        pos: 6..14
       }
     );
     assert_eq!(
       res[2],
       Token {
-        kind: TokenKind::Identifier("with.dot".into()),
-        start_pos: 15,
-        end_pos: 23
+        kind: TokenKind::Identifier,
+        text: Some("with.dot".into()),
+        pos: 15..23
       }
     );
     assert_eq!(
       res[3],
       Token {
-        kind: TokenKind::Identifier("_with_underscore-and3245".into()),
-        start_pos: 24,
-        end_pos: 48
+        kind: TokenKind::Identifier,
+        text: Some("_with_underscore-and3245".into()),
+        pos: 24..48
       }
     );
   }
@@ -478,9 +470,9 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::LineComment("// hello comment".into()),
-        start_pos: 0,
-        end_pos: 16
+        kind: TokenKind::LineComment,
+        text: Some("// hello comment".into()),
+        pos: 0..16
       }
     );
   }
@@ -493,9 +485,9 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::MultiLineComment("/* hello  \n\n comment */".into()),
-        start_pos: 0,
-        end_pos: 23
+        kind: TokenKind::MultiLineComment,
+        text: Some("/* hello  \n\n comment */".into()),
+        pos: 0..23
       }
     );
   }
@@ -509,8 +501,8 @@ mod tests {
       res[1],
       Token {
         kind: TokenKind::EOL,
-        start_pos: 5,
-        end_pos: 6
+        text: None,
+        pos: 5..6
       }
     );
 
@@ -518,8 +510,8 @@ mod tests {
       res[3],
       Token {
         kind: TokenKind::EOL,
-        start_pos: 14,
-        end_pos: 15
+        text: None,
+        pos: 14..15
       }
     );
   }
@@ -532,25 +524,25 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::Reference("hello".into()),
-        start_pos: 0,
-        end_pos: 6
+        kind: TokenKind::Reference,
+        text: Some("hello".into()),
+        pos: 0..6
       }
     );
     assert_eq!(
       res[1],
       Token {
-        kind: TokenKind::Reference("another1".into()),
-        start_pos: 7,
-        end_pos: 16
+        kind: TokenKind::Reference,
+        text: Some("another1".into()),
+        pos: 7..16
       }
     );
     assert_eq!(
       res[2],
       Token {
-        kind: TokenKind::Reference("with.dot".into()),
-        start_pos: 17,
-        end_pos: 26
+        kind: TokenKind::Reference,
+        text: Some("with.dot".into()),
+        pos: 17..26
       }
     );
   }
@@ -563,17 +555,17 @@ mod tests {
     assert_eq!(
       res[0],
       Token {
-        kind: TokenKind::Color("112233".into()),
-        start_pos: 0,
-        end_pos: 7
+        kind: TokenKind::Color,
+        text: Some("112233".into()),
+        pos: 0..7
       }
     );
     assert_eq!(
       res[1],
       Token {
-        kind: TokenKind::Color("acFF23".into()),
-        start_pos: 8,
-        end_pos: 15
+        kind: TokenKind::Color,
+        text: Some("acFF23".into()),
+        pos: 8..15
       }
     );
   }
@@ -585,16 +577,16 @@ mod tests {
       tokens[0],
       Token {
         kind: TokenKind::Boolean(true),
-        start_pos: 0,
-        end_pos: 4,
+        text: None,
+        pos: 0..4
       }
     );
     assert_eq!(
       tokens[1],
       Token {
         kind: TokenKind::Boolean(false),
-        start_pos: 5,
-        end_pos: 10,
+        text: None,
+        pos: 5..10
       }
     );
   }
@@ -606,48 +598,48 @@ mod tests {
       tokens[0],
       Token {
         kind: TokenKind::ParenOpen,
-        start_pos: 0,
-        end_pos: 1,
+        text: None,
+        pos: 0..1
       }
     );
     assert_eq!(
       tokens[1],
       Token {
         kind: TokenKind::BraceOpen,
-        start_pos: 2,
-        end_pos: 3,
+        text: None,
+        pos: 2..3
       }
     );
     assert_eq!(
       tokens[2],
       Token {
         kind: TokenKind::BracketOpen,
-        start_pos: 4,
-        end_pos: 5,
+        text: None,
+        pos: 4..5
       }
     );
     assert_eq!(
       tokens[3],
       Token {
         kind: TokenKind::ParenClose,
-        start_pos: 6,
-        end_pos: 7,
+        text: None,
+        pos: 6..7
       }
     );
     assert_eq!(
       tokens[4],
       Token {
         kind: TokenKind::BraceClose,
-        start_pos: 8,
-        end_pos: 9,
+        text: None,
+        pos: 8..9
       }
     );
     assert_eq!(
       tokens[5],
       Token {
         kind: TokenKind::BracketClose,
-        start_pos: 10,
-        end_pos: 11,
+        text: None,
+        pos: 10..11
       }
     );
   }

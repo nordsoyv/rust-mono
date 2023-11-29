@@ -30,16 +30,17 @@ impl Parsable for AstTitleNode {
       return false;
     }
 
-    if curr_token.unwrap().kind != TokenKind::Identifier("title".into()) {
-      return false;
-    }
-    if let TokenKind::String(_title) = &token_1.unwrap().kind {
-      return true;
-    }
+    let curr_token = curr_token.unwrap();
+    let token1 = token_1.unwrap();
     if token_2.unwrap().kind != TokenKind::EOL {
       return false;
     }
-    return true;
+    if curr_token.kind == TokenKind::Identifier && curr_token.text == Some("title".into()) {
+      if token1.kind == TokenKind::String {
+        return true;
+      }
+    }
+    return false;
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
@@ -48,11 +49,11 @@ impl Parsable for AstTitleNode {
       .ok_or(anyhow!("Got error unwraping token for title"))?;
     let node_ref = parser.get_next_node_ref();
     match &title_token.kind {
-      TokenKind::String(title) => {
+      TokenKind::String => {
         let ast_node = AstTitleNode {
           node_ref,
           parent,
-          title: title.clone(),
+          title: title_token.text.as_ref().unwrap().clone(),
         };
         parser.add_node(Node::Title(ast_node));
         parser.eat_tokens(3);
@@ -70,51 +71,67 @@ pub struct AstEntityNode {
   pub children: Vec<NodeRef>,
 }
 
-// impl Parsable for AstEntityNode {
-//   fn can_parse(parser: &Parser) -> bool {
-//     let curr_token = parser.get_current_token();
-//     let token_1 = parser.get_next_token(1);
-//     let token_2 = parser.get_next_token(2);
-//     if curr_token.is_none() || token_1.is_none() || token_2.is_none() {
-//       return false;
-//     }
-//     let curr_token = curr_token.unwrap();
-//     let token_1 = token_1.unwrap();
-//     let token_2 = token_2.unwrap();
-//     if token_1.kind != TokenKind::BraceOpen {
-//       return false;
-//     }
-//     if token_2.kind != TokenKind::EOL {
-//       return false;
-//     }
-//     if let TokenKind::String(_main_type) = &curr_token.kind {
-//       return true;
-//     }
-//     return false;
-//   }
+impl Parsable for AstEntityNode {
+  fn can_parse(parser: &Parser) -> bool {
+    let next_token = parser.get_current_token();
+    if next_token.is_some() {
+      let next_token = next_token.unwrap();
+      if next_token.kind == TokenKind::Identifier {
+        return true;
+      }
+    }
+    return false;
+  }
 
-//   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-//     let header = AstEntityNode::parse_entity_header(parser)?;
+  fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
+    let header = AstEntityNode::parse_entity_header(parser)?;
+    parser.eat_tokens(header.num_tokens);
+    parser.eat_token_of_type(TokenKind::BraceOpen)?;
+    parser.eat_token_of_type(TokenKind::EOL)?;
 
-//     let body = AstEntityNode::parse_entity_body(parser)?;
-//   }
-// }
+    let node_ref = parser.get_next_node_ref();
+    let mut entity = AstEntityNode {
+      children: vec![],
+      node_ref,
+      parent
+    };
 
-// impl AstEntityNode {
-//   fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
-//     let curr_token = parser.get_current_token().unwrap();
-//     match curr_token.kind {
-//       TokenKind::Identifier(main_type) => {
-//         parser.eat_tokens(3);
-//         return Ok(EntityHeaderInfo {
-//           main_type: main_type.clone(),
-//         });
-//       }
-//       _ => {
-//         return Err(anyhow!("Unexptected token while parsing entity header"));
-//       }
-//     }
-//   }
+    loop {
+      let curr_token = parser.get_current_token().ok_or(anyhow!(format!("Unexpected EOF when parsing entity")))?;
+      if curr_token.kind == TokenKind::EOL {
+        parser.eat_token();
+        continue;
+      }
+      if curr_token.kind == TokenKind::LineComment {
+        parser.eat_token();
+        continue;
+      }
+      if curr_token.kind == TokenKind::MultiLineComment {
+        parser.eat_token();
+        continue;
+      }
+      if curr_token.kind == TokenKind::BraceClose {
+        parser.eat_token();
+        parser.add_node(Node::Entity(entity));
+        return Ok(node_ref);
+      }
+      return Err(anyhow!("Unexpected error while parsing entity"));
+    }
+  
+  }
+}
+
+impl AstEntityNode {
+  fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
+    let terms = parser.get_tokens_of_kind(TokenKind::Identifier);
+    let terms = terms.into_iter().map(|t| t.text.as_ref().unwrap().clone()).collect::<Vec<Rc<str>>>();
+
+    return Ok(EntityHeaderInfo {
+      num_tokens: terms.len(),
+      terms,
+    });
+  }
+}
 
 //   fn parse_entity_body(parser: &mut Parser) -> Result {
 //     todo!()
@@ -122,5 +139,6 @@ pub struct AstEntityNode {
 // }
 
 struct EntityHeaderInfo {
-  main_type: Rc<str>,
+  num_tokens: usize,
+  terms: Vec<Rc<str>>,
 }
