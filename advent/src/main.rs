@@ -1,11 +1,13 @@
 mod a_of_c_2019;
 mod a_of_c_2020;
+mod a_of_c_2023;
 mod empty_task;
 mod task;
 mod util;
 
 use crate::a_of_c_2019::create_2019_task;
 use crate::a_of_c_2020::create_2020_task;
+use crate::a_of_c_2023::create_2023_task;
 
 use clap::Parser;
 
@@ -27,6 +29,7 @@ fn main() {
   let task = match year.as_str() {
     "2019" => create_2019_task(&task_id),
     "2020" => create_2020_task(&task_id),
+    "2023" => create_2023_task(&task_id),
     _ => panic!("Unknown year given"),
   };
    println!("Running task {} :: {}", &year,&task_id);

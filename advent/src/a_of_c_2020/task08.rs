@@ -66,7 +66,7 @@ enum ReturnCode {
 #[derive(Debug)]
 struct GameConsole {
   commands: Vec<Cmd>,
-  ip: i32,
+  _ip: i32,
   acc: i32,
 }
 
@@ -74,7 +74,7 @@ impl GameConsole {
   fn new() -> GameConsole {
     GameConsole {
       commands: vec![],
-      ip: 0,
+      _ip: 0,
       acc: 0,
     }
   }
