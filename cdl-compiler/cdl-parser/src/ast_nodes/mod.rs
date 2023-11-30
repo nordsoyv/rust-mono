@@ -15,7 +15,7 @@ pub trait Parsable {
 
 #[derive(Debug)]
 pub struct AstTitleNode {
-  pub node_ref: NodeRef,
+  // pub node_ref: NodeRef,
   pub title: Rc<str>,
   pub parent: NodeRef,
 }
@@ -47,15 +47,13 @@ impl Parsable for AstTitleNode {
     let title_token = parser
       .get_next_token(1)
       .ok_or(anyhow!("Got error unwraping token for title"))?;
-    let node_ref = parser.get_next_node_ref();
     match &title_token.kind {
       TokenKind::String => {
         let ast_node = AstTitleNode {
-          node_ref,
           parent,
           title: title_token.text.as_ref().unwrap().clone(),
         };
-        parser.add_node(Node::Title(ast_node));
+        let node_ref = parser.add_node(Node::Title(ast_node));
         parser.eat_tokens(3);
         return Ok(node_ref);
       }
@@ -66,9 +64,10 @@ impl Parsable for AstTitleNode {
 
 #[derive(Debug)]
 pub struct AstEntityNode {
-  pub node_ref: NodeRef,
+  //pub node_ref: NodeRef,
   pub parent: NodeRef,
   pub children: Vec<NodeRef>,
+  pub terms : Vec<Rc<str>>,
 }
 
 impl Parsable for AstEntityNode {
@@ -88,32 +87,26 @@ impl Parsable for AstEntityNode {
     parser.eat_tokens(header.num_tokens);
     parser.eat_token_of_type(TokenKind::BraceOpen)?;
     parser.eat_token_of_type(TokenKind::EOL)?;
-
-    let node_ref = parser.get_next_node_ref();
-    let mut entity = AstEntityNode {
+    
+    let entity = AstEntityNode {
       children: vec![],
-      node_ref,
-      parent
+      parent,
+      terms: header.terms
     };
-
+    let current_entity_ref = parser.add_node(Node::Entity(entity));
     loop {
+      parser.eat_eol_and_comments();
+      if AstEntityNode::can_parse(&parser) {
+        let child_node_ref = AstEntityNode::parse(parser, current_entity_ref)?;
+        //entity.children.push(child_node_ref);
+        parser.add_child_to_node(current_entity_ref, child_node_ref);
+        continue;
+      }
       let curr_token = parser.get_current_token().ok_or(anyhow!(format!("Unexpected EOF when parsing entity")))?;
-      if curr_token.kind == TokenKind::EOL {
-        parser.eat_token();
-        continue;
-      }
-      if curr_token.kind == TokenKind::LineComment {
-        parser.eat_token();
-        continue;
-      }
-      if curr_token.kind == TokenKind::MultiLineComment {
-        parser.eat_token();
-        continue;
-      }
       if curr_token.kind == TokenKind::BraceClose {
         parser.eat_token();
-        parser.add_node(Node::Entity(entity));
-        return Ok(node_ref);
+        //parser.add_node(Node::Entity(entity));
+        return Ok(current_entity_ref);
       }
       return Err(anyhow!("Unexpected error while parsing entity"));
     }

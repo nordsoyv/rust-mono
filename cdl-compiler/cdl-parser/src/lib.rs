@@ -1,11 +1,11 @@
 mod ast_nodes;
-mod types;
 mod parser;
+mod types;
 
 use anyhow::Result;
-use std::{cell::RefCell};
 use cdl_lexer::lex;
-use parser::{Parser, Node};
+use parser::{Node, Parser};
+use std::cell::RefCell;
 use types::NodeRef;
 
 pub fn parse_text(text: &str) -> Result<Ast> {
@@ -29,7 +29,6 @@ pub struct Ast {
   pub script_entity: NodeRef,
 }
 
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -38,16 +37,39 @@ mod tests {
   fn can_parse_title() {
     let ast = parse_text("title \"dashboard title\"\n");
     assert!(ast.is_ok());
-    dbg!(&ast.unwrap());
+    //dbg!(&ast.unwrap());
   }
   #[test]
   fn can_parse_entity() {
-    let ast = parse_text(r"maintype {
+    let ast = parse_text(
+      r"maintype {
 
     }   
-    ");
-    dbg!(&ast);
+    ",
+    );
+    // dbg!(&ast);
     assert!(ast.is_ok());
-    
+  }
+  #[test]
+  fn can_parse_nested_entity() {
+    let ast = parse_text(
+      r"maintype {
+      otherMaintype {
+
+      }
+    }   
+    ",
+    );
+
+    dbg!(&ast);
+    assert!(&ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::Entity(node) = &ast.nodes[1] {
+      assert_eq!("maintype".as_bytes(), node.terms[0].as_bytes());
+      assert_eq!(NodeRef(2), node.children[0]);
+    }
+    if let Node::Entity(node) = &ast.nodes[2] {
+      assert_eq!("otherMaintype".as_bytes(), node.terms[0].as_bytes());
+    }
   }
 }

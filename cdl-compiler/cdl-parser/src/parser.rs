@@ -59,14 +59,15 @@ impl Parser {
     Ok(())
   }
 
-  pub fn add_node(&self, n: Node) {
+  pub fn add_node(&self, n: Node) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
     nodes.push(n);
+    return (nodes.len() - 1).into();
   }
 
-  pub fn get_next_node_ref(&self) -> NodeRef {
-    return self.nodes.borrow().len().into();
-  }
+  // pub fn get_next_node_ref(&self) -> NodeRef {
+  //   return self.nodes.borrow().len().into();
+  // }
 
   pub fn parse(&mut self) -> Result<NodeRef> {
     Ok(self.parse_top_level()?)
@@ -92,9 +93,9 @@ impl Parser {
     return &[];
   }
 
-  fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
+  pub fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
     let mut nodes = self.nodes.borrow_mut();
-    let node = nodes.get_mut(parent.0).unwrap();
+    let node = nodes.get_mut(parent.0 as usize).unwrap();
     match node {
       Node::Entity(ent) => ent.children.push(child),
       _ => {}
@@ -105,15 +106,29 @@ impl Parser {
     self.tokens.len() > self.curr_token
   }
 
+  pub fn eat_eol_and_comments(&mut self) {
+    while self.is_tokens_left() {
+      let curr_token = self.get_current_token().unwrap();
+      if curr_token.kind == TokenKind::EOL
+        || curr_token.kind == TokenKind::LineComment
+        || curr_token.kind == TokenKind::MultiLineComment
+      {
+        self.eat_token();
+      } else {
+        break;
+      }
+    }
+  }
+
   fn parse_top_level(&mut self) -> Result<NodeRef> {
-    let root_node_ref = self.get_next_node_ref();
     let root_node = AstEntityNode {
       children: vec![],
-      node_ref: root_node_ref,
-      parent: NodeRef(0),
+      parent: NodeRef(-1),
+      terms: vec![]
     };
-    self.add_node(Node::Entity(root_node));
+    let root_node_ref = self.add_node(Node::Entity(root_node));
     while self.is_tokens_left() {
+      self.eat_eol_and_comments();
       if AstTitleNode::can_parse(self) {
         let node_ref = AstTitleNode::parse(self, root_node_ref)?;
         self.add_child_to_node(root_node_ref, node_ref);
@@ -122,19 +137,6 @@ impl Parser {
       if AstEntityNode::can_parse(self) {
         let node_ref = AstEntityNode::parse(self, root_node_ref)?;
         self.add_child_to_node(root_node_ref, node_ref);
-        continue;
-      }
-      let curr_token = self.get_current_token().unwrap();;
-      if curr_token.kind == TokenKind::EOL {
-        self.eat_token();
-        continue;
-      }
-      if curr_token.kind == TokenKind::LineComment {
-        self.eat_token();
-        continue;
-      }
-      if curr_token.kind == TokenKind::MultiLineComment {
-        self.eat_token();
         continue;
       }
     }
