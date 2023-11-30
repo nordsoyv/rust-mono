@@ -37,7 +37,6 @@ mod tests {
   fn can_parse_title() {
     let ast = parse_text("title \"dashboard title\"\n");
     assert!(ast.is_ok());
-    //dbg!(&ast.unwrap());
   }
   #[test]
   fn can_parse_entity() {
@@ -47,8 +46,13 @@ mod tests {
     }   
     ",
     );
-    // dbg!(&ast);
     assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::Entity(node) = &ast.nodes[1] {
+      assert_eq!("maintype".as_bytes(), node.terms[0].as_bytes());
+      assert_eq!(0, node.children.len());
+    }
+
   }
   #[test]
   fn can_parse_nested_entity() {
@@ -60,8 +64,6 @@ mod tests {
     }   
     ",
     );
-
-    dbg!(&ast);
     assert!(&ast.is_ok());
     let ast = ast.unwrap();
     if let Node::Entity(node) = &ast.nodes[1] {

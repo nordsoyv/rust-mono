@@ -2,12 +2,11 @@ use std::cell::RefCell;
 
 use cdl_lexer::{Token, TokenKind};
 
+use crate::ast_nodes::{ast_entity::AstEntityNode, ast_title::AstTitleNode};
 use crate::ast_nodes::Parsable;
-use crate::{
-  ast_nodes::{AstEntityNode, AstTitleNode},
-  types::NodeRef,
-};
+use crate::types::NodeRef;
 use anyhow::{anyhow, Result};
+
 #[derive(Debug)]
 pub enum Node {
   Title(AstTitleNode),
@@ -124,7 +123,7 @@ impl Parser {
     let root_node = AstEntityNode {
       children: vec![],
       parent: NodeRef(-1),
-      terms: vec![]
+      terms: vec![],
     };
     let root_node_ref = self.add_node(Node::Entity(root_node));
     while self.is_tokens_left() {
