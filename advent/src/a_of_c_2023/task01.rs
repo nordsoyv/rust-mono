@@ -21,7 +21,7 @@ impl Task for Task01B {
 
 fn count_numbers(input: String) -> u32 {
   input
-    .split("\n")
+    .lines()
     .map(find_first_and_last)
     .map(|numbers| numbers.0 * 10 + numbers.1)
     .fold(0, |sum, number| sum + number)
@@ -30,14 +30,14 @@ fn count_numbers(input: String) -> u32 {
 fn find_first_and_last(line: &str) -> (u32, u32) {
   let mut first = 0;
   let mut last = 0;
-  for i in 0..line.len() {
+  for i in 0..=line.len() {
     if let Some(digit) = find_digit(&line[0..i]) {
       first = digit;
       break;
     }
   }
 
-  for i in (0..line.len()).rev() {
+  for i in (0..=line.len()).rev() {
     if let Some(digit) = find_digit(&line[i..line.len()]) {
       last = digit;
       break;
@@ -119,5 +119,6 @@ zoneight234
     assert_eq!((4, 2), find_first_and_last("4nineeightseven2"));
     assert_eq!((1, 4), find_first_and_last("zoneight234"));
     assert_eq!((7, 6), find_first_and_last("7pqrstsixteen"));
+    assert_eq!((4, 4), find_first_and_last("bvcz4"));
   }
 }
