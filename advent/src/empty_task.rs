@@ -14,3 +14,13 @@ impl Task for TaskEmptyB {
         println!("Emtpy task, not impemented yet");
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn task_a_example() {
+  }
+}
