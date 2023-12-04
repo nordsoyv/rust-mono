@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::Parsable;
+use super::ast_property::AstPropertyNode;
 
 #[derive(Debug)]
 pub struct AstEntityNode {
@@ -44,12 +45,20 @@ impl Parsable for AstEntityNode {
     let current_entity_ref = parser.add_node(Node::Entity(entity));
     loop {
       parser.eat_eol_and_comments();
+      if AstPropertyNode::can_parse(&parser) {
+        let child_node_ref = AstPropertyNode::parse(parser, current_entity_ref)?;
+        //entity.children.push(child_node_ref);
+        parser.add_child_to_node(current_entity_ref, child_node_ref);
+        continue;
+      }
       if AstEntityNode::can_parse(&parser) {
         let child_node_ref = AstEntityNode::parse(parser, current_entity_ref)?;
         //entity.children.push(child_node_ref);
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
+
+
       let curr_token = parser
         .get_current_token()
         .ok_or(anyhow!(format!("Unexpected EOF when parsing entity")))?;

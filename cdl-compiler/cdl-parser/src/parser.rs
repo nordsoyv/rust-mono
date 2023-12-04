@@ -2,6 +2,8 @@ use std::cell::RefCell;
 
 use cdl_lexer::{Token, TokenKind};
 
+use crate::ast_nodes::ast_identifier::AstIdentifierNode;
+use crate::ast_nodes::ast_property::AstPropertyNode;
 use crate::ast_nodes::{ast_entity::AstEntityNode, ast_title::AstTitleNode};
 use crate::ast_nodes::Parsable;
 use crate::types::NodeRef;
@@ -11,6 +13,8 @@ use anyhow::{anyhow, Result};
 pub enum Node {
   Title(AstTitleNode),
   Entity(AstEntityNode),
+  Property(AstPropertyNode),
+  Identifier(AstIdentifierNode),
 }
 
 #[derive(Debug)]

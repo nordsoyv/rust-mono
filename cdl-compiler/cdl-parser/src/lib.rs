@@ -54,6 +54,21 @@ mod tests {
     }
 
   }
+
+  #[test]
+  fn can_parse_property() {
+    let ast = parse_text(
+      r"maintype {
+      prop: prop
+    }   
+    ",
+    );
+    dbg!(&ast);
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    
+
+  }
   #[test]
   fn can_parse_nested_entity() {
     let ast = parse_text(
@@ -72,6 +87,7 @@ mod tests {
     }
     if let Node::Entity(node) = &ast.nodes[2] {
       assert_eq!("otherMaintype".as_bytes(), node.terms[0].as_bytes());
+      assert_eq!(0, node.children.len());
     }
   }
 }
