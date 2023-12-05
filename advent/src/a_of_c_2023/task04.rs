@@ -147,7 +147,7 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
     for index in 0..cards.len() {
       let num_copies = copies[index];
       let num_winning = cards[index].find_number_of_winning_numbers();
-      for iters in 0..num_copies {
+      for _iters in 0..num_copies {
         for winning in 0..num_winning {
           copies[index + winning + 1] = copies[index + winning + 1] + 1;
         }

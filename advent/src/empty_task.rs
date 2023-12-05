@@ -5,13 +5,13 @@ pub struct TaskEmptyB {}
 
 impl Task for TaskEmptyA {
     fn run(&self) {
-        println!("Emtpy task, not impemented yet");
+        println!("Empty task, not implemented yet");
     }
 }
 
 impl Task for TaskEmptyB {
     fn run(&self) {
-        println!("Emtpy task, not impemented yet");
+        println!("Empty task, not implemented yet");
     }
 }
 
