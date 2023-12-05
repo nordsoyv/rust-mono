@@ -1,5 +1,5 @@
 use std::{ops::Range, usize::MAX};
-
+use rayon::prelude::*;
 use crate::{task::Task, util::read_file};
 
 pub struct Task05A {}
@@ -27,7 +27,7 @@ impl Task for Task05B {
     let almanac = Almanac::parse_taskb(input);
     let min = almanac
       .seed_ranges
-      .iter()
+      .par_iter()
       .map(|range| {
         let mut min = MAX;
         for seed_id in range.clone() {
