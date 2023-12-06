@@ -3,12 +3,14 @@ mod task02;
 mod task03;
 mod task04;
 mod task05;
+mod task06;
 
 use self::task01::{Task01A, Task01B};
 use self::task02::{Task02A, Task02B};
 use self::task03::{Task03A, Task03B};
 use self::task04::{Task04A, Task04B};
 use self::task05::{Task05A, Task05B};
+use self::task06::{Task06A, Task06B};
 use crate::task::Task;
 
 pub fn create_2023_task(id: &str) -> Box<dyn Task> {
@@ -23,6 +25,8 @@ pub fn create_2023_task(id: &str) -> Box<dyn Task> {
     "04b" => Box::new(Task04B {}),
     "05a" => Box::new(Task05A {}),
     "05b" => Box::new(Task05B {}),
+    "06a" => Box::new(Task06A {}),
+    "06b" => Box::new(Task06B {}),
     _ => panic!("No task found"),
   }
 }
