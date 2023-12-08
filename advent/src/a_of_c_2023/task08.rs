@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use num::integer::lcm;
 use crate::{task::Task, util::read_file};
+use num::integer::lcm;
+use std::collections::HashMap;
 
 pub struct Task08A {}
 pub struct Task08B {}
@@ -78,11 +78,11 @@ impl TaskA {
       .map(|key| self.map.get(key).unwrap())
       .collect();
 
-      let mut path_lengths: Vec<usize> = vec![];
+    let mut path_lengths: Vec<usize> = vec![];
 
-    for node in &nodes {
+    for node in nodes {
       let mut length = 0;
-      let mut current_node = node.clone();
+      let mut current_node = node;
       loop {
         if current_node.0.ends_with("Z") {
           path_lengths.push(length);
@@ -97,9 +97,9 @@ impl TaskA {
       }
     }
 
-    let  mut lcm_curr: usize = 1;
+    let mut lcm_curr: usize = 1;
     for length in path_lengths {
-        lcm_curr = lcm(lcm_curr,length);
+      lcm_curr = lcm(lcm_curr, length);
     }
     lcm_curr
   }
