@@ -1,7 +1,10 @@
 pub mod ast_entity;
-pub mod ast_title;
-pub mod ast_property;
 pub mod ast_identifier;
+pub mod ast_number;
+pub mod ast_property;
+pub mod ast_script;
+pub mod ast_string;
+pub mod ast_title;
 
 use anyhow::Result;
 

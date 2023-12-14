@@ -52,21 +52,42 @@ mod tests {
       assert_eq!("maintype".as_bytes(), node.terms[0].as_bytes());
       assert_eq!(0, node.children.len());
     }
-
   }
 
   #[test]
-  fn can_parse_property() {
+  fn can_parse_properties() {
     let ast = parse_text(
-      r"maintype {
-      prop: prop
+      r#"maintype {
+      prop: identifier
+      prop2: "string"
+      prop3: 1234
     }   
-    ",
+    "#,
     );
     dbg!(&ast);
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    
+    if let Node::Property(prop) = &ast.nodes[2] {
+      assert_eq!("prop".as_bytes(), prop.name.as_bytes());
+      assert_eq!(NodeRef(3), prop.child);
+    }
+    if let Node::Identifier(ident) = &ast.nodes[3] {
+      assert_eq!("identifier".as_bytes(), ident.identifier.as_bytes());
+    }
+    if let Node::Property(prop) = &ast.nodes[4] {
+      assert_eq!("prop2".as_bytes(), prop.name.as_bytes());
+      assert_eq!(NodeRef(5), prop.child);
+    }
+    if let Node::String(str) = &ast.nodes[5] {
+      assert_eq!("\"string\"".as_bytes(), str.text.as_bytes());
+    }
+    if let Node::Property(prop) = &ast.nodes[6] {
+      assert_eq!("prop3".as_bytes(), prop.name.as_bytes());
+      assert_eq!(NodeRef(7), prop.child);
+    }
+    if let Node::Number(number) = &ast.nodes[7] {
+      assert_eq!(1234f64,number.value);
+    }
 
   }
   #[test]

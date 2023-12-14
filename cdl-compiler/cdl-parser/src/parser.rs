@@ -3,9 +3,12 @@ use std::cell::RefCell;
 use cdl_lexer::{Token, TokenKind};
 
 use crate::ast_nodes::ast_identifier::AstIdentifierNode;
+use crate::ast_nodes::ast_number::AstNumberNode;
 use crate::ast_nodes::ast_property::AstPropertyNode;
-use crate::ast_nodes::{ast_entity::AstEntityNode, ast_title::AstTitleNode};
+use crate::ast_nodes::ast_script::AstScriptNode;
 use crate::ast_nodes::Parsable;
+use crate::ast_nodes::ast_string::AstStringNode;
+use crate::ast_nodes::{ast_entity::AstEntityNode, ast_title::AstTitleNode};
 use crate::types::NodeRef;
 use anyhow::{anyhow, Result};
 
@@ -15,6 +18,9 @@ pub enum Node {
   Entity(AstEntityNode),
   Property(AstPropertyNode),
   Identifier(AstIdentifierNode),
+  Script(AstScriptNode),
+  String(AstStringNode),
+  Number(AstNumberNode)
 }
 
 #[derive(Debug)]
@@ -101,7 +107,9 @@ impl Parser {
     let node = nodes.get_mut(parent.0 as usize).unwrap();
     match node {
       Node::Entity(ent) => ent.children.push(child),
-      _ => {}
+      Node::Script(script) => script.children.push(child),
+      Node::Property(prop) => prop.child = child,
+      _ => panic!("Unknown type to set as parent {:?}", node),
     }
   }
 
@@ -124,12 +132,8 @@ impl Parser {
   }
 
   fn parse_top_level(&mut self) -> Result<NodeRef> {
-    let root_node = AstEntityNode {
-      children: vec![],
-      parent: NodeRef(-1),
-      terms: vec![],
-    };
-    let root_node_ref = self.add_node(Node::Entity(root_node));
+    let root_node = AstScriptNode { children: vec![] };
+    let root_node_ref = self.add_node(Node::Script(root_node));
     while self.is_tokens_left() {
       self.eat_eol_and_comments();
       if AstTitleNode::can_parse(self) {

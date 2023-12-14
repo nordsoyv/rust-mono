@@ -57,8 +57,6 @@ impl Parsable for AstEntityNode {
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
-
-
       let curr_token = parser
         .get_current_token()
         .ok_or(anyhow!(format!("Unexpected EOF when parsing entity")))?;

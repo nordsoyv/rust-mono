@@ -8,7 +8,7 @@ use crate::{
   types::NodeRef,
 };
 
-use super::{ast_identifier::AstIdentifierNode, Parsable};
+use super::{ast_identifier::AstIdentifierNode, Parsable, ast_string::AstStringNode, ast_number::AstNumberNode};
 
 #[derive(Debug)]
 pub struct AstPropertyNode {
@@ -45,7 +45,7 @@ impl Parsable for AstPropertyNode {
     parser.eat_tokens(2);
     let expr_node_ref = AstPropertyNode::parse_expression(parser, node_ref)?;
     parser.add_child_to_node(node_ref, expr_node_ref);
-    parser.eat_tokens(2);
+    parser.eat_token_of_type(TokenKind::EOL).expect("Tried parsing property, did not find EOL when exptected");
     Ok(node_ref)
   }
 }
@@ -56,7 +56,14 @@ impl AstPropertyNode {
       //parser.eat_eol_and_comments();
       if AstIdentifierNode::can_parse(&parser) {
         let child_node_ref = AstIdentifierNode::parse(parser, parent)?;
-
+        return Ok(child_node_ref);
+      }
+      if AstStringNode::can_parse(&parser) {
+        let child_node_ref = AstStringNode::parse(parser, parent)?;
+        return Ok(child_node_ref);
+      }
+      if AstNumberNode::can_parse(&parser) {
+        let child_node_ref = AstNumberNode::parse(parser, parent)?;
         return Ok(child_node_ref);
       }
       return Err(anyhow!("Error parsing expression"));
