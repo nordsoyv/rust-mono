@@ -8,6 +8,7 @@ use crate::ast_nodes::ast_property::AstPropertyNode;
 use crate::ast_nodes::ast_script::AstScriptNode;
 use crate::ast_nodes::Parsable;
 use crate::ast_nodes::ast_string::AstStringNode;
+use crate::ast_nodes::ast_vpath::AstVPathNode;
 use crate::ast_nodes::{ast_entity::AstEntityNode, ast_title::AstTitleNode};
 use crate::types::NodeRef;
 use anyhow::{anyhow, Result};
@@ -20,7 +21,8 @@ pub enum Node {
   Identifier(AstIdentifierNode),
   Script(AstScriptNode),
   String(AstStringNode),
-  Number(AstNumberNode)
+  Number(AstNumberNode),
+  VPath(AstVPathNode)
 }
 
 #[derive(Debug)]

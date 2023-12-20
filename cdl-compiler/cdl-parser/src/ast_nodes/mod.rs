@@ -5,6 +5,7 @@ pub mod ast_property;
 pub mod ast_script;
 pub mod ast_string;
 pub mod ast_title;
+pub mod ast_vpath;
 
 use anyhow::Result;
 

@@ -8,7 +8,7 @@ use crate::{
   types::NodeRef,
 };
 
-use super::{ast_identifier::AstIdentifierNode, Parsable, ast_string::AstStringNode, ast_number::AstNumberNode};
+use super::{ast_identifier::AstIdentifierNode, Parsable, ast_string::AstStringNode, ast_number::AstNumberNode, ast_vpath::AstVPathNode};
 
 #[derive(Debug)]
 pub struct AstPropertyNode {
@@ -54,6 +54,10 @@ impl AstPropertyNode {
   fn parse_expression(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     loop {
       //parser.eat_eol_and_comments();
+      if AstVPathNode::can_parse(&parser) {
+        let child_node_ref = AstVPathNode::parse(parser, parent)?;
+        return Ok(child_node_ref);
+      }
       if AstIdentifierNode::can_parse(&parser) {
         let child_node_ref = AstIdentifierNode::parse(parser, parent)?;
         return Ok(child_node_ref);
