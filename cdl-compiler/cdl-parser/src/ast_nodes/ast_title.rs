@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::rc::Rc;
+use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
 
@@ -14,6 +14,7 @@ use super::Parsable;
 pub struct AstTitleNode {
   pub title: Rc<str>,
   pub parent: NodeRef,
+  pub location: Range<usize>,
 }
 
 impl Parsable for AstTitleNode {
@@ -40,6 +41,9 @@ impl Parsable for AstTitleNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
+    let title_keyword_token = parser
+      .get_current_token()
+      .ok_or(anyhow!("Got error unwraping token for title"))?;
     let title_token = parser
       .get_next_token(1)
       .ok_or(anyhow!("Got error unwraping token for title"))?;
@@ -48,6 +52,7 @@ impl Parsable for AstTitleNode {
         let ast_node = AstTitleNode {
           parent,
           title: title_token.text.as_ref().unwrap().clone(),
+          location: title_keyword_token.pos.start..title_token.pos.end,
         };
         let node_ref = parser.add_node(Node::Title(ast_node));
         parser.eat_tokens(3);

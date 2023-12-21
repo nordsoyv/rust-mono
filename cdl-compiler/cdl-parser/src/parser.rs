@@ -6,9 +6,9 @@ use crate::ast_nodes::ast_identifier::AstIdentifierNode;
 use crate::ast_nodes::ast_number::AstNumberNode;
 use crate::ast_nodes::ast_property::AstPropertyNode;
 use crate::ast_nodes::ast_script::AstScriptNode;
-use crate::ast_nodes::Parsable;
 use crate::ast_nodes::ast_string::AstStringNode;
 use crate::ast_nodes::ast_vpath::AstVPathNode;
+use crate::ast_nodes::Parsable;
 use crate::ast_nodes::{ast_entity::AstEntityNode, ast_title::AstTitleNode};
 use crate::types::NodeRef;
 use anyhow::{anyhow, Result};
@@ -22,52 +22,57 @@ pub enum Node {
   Script(AstScriptNode),
   String(AstStringNode),
   Number(AstNumberNode),
-  VPath(AstVPathNode)
+  VPath(AstVPathNode),
 }
 
 #[derive(Debug)]
 pub struct Parser {
   pub tokens: Vec<Token>,
-  pub curr_token: usize,
+  pub curr_token: RefCell<usize>,
   pub nodes: RefCell<Vec<Node>>,
 }
 
 impl Parser {
   pub fn get_current_token(&self) -> Option<&Token> {
-    if self.curr_token < self.tokens.len() {
-      return Some(&self.tokens[self.curr_token]);
+    let curr = self.curr_token.borrow();
+    if *curr < self.tokens.len() {
+      return Some(&self.tokens[*curr]);
     }
     None
   }
 
   pub fn get_next_token(&self, num: usize) -> Option<&Token> {
-    if self.curr_token + num < self.tokens.len() {
-      return Some(&self.tokens[self.curr_token + num]);
+    let curr = self.curr_token.borrow();
+    if *curr + num < self.tokens.len() {
+      return Some(&self.tokens[*curr + num]);
     }
     None
   }
 
   #[allow(dead_code)]
-  pub fn eat_token(&mut self) {
-    self.curr_token += 1;
+  pub fn eat_token(& self) {
+    self.curr_token.replace_with(|&mut old| old + 1);
   }
 
-  pub fn eat_tokens(&mut self, num: usize) {
-    self.curr_token += num;
+  pub fn eat_tokens(& self, num: usize) {
+    self.curr_token.replace_with(|&mut old| old + num);
   }
 
-  pub fn eat_token_of_type(&mut self, kind: TokenKind) -> Result<()> {
-    let current_token = self
-      .get_current_token()
-      .ok_or(anyhow!(format!("Expected {:?}, found EOF", kind)))?;
-    if current_token.kind != kind {
-      return Err(anyhow!(format!(
-        "Expected {:?}, found {:?}",
-        kind, current_token.kind
-      )));
-    }
+  pub fn eat_token_of_type(&mut self, kind: TokenKind) -> Result<usize> {
+    let end_pos = {
+      let current_token = self
+        .get_current_token()
+        .ok_or(anyhow!(format!("Expected {:?}, found EOF", kind)))?;
+      if current_token.kind != kind {
+        return Err(anyhow!(format!(
+          "Expected {:?}, found {:?}",
+          kind, current_token.kind
+        )));
+      }
+      current_token.pos.end
+    };
     self.eat_token();
-    Ok(())
+    Ok(end_pos)
   }
 
   pub fn add_node(&self, n: Node) -> NodeRef {
@@ -98,8 +103,9 @@ impl Parser {
       }
     }
     if num_tokens > 0 {
-      let end_token = self.curr_token + num_tokens;
-      return &self.tokens[self.curr_token..end_token];
+      let curr = *self.curr_token.borrow();
+      let end_token = curr + num_tokens;
+      return &self.tokens[curr..end_token];
     }
     return &[];
   }
@@ -116,7 +122,7 @@ impl Parser {
   }
 
   fn is_tokens_left(&self) -> bool {
-    self.tokens.len() > self.curr_token
+    self.tokens.len() > *self.curr_token.borrow()
   }
 
   pub fn eat_eol_and_comments(&mut self) {
@@ -134,7 +140,10 @@ impl Parser {
   }
 
   fn parse_top_level(&mut self) -> Result<NodeRef> {
-    let root_node = AstScriptNode { children: vec![] };
+    let root_node = AstScriptNode {
+      children: vec![],
+      location: 0..self.tokens[self.tokens.len() - 1].pos.end,
+    };
     let root_node_ref = self.add_node(Node::Script(root_node));
     while self.is_tokens_left() {
       self.eat_eol_and_comments();
@@ -150,5 +159,15 @@ impl Parser {
       }
     }
     Ok(root_node_ref)
+  }
+
+  pub(crate) fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {
+    let mut nodes = self.nodes.borrow_mut();
+    let node = nodes.get_mut(node_ref.0 as usize).unwrap();
+    match node {
+      Node::Property(prop) => prop.location = start..end,
+      Node::Entity(ent) => ent.location = start..end,
+      _ => panic!("Unknown type to set location on {:?}", node),
+    }
   }
 }

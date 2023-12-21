@@ -5,23 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb",
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
             "request": "launch",
-            "name": "Debug unit tests in library 'cdl-lexer'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=cdl-lexer"
-                ],
-                "filter": {
-                    "name": "cdl-lexer",
-                    "kind": "lib"
+            "program": "${workspaceRoot}/target/debug/advent.exe",
+            "args": [
+                "-namespace", "default",
+                "-id", "1234",
+                "-address", "\\\\.\\pipe\\containerd-containerd",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [ 
+                {
+                "name": "TTRPC_ADDRESS",
+                "value": "\\\\.\\pipe\\containerd-containerd.ttrpc"
                 }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            ],
+            "preLaunchTask": "skeleton"
         }
     ]
 }

@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
+use std::ops::Range;
 use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
@@ -17,6 +18,7 @@ pub struct AstEntityNode {
   pub parent: NodeRef,
   pub children: Vec<NodeRef>,
   pub terms: Vec<Rc<str>>,
+  pub location: Range<usize>
 }
 
 impl Parsable for AstEntityNode {
@@ -41,6 +43,7 @@ impl Parsable for AstEntityNode {
       children: vec![],
       parent,
       terms: header.terms,
+      location : header.start_loc..0
     };
     let current_entity_ref = parser.add_node(Node::Entity(entity));
     loop {
@@ -59,10 +62,11 @@ impl Parsable for AstEntityNode {
       }
       let curr_token = parser
         .get_current_token()
-        .ok_or(anyhow!(format!("Unexpected EOF when parsing entity")))?;
+        .ok_or(anyhow!(format!("Unexpected token when parsing entity")))?;
       if curr_token.kind == TokenKind::BraceClose {
         parser.eat_token();
         //parser.add_node(Node::Entity(entity));
+        parser.update_location_on_node(current_entity_ref, header.start_loc, curr_token.pos.end);
         return Ok(current_entity_ref);
       }
       return Err(anyhow!("Unexpected error while parsing entity"));
@@ -73,6 +77,7 @@ impl Parsable for AstEntityNode {
 impl AstEntityNode {
   fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
     let terms = parser.get_tokens_of_kind(TokenKind::Identifier);
+    let start_loc = terms[0].pos.start;
     let terms = terms
       .into_iter()
       .map(|t| t.text.as_ref().unwrap().clone())
@@ -81,6 +86,7 @@ impl AstEntityNode {
     return Ok(EntityHeaderInfo {
       num_tokens: terms.len(),
       terms,
+      start_loc
     });
   }
 }
@@ -88,4 +94,5 @@ impl AstEntityNode {
 struct EntityHeaderInfo {
   num_tokens: usize,
   terms: Vec<Rc<str>>,
+  start_loc: usize
 }

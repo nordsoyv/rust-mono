@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::rc::Rc;
+use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
 
@@ -8,13 +8,17 @@ use crate::{
   types::NodeRef,
 };
 
-use super::{ast_identifier::AstIdentifierNode, Parsable, ast_string::AstStringNode, ast_number::AstNumberNode, ast_vpath::AstVPathNode};
+use super::{
+  ast_identifier::AstIdentifierNode, ast_number::AstNumberNode, ast_string::AstStringNode,
+  ast_vpath::AstVPathNode, Parsable,
+};
 
 #[derive(Debug)]
 pub struct AstPropertyNode {
   pub name: Rc<str>,
   pub parent: NodeRef,
   pub child: NodeRef,
+  pub location: Range<usize>,
 }
 
 impl Parsable for AstPropertyNode {
@@ -33,19 +37,27 @@ impl Parsable for AstPropertyNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    let name_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got error unwraping token for property name"))?;
-    let ast_node = AstPropertyNode {
-      parent,
-      name: name_token.text.as_ref().unwrap().clone(),
-      child: NodeRef(-1),
+    let (node_ref, start_pos) = {
+      let name_token = parser
+        .get_current_token()
+        .ok_or(anyhow!("Got error unwraping token for property name"))?;
+      let ast_node = AstPropertyNode {
+        parent,
+        name: name_token.text.as_ref().unwrap().clone(),
+        child: NodeRef(-1),
+        location: name_token.pos.start..usize::MAX,
+      };
+
+      let node_ref = parser.add_node(Node::Property(ast_node));
+      (node_ref, name_token.pos.start)
     };
-    let node_ref = parser.add_node(Node::Property(ast_node));
     parser.eat_tokens(2);
     let expr_node_ref = AstPropertyNode::parse_expression(parser, node_ref)?;
+    let last_token_end = parser
+      .eat_token_of_type(TokenKind::EOL)
+      .expect("Tried parsing property, did not find EOL when exptected");
+    parser.update_location_on_node(node_ref, start_pos, last_token_end);
     parser.add_child_to_node(node_ref, expr_node_ref);
-    parser.eat_token_of_type(TokenKind::EOL).expect("Tried parsing property, did not find EOL when exptected");
     Ok(node_ref)
   }
 }
@@ -55,20 +67,16 @@ impl AstPropertyNode {
     loop {
       //parser.eat_eol_and_comments();
       if AstVPathNode::can_parse(&parser) {
-        let child_node_ref = AstVPathNode::parse(parser, parent)?;
-        return Ok(child_node_ref);
+        return AstVPathNode::parse(parser, parent);
       }
       if AstIdentifierNode::can_parse(&parser) {
-        let child_node_ref = AstIdentifierNode::parse(parser, parent)?;
-        return Ok(child_node_ref);
+        return AstIdentifierNode::parse(parser, parent);
       }
       if AstStringNode::can_parse(&parser) {
-        let child_node_ref = AstStringNode::parse(parser, parent)?;
-        return Ok(child_node_ref);
+        return AstStringNode::parse(parser, parent);
       }
       if AstNumberNode::can_parse(&parser) {
-        let child_node_ref = AstNumberNode::parse(parser, parent)?;
-        return Ok(child_node_ref);
+        return AstNumberNode::parse(parser, parent);
       }
       return Err(anyhow!("Error parsing expression"));
     }

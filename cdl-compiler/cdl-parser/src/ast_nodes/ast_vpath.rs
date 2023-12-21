@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::rc::Rc;
+use std::{rc::Rc, ops::Range};
 
 use cdl_lexer::TokenKind;
 
@@ -15,6 +15,7 @@ pub struct AstVPathNode {
   pub parent: NodeRef,
   pub table: Rc<str>,
   pub variable: Option<Rc<str>>,
+  pub location: Range<usize>
 }
 
 impl Parsable for AstVPathNode {
@@ -39,20 +40,25 @@ impl Parsable for AstVPathNode {
     let table_token = parser
       .get_next_token(0)
       .ok_or(anyhow!("Got error unwraping token for VPath"))?;
+    let colon_token= parser
+    .get_next_token(1)
+    .ok_or(anyhow!("Got error unwraping token for VPath"))?;
+    let mut location = table_token.pos.start..colon_token.pos.end;
     let variable = {
       let variable_token = parser.get_next_token(2);
-      if variable_token.is_some() {
-        let v = variable_token.unwrap();
-        dbg!(&v);
+      if let Some(v) = variable_token {
         match &v.kind {
-          TokenKind::Identifier => v.text.clone(),
-          _ => None
+          TokenKind::Identifier => {
+            location.end = v.pos.end;
+            v.text.clone()
+          },
+          _ => None,
         }
       } else {
         None
       }
     };
-
+    
     let table = match &table_token.kind {
       TokenKind::Identifier => table_token.text.clone().unwrap(),
       _ => return Err(anyhow!("Unknown error occured while parsing VPath node")),
@@ -65,6 +71,7 @@ impl Parsable for AstVPathNode {
       parent,
       table,
       variable,
+      location
     };
     let node_ref = parser.add_node(Node::VPath(ast_node));
     return Ok(node_ref);

@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::rc::Rc;
+use std::{rc::Rc, ops::Range};
 
 use cdl_lexer::TokenKind;
 
@@ -21,6 +21,7 @@ pub struct AstStringNode {
   pub text: Rc<str>,
   pub parent: NodeRef,
   pub quote_kind: QuoteKind,
+  pub location: Range<usize>
 }
 
 impl Parsable for AstStringNode {
@@ -50,6 +51,7 @@ impl Parsable for AstStringNode {
       parent,
       text,
       quote_kind,
+      location: string_token.pos.clone()
     };
     let node_ref = parser.add_node(Node::String(ast_node));
     parser.eat_tokens(1);

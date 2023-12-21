@@ -11,7 +11,7 @@ use types::NodeRef;
 pub fn parse_text(text: &str) -> Result<Ast> {
   let tokens = lex(text)?;
   let mut parser = Parser {
-    curr_token: 0,
+    curr_token: RefCell::new(0),
     nodes: RefCell::new(Vec::new()),
     tokens: tokens,
   };

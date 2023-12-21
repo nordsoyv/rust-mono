@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use anyhow::{anyhow, Result};
 
 use cdl_lexer::TokenKind;
@@ -13,6 +15,7 @@ use super::Parsable;
 pub struct AstNumberNode {
   pub value: f64,
   pub parent: NodeRef,
+  pub location: Range<usize>
 }
 
 impl Parsable for AstNumberNode {
@@ -39,6 +42,7 @@ impl Parsable for AstNumberNode {
     let ast_node = AstNumberNode {
       parent,
       value,
+      location: number_token.pos.clone()
     };
     let node_ref = parser.add_node(Node::Number(ast_node));
     parser.eat_tokens(1);

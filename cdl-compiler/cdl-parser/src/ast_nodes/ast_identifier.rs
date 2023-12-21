@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::rc::Rc;
+use std::{rc::Rc, ops::Range};
 
 use cdl_lexer::TokenKind;
 
@@ -14,6 +14,7 @@ use super::Parsable;
 pub struct AstIdentifierNode {
   pub identifier: Rc<str>,
   pub parent: NodeRef,
+  pub location: Range<usize>
 }
 
 impl Parsable for AstIdentifierNode {
@@ -36,6 +37,7 @@ impl Parsable for AstIdentifierNode {
     let ast_node = AstIdentifierNode {
       parent,
       identifier: ident_token.text.as_ref().unwrap().clone(),
+      location: ident_token.pos.clone()
     };
     let node_ref = parser.add_node(Node::Identifier(ast_node));
     parser.eat_tokens(1);
