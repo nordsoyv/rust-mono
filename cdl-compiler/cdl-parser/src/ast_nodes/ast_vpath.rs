@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::{rc::Rc, ops::Range};
+use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
 
@@ -13,20 +13,23 @@ use super::Parsable;
 #[derive(Debug)]
 pub struct AstVPathNode {
   pub parent: NodeRef,
-  pub table: Rc<str>,
+  pub table: Option<Rc<str>>,
   pub variable: Option<Rc<str>>,
-  pub location: Range<usize>
+  pub location: Range<usize>,
 }
 
 impl Parsable for AstVPathNode {
   fn can_parse(parser: &Parser) -> bool {
     let curr_token = parser.get_current_token();
     let token_1 = parser.get_next_token(1);
-    if curr_token.is_none() || token_1.is_none() {
+    if curr_token.is_none() {
       return false;
     }
 
     let curr_token = curr_token.unwrap();
+    if curr_token.kind == TokenKind::Colon {
+      return true;
+    }
     let token1 = token_1.unwrap();
     if curr_token.kind == TokenKind::Identifier {
       if token1.kind == TokenKind::Colon {
@@ -37,41 +40,55 @@ impl Parsable for AstVPathNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    let table_token = parser
-      .get_next_token(0)
+    let first_token = parser
+      .get_current_token()
       .ok_or(anyhow!("Got error unwraping token for VPath"))?;
-    let colon_token= parser
-    .get_next_token(1)
-    .ok_or(anyhow!("Got error unwraping token for VPath"))?;
-    let mut location = table_token.pos.start..colon_token.pos.end;
-    let variable = {
-      let variable_token = parser.get_next_token(2);
-      if let Some(v) = variable_token {
-        match &v.kind {
-          TokenKind::Identifier => {
-            location.end = v.pos.end;
-            v.text.clone()
-          },
-          _ => None,
+    let second_token = parser
+      .get_next_token(1)
+      .ok_or(anyhow!("Got error unwraping token for VPath"))?;
+
+    let third_token = parser
+      .get_next_token(2)
+      .ok_or(anyhow!("Got error unwraping token for VPath"))?;
+
+    let ast_node = match (&first_token.kind, &second_token.kind, &third_token.kind) {
+      (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier) => {
+        parser.eat_tokens(3);
+        AstVPathNode {
+          parent,
+          table: first_token.text.clone(),
+          variable: third_token.text.clone(),
+          location: first_token.pos.start..third_token.pos.end,
         }
-      } else {
-        None
       }
-    };
-    
-    let table = match &table_token.kind {
-      TokenKind::Identifier => table_token.text.clone().unwrap(),
-      _ => return Err(anyhow!("Unknown error occured while parsing VPath node")),
-    };
-    parser.eat_tokens(2);
-    if variable.is_some() {
-      parser.eat_token();
-    }
-    let ast_node = AstVPathNode {
-      parent,
-      table,
-      variable,
-      location
+      (TokenKind::Identifier, TokenKind::Colon, _) => {
+        parser.eat_tokens(2);
+        AstVPathNode {
+          parent,
+          table: first_token.text.clone(),
+          variable: None,
+          location: first_token.pos.start..second_token.pos.end,
+        }
+      }
+      (TokenKind::Colon, TokenKind::Identifier, _) => {
+        parser.eat_tokens(2);
+        AstVPathNode {
+          parent,
+          table: None,
+          variable: second_token.text.clone(),
+          location: first_token.pos.start..second_token.pos.end,
+        }
+      }
+      (TokenKind::Colon, _, _) => {
+        parser.eat_tokens(1);
+        AstVPathNode {
+          parent,
+          table: None,
+          variable: None,
+          location: first_token.pos.clone(),
+        }
+      }
+      (_, _, _) => return Err(anyhow!("Unknown error occured while parsing VPath node")),
     };
     let node_ref = parser.add_node(Node::VPath(ast_node));
     return Ok(node_ref);
