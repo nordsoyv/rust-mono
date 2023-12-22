@@ -2,15 +2,13 @@ use std::cell::RefCell;
 
 use cdl_lexer::{Token, TokenKind};
 
-use crate::ast_nodes::ast_identifier::AstIdentifierNode;
-use crate::ast_nodes::ast_number::AstNumberNode;
-use crate::ast_nodes::ast_property::AstPropertyNode;
-use crate::ast_nodes::ast_script::AstScriptNode;
-use crate::ast_nodes::ast_string::AstStringNode;
-use crate::ast_nodes::ast_vpath::AstVPathNode;
-use crate::ast_nodes::Parsable;
-use crate::ast_nodes::{ast_entity::AstEntityNode, ast_title::AstTitleNode};
-use crate::types::NodeRef;
+use crate::{
+  ast_nodes::{
+    AstColorNode, AstEntityNode, AstIdentifierNode, AstNumberNode, AstPropertyNode, AstScriptNode,
+    AstStringNode, AstTitleNode, AstVPathNode, Parsable,
+  },
+  types::NodeRef,
+};
 use anyhow::{anyhow, Result};
 
 #[derive(Debug)]
@@ -23,6 +21,7 @@ pub enum Node {
   String(AstStringNode),
   Number(AstNumberNode),
   VPath(AstVPathNode),
+  Color(AstColorNode),
 }
 
 #[derive(Debug)]
@@ -50,11 +49,11 @@ impl Parser {
   }
 
   #[allow(dead_code)]
-  pub fn eat_token(& self) {
+  pub fn eat_token(&self) {
     self.curr_token.replace_with(|&mut old| old + 1);
   }
 
-  pub fn eat_tokens(& self, num: usize) {
+  pub fn eat_tokens(&self, num: usize) {
     self.curr_token.replace_with(|&mut old| old + num);
   }
 
