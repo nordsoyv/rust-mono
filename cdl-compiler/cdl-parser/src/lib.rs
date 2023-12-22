@@ -1,6 +1,7 @@
 mod ast_nodes;
 mod parser;
 mod types;
+mod parse_expr;
 
 use anyhow::Result;
 use cdl_lexer::lex;
@@ -229,4 +230,21 @@ mod tests {
       assert_eq!(0, node.children.len());
     }
   }
+
+  #[test]
+  fn can_parse_function_string() {
+    let ast = parse_text(
+      r#"maintype {
+        prop: func(12,12,"asdf")
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::Function(node) = &ast.nodes[3] {
+      assert_eq!("func", node.name.to_string());
+    }
+  }
+
+
 }

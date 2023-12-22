@@ -5,7 +5,7 @@ use cdl_lexer::{Token, TokenKind};
 use crate::{
   ast_nodes::{
     AstColorNode, AstEntityNode, AstIdentifierNode, AstNumberNode, AstPropertyNode, AstScriptNode,
-    AstStringNode, AstTitleNode, AstVPathNode, Parsable, AstReferenceNode,
+    AstStringNode, AstTitleNode, AstVPathNode, Parsable, AstReferenceNode, ast_function::AstFunctionNode,
   },
   types::NodeRef,
 };
@@ -22,7 +22,8 @@ pub enum Node {
   Number(AstNumberNode),
   VPath(AstVPathNode),
   Color(AstColorNode),
-  Reference(AstReferenceNode)
+  Reference(AstReferenceNode),
+  Function(AstFunctionNode),
 }
 
 #[derive(Debug)]
@@ -117,6 +118,7 @@ impl Parser {
       Node::Entity(ent) => ent.children.push(child),
       Node::Script(script) => script.children.push(child),
       Node::Property(prop) => prop.child = child,
+      Node::Function(func) => func.children.push(child),
       _ => panic!("Unknown type to set as parent {:?}", node),
     }
   }
@@ -167,6 +169,7 @@ impl Parser {
     match node {
       Node::Property(prop) => prop.location = start..end,
       Node::Entity(ent) => ent.location = start..end,
+      Node::Function(func) => func.location = start..end,
       _ => panic!("Unknown type to set location on {:?}", node),
     }
   }

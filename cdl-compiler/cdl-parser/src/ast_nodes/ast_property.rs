@@ -5,13 +5,10 @@ use cdl_lexer::TokenKind;
 
 use crate::{
   parser::{Node, Parser},
-  types::NodeRef,
+  types::NodeRef, parse_expr::parse_expression,
 };
 
-use super::{
-  ast_identifier::AstIdentifierNode, ast_number::AstNumberNode, ast_string::AstStringNode,
-  ast_vpath::AstVPathNode, Parsable, AstColorNode, AstReferenceNode,
-};
+use super::Parsable;
 
 #[derive(Debug)]
 pub struct AstPropertyNode {
@@ -52,39 +49,12 @@ impl Parsable for AstPropertyNode {
       (node_ref, name_token.pos.start)
     };
     parser.eat_tokens(2);
-    let expr_node_ref = AstPropertyNode::parse_expression(parser, node_ref)?;
+    let expr_node_ref = parse_expression(parser, node_ref)?;
     let last_token_end = parser
       .eat_token_of_type(TokenKind::EOL)
       .expect("Tried parsing property, did not find EOL when exptected");
     parser.update_location_on_node(node_ref, start_pos, last_token_end);
     parser.add_child_to_node(node_ref, expr_node_ref);
     Ok(node_ref)
-  }
-}
-
-impl AstPropertyNode {
-  fn parse_expression(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    loop {
-      //parser.eat_eol_and_comments();
-      if AstVPathNode::can_parse(&parser) {
-        return AstVPathNode::parse(parser, parent);
-      }
-      if AstIdentifierNode::can_parse(&parser) {
-        return AstIdentifierNode::parse(parser, parent);
-      }
-      if AstStringNode::can_parse(&parser) {
-        return AstStringNode::parse(parser, parent);
-      }
-      if AstNumberNode::can_parse(&parser) {
-        return AstNumberNode::parse(parser, parent);
-      }
-      if AstReferenceNode::can_parse(&parser) {
-        return AstReferenceNode::parse(parser, parent);
-      }
-      if AstColorNode::can_parse(&parser) {
-        return AstColorNode::parse(parser, parent);
-      }
-      return Err(anyhow!("Error parsing expression"));
-    }
   }
 }
