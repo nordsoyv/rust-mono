@@ -4,8 +4,9 @@ use std::{ops::Range, rc::Rc};
 use cdl_lexer::TokenKind;
 
 use crate::{
+  parse_expr::parse_list,
   parser::{Node, Parser},
-  types::NodeRef, parse_expr::parse_expression,
+  types::NodeRef,
 };
 
 use super::Parsable;
@@ -14,7 +15,7 @@ use super::Parsable;
 pub struct AstPropertyNode {
   pub name: Rc<str>,
   pub parent: NodeRef,
-  pub child: NodeRef,
+  pub child: Vec<NodeRef>,
   pub location: Range<usize>,
 }
 
@@ -41,7 +42,7 @@ impl Parsable for AstPropertyNode {
       let ast_node = AstPropertyNode {
         parent,
         name: name_token.text.as_ref().unwrap().clone(),
-        child: NodeRef(-1),
+        child: vec![],
         location: name_token.pos.start..usize::MAX,
       };
 
@@ -49,12 +50,15 @@ impl Parsable for AstPropertyNode {
       (node_ref, name_token.pos.start)
     };
     parser.eat_tokens(2);
-    let expr_node_ref = parse_expression(parser, node_ref)?;
+    let children = parse_list(parser, node_ref)?;
     let last_token_end = parser
       .eat_token_of_type(TokenKind::EOL)
       .expect("Tried parsing property, did not find EOL when exptected");
     parser.update_location_on_node(node_ref, start_pos, last_token_end);
-    parser.add_child_to_node(node_ref, expr_node_ref);
+    children
+      .iter()
+      .for_each(|c| parser.add_child_to_node(node_ref, *c));
+    //parser.add_child_to_node(node_ref, children);
     Ok(node_ref)
   }
 }

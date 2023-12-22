@@ -9,6 +9,7 @@ pub mod ast_vpath;
 pub mod ast_color;
 pub mod ast_reference;
 pub mod ast_function;
+pub mod ast_operator;
 
 use anyhow::Result;
 
@@ -24,6 +25,7 @@ pub use ast_string::AstStringNode;
 pub use ast_title::AstTitleNode;
 pub use ast_vpath::AstVPathNode;
 pub use ast_reference::AstReferenceNode;
+pub use ast_operator::AstOperatorNode;
 
 pub trait Parsable {
   fn can_parse(parser: &Parser) -> bool;

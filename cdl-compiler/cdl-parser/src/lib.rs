@@ -1,7 +1,7 @@
 mod ast_nodes;
+mod parse_expr;
 mod parser;
 mod types;
-mod parse_expr;
 
 use anyhow::Result;
 use cdl_lexer::lex;
@@ -129,7 +129,6 @@ mod tests {
     }
   }
 
-
   #[test]
   fn can_parse_property_vpath() {
     let ast = parse_text(
@@ -232,7 +231,7 @@ mod tests {
   }
 
   #[test]
-  fn can_parse_function_string() {
+  fn can_parse_function() {
     let ast = parse_text(
       r#"maintype {
         prop: func(12,12,"asdf")
@@ -243,8 +242,38 @@ mod tests {
     let ast = ast.unwrap();
     if let Node::Function(node) = &ast.nodes[3] {
       assert_eq!("func", node.name.to_string());
+      assert_eq!(vec![NodeRef(4), NodeRef(5),NodeRef(6)], node.children);
     }
   }
 
+  #[test]
+  fn can_parse_lists() {
+    let ast = parse_text(
+      r#"maintype {
+        prop: 12,12,"asdf"
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::Property(node) = &ast.nodes[3] {
+      assert_eq!(vec![NodeRef(4), NodeRef(5),NodeRef(6)], node.child);
+    }
+  }
+  #[test]
+  fn can_parse_expressions() {
+    let ast = parse_text(
+      r#"maintype {
+        prop: 1 + 1
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::Property(node) = &ast.nodes[2] {
+      assert_eq!(vec![NodeRef(4)], node.child);
+    }
+  }
 
+  
 }

@@ -1,11 +1,12 @@
-use std::cell::RefCell;
+use std::{ cell::RefCell, ops::Range};
 
 use cdl_lexer::{Token, TokenKind};
 
 use crate::{
   ast_nodes::{
-    AstColorNode, AstEntityNode, AstIdentifierNode, AstNumberNode, AstPropertyNode, AstScriptNode,
-    AstStringNode, AstTitleNode, AstVPathNode, Parsable, AstReferenceNode, ast_function::AstFunctionNode,
+    ast_function::AstFunctionNode, AstColorNode, AstEntityNode, AstIdentifierNode, AstNumberNode,
+    AstOperatorNode, AstPropertyNode, AstReferenceNode, AstScriptNode, AstStringNode, AstTitleNode,
+    AstVPathNode, Parsable,
   },
   types::NodeRef,
 };
@@ -24,6 +25,7 @@ pub enum Node {
   Color(AstColorNode),
   Reference(AstReferenceNode),
   Function(AstFunctionNode),
+  Operator(AstOperatorNode),
 }
 
 #[derive(Debug)]
@@ -117,8 +119,9 @@ impl Parser {
     match node {
       Node::Entity(ent) => ent.children.push(child),
       Node::Script(script) => script.children.push(child),
-      Node::Property(prop) => prop.child = child,
+      Node::Property(prop) => prop.child.push(child),
       Node::Function(func) => func.children.push(child),
+      Node::Operator(op) => op.right = child,
       _ => panic!("Unknown type to set as parent {:?}", node),
     }
   }
@@ -167,10 +170,37 @@ impl Parser {
     let mut nodes = self.nodes.borrow_mut();
     let node = nodes.get_mut(node_ref.0 as usize).unwrap();
     match node {
-      Node::Property(prop) => prop.location = start..end,
-      Node::Entity(ent) => ent.location = start..end,
-      Node::Function(func) => func.location = start..end,
-      _ => panic!("Unknown type to set location on {:?}", node),
+      Node::Color(node) => node.location = start..end,
+      Node::Entity(node) => node.location = start..end,
+      Node::Function(node) => node.location = start..end,
+      Node::Identifier(node) => node.location = start..end,
+      Node::Number(node) => node.location = start..end,
+      Node::Operator(node) => node.location = start..end,
+      Node::Property(node) => node.location = start..end,
+      Node::Reference(node) => node.location = start..end,
+      Node::Script(node) => node.location = start..end,
+      Node::String(node) => node.location = start..end,
+      Node::Title(node) => node.location = start..end,
+      Node::VPath(node) => node.location = start..end,
+    }
+  }
+
+  pub fn get_pos_for_node(&self, node_ref: NodeRef) -> Range<usize> {
+    let nodes = self.nodes.borrow();
+    let node = nodes.get(node_ref.0 as usize).unwrap();
+    match node {
+      Node::Property(prop) => prop.location.clone(),
+      Node::Entity(ent) => ent.location.clone(),
+      Node::Function(func) => func.location.clone(),
+      Node::Color(color) => color.location.clone(),
+      Node::Identifier(node) => node.location.clone(),
+      Node::Number(node) => node.location.clone(),
+      Node::Operator(node) => node.location.clone(),
+      Node::Reference(node) => node.location.clone(),
+      Node::Script(node) => node.location.clone(),
+      Node::String(node) => node.location.clone(),
+      Node::Title(node) => node.location.clone(),
+      Node::VPath(node) => node.location.clone(),
     }
   }
 }
