@@ -5,7 +5,7 @@ use cdl_lexer::{Token, TokenKind};
 use crate::{
   ast_nodes::{
     AstColorNode, AstEntityNode, AstIdentifierNode, AstNumberNode, AstPropertyNode, AstScriptNode,
-    AstStringNode, AstTitleNode, AstVPathNode, Parsable,
+    AstStringNode, AstTitleNode, AstVPathNode, Parsable, AstReferenceNode,
   },
   types::NodeRef,
 };
@@ -22,6 +22,7 @@ pub enum Node {
   Number(AstNumberNode),
   VPath(AstVPathNode),
   Color(AstColorNode),
+  Reference(AstReferenceNode)
 }
 
 #[derive(Debug)]

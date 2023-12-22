@@ -113,6 +113,21 @@ mod tests {
       assert_eq!("00aabb", node.color.to_string());
     }
   }
+  #[test]
+  fn can_parse_property_reference() {
+    let ast = parse_text(
+      r#"maintype {
+        prop: @identifier
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::Reference(node) = &ast.nodes[3] {
+      assert_eq!("identifier", node.ident.to_string());
+    }
+  }
+
 
   #[test]
   fn can_parse_property_vpath() {

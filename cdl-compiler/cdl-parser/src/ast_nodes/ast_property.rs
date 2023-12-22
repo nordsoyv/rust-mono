@@ -10,7 +10,7 @@ use crate::{
 
 use super::{
   ast_identifier::AstIdentifierNode, ast_number::AstNumberNode, ast_string::AstStringNode,
-  ast_vpath::AstVPathNode, Parsable, AstColorNode,
+  ast_vpath::AstVPathNode, Parsable, AstColorNode, AstReferenceNode,
 };
 
 #[derive(Debug)]
@@ -77,6 +77,9 @@ impl AstPropertyNode {
       }
       if AstNumberNode::can_parse(&parser) {
         return AstNumberNode::parse(parser, parent);
+      }
+      if AstReferenceNode::can_parse(&parser) {
+        return AstReferenceNode::parse(parser, parent);
       }
       if AstColorNode::can_parse(&parser) {
         return AstColorNode::parse(parser, parent);
