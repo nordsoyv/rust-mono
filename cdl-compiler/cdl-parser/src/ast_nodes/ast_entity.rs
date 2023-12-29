@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use anyhow::Result;
 use std::ops::Range;
 use std::rc::Rc;
+use std::vec;
 
 use cdl_lexer::TokenKind;
 
@@ -10,15 +11,19 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
 use super::ast_property::AstPropertyNode;
+use super::Parsable;
 
 #[derive(Debug)]
 pub struct AstEntityNode {
   pub parent: NodeRef,
   pub children: Vec<NodeRef>,
   pub terms: Vec<Rc<str>>,
-  pub location: Range<usize>
+  pub location: Range<usize>,
+  pub label: Option<Rc<str>>,
+  pub refs: Vec<Rc<str>>,
+  pub ident: Option<Rc<str>>,
+  pub entity_number: Option<f64>,
 }
 
 impl Parsable for AstEntityNode {
@@ -35,7 +40,6 @@ impl Parsable for AstEntityNode {
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let header = AstEntityNode::parse_entity_header(parser)?;
-    parser.eat_tokens(header.num_tokens);
     parser.eat_token_of_type(TokenKind::BraceOpen)?;
     parser.eat_token_of_type(TokenKind::EOL)?;
 
@@ -43,7 +47,11 @@ impl Parsable for AstEntityNode {
       children: vec![],
       parent,
       terms: header.terms,
-      location : header.start_loc..0
+      location: header.start_loc..0,
+      label: header.label,
+      refs: header.refs,
+      ident: header.ident,
+      entity_number: header.entity_number
     };
     let current_entity_ref = parser.add_node(Node::Entity(entity));
     loop {
@@ -82,17 +90,68 @@ impl AstEntityNode {
       .into_iter()
       .map(|t| t.text.as_ref().unwrap().clone())
       .collect::<Vec<Rc<str>>>();
+    parser.eat_tokens(terms.len());
+
+    let label_token = parser.get_tokens_of_kind(TokenKind::String);
+    let label = if label_token.len() > 0 {
+      parser.eat_token();
+      label_token[0].text.clone()
+    } else {
+      None
+    };
+
+    let ref_tokens = parser.get_tokens_of_kind(TokenKind::Reference);
+    let refs = if ref_tokens.len() > 0 {
+      parser.eat_tokens(ref_tokens.len());
+      ref_tokens.iter().map(|r| r.text.clone().unwrap()).collect()
+    } else {
+      vec![]
+    };
+
+    let ident = if parser.is_next_token_of_type(TokenKind::Hash) {
+      let ident_token = parser.get_next_token(1);
+      if ident_token.is_some() {
+        parser.eat_tokens(2);
+        ident_token.unwrap().text.clone()
+      } else {
+        None
+      }
+    } else {
+      None
+    };
+
+    let entity_number = {
+      let next_token = parser.get_current_token();
+      if next_token.is_some() {
+        let next_token = next_token.unwrap();
+        if let TokenKind::Number(entity_number) = next_token.kind {
+          parser.eat_token();
+          Some(entity_number)
+        } else {
+          None
+        }
+      } else {
+        None
+      }
+    };
 
     return Ok(EntityHeaderInfo {
-      num_tokens: terms.len(),
       terms,
-      start_loc
+      start_loc,
+      label,
+      refs,
+      ident,
+      entity_number,
     });
   }
 }
 
+#[derive(Debug)]
 struct EntityHeaderInfo {
-  num_tokens: usize,
   terms: Vec<Rc<str>>,
-  start_loc: usize
+  start_loc: usize,
+  label: Option<Rc<str>>,
+  refs: Vec<Rc<str>>,
+  ident: Option<Rc<str>>,
+  entity_number: Option<f64>,
 }

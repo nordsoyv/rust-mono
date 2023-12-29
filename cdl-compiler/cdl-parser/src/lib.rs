@@ -55,6 +55,27 @@ mod tests {
       assert_eq!(0, node.children.len());
     }
   }
+  #[test]
+  fn can_parse_entity_header() {
+    let ast = parse_text(
+      r#"maintype subtype "label" @ref1 @ref2 #id 3245{
+
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+
+    let ast = ast.unwrap();
+    if let Node::Entity(node) = &ast.nodes[1] {
+      assert_eq!("maintype", node.terms[0].to_string());
+      assert_eq!(0, node.children.len());
+      assert_eq!("\"label\"", node.label.as_ref().unwrap().to_string());
+      assert_eq!("ref1", node.refs[0].to_string());
+      assert_eq!("ref2", node.refs[1].to_string());
+      assert_eq!("id", node.ident.as_ref().unwrap().to_string());
+      assert_eq!(3245.0, *node.entity_number.as_ref().unwrap());
+    }
+  }
 
   #[test]
   fn can_parse_property_identifier() {
@@ -242,7 +263,7 @@ mod tests {
     let ast = ast.unwrap();
     if let Node::Function(node) = &ast.nodes[3] {
       assert_eq!("func", node.name.to_string());
-      assert_eq!(vec![NodeRef(4), NodeRef(5),NodeRef(6)], node.children);
+      assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children);
     }
   }
 
@@ -257,7 +278,7 @@ mod tests {
     assert!(ast.is_ok());
     let ast = ast.unwrap();
     if let Node::Property(node) = &ast.nodes[3] {
-      assert_eq!(vec![NodeRef(4), NodeRef(5),NodeRef(6)], node.child);
+      assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.child);
     }
   }
   #[test]
@@ -275,5 +296,22 @@ mod tests {
     }
   }
 
-  
+  #[test]
+  fn can_parse_expressions_parents() {
+    let ast = parse_text(
+      r#"maintype {
+        prop: 1 + (2 - 3)
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::Property(node) = &ast.nodes[2] {
+      assert_eq!(vec![NodeRef(4)], node.child);
+    }
+    if let Node::Operator(node) = &ast.nodes[6] {
+      assert_eq!(NodeRef(5), node.left);
+      assert_eq!(NodeRef(7), node.right);
+    }
+  }
 }

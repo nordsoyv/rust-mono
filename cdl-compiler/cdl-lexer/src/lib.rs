@@ -656,4 +656,33 @@ mod tests {
     let res = tokens.unwrap();
     assert_eq!(24538, res.len());
   }
+  #[test]
+  fn can_parse_number() {
+    let tokens = lex("1 1.1 -3245.2").unwrap();
+
+    assert_eq!(
+      tokens[0],
+      Token {
+        kind: TokenKind::Number(1.0),
+        text: None,
+        pos: 0..1
+      }
+    );
+    assert_eq!(
+      tokens[1],
+      Token {
+        kind: TokenKind::Number(1.1),
+        text: None,
+        pos: 2..5
+      }
+    );
+    assert_eq!(
+      tokens[2],
+      Token {
+        kind: TokenKind::Number(-3245.2),
+        text: None,
+        pos: 6..13
+      }
+    );
+  }
 }

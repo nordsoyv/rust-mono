@@ -83,6 +83,14 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   if AstColorNode::can_parse(&parser) {
     return AstColorNode::parse(parser, parent);
   }
+  if parser.is_next_token_of_type(TokenKind::ParenOpen) {
+    parser.eat_token();
+    let expr_node = parse_expression(parser, parent)?;
+    let location = parser.get_pos_for_node(expr_node);
+    let end = parser.eat_token_of_type(TokenKind::ParenClose)?;
+    parser.update_location_on_node(expr_node, location.start, end);
+    return Ok(expr_node);
+  }
   dbg!(parser.get_current_token());
   return Err(anyhow!("Error parsing expression"));
 }

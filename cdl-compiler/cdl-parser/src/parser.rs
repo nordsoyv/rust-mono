@@ -1,4 +1,4 @@
-use std::{ cell::RefCell, ops::Range};
+use std::{cell::RefCell, ops::Range};
 
 use cdl_lexer::{Token, TokenKind};
 
@@ -76,6 +76,18 @@ impl Parser {
     };
     self.eat_token();
     Ok(end_pos)
+  }
+
+  pub fn is_next_token_of_type(&self, kind: TokenKind) -> bool {
+    let curr_token = self.get_current_token();
+    if curr_token.is_none() {
+      return false;
+    }
+    let curr_token = curr_token.unwrap();
+    if curr_token.kind == kind {
+      return true;
+    }
+    return false;
   }
 
   pub fn add_node(&self, n: Node) -> NodeRef {
