@@ -12,6 +12,7 @@ use crate::{
 };
 
 use super::ast_property::AstPropertyNode;
+use super::AstTableAliasNode;
 use super::Parsable;
 
 #[derive(Debug)]
@@ -40,6 +41,14 @@ impl Parsable for AstEntityNode {
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let header = AstEntityNode::parse_entity_header(parser)?;
+    let is_config_hub = if header.terms.len() > 1
+      && header.terms[0] == "config".into()
+      && header.terms[1] == "hub".into()
+    {
+      true
+    } else {
+      false
+    };
     parser.eat_token_of_type(TokenKind::BraceOpen)?;
     parser.eat_token_of_type(TokenKind::EOL)?;
 
@@ -51,7 +60,7 @@ impl Parsable for AstEntityNode {
       label: header.label,
       refs: header.refs,
       ident: header.ident,
-      entity_number: header.entity_number
+      entity_number: header.entity_number,
     };
     let current_entity_ref = parser.add_node(Node::Entity(entity));
     loop {
@@ -62,12 +71,22 @@ impl Parsable for AstEntityNode {
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
+      if AstTableAliasNode::can_parse(&parser) {
+        if !is_config_hub {
+          return Err(anyhow!("Table Alias not allowed outside config hub"));
+        }
+        let child_node_ref = AstTableAliasNode::parse(parser, current_entity_ref)?;
+        //entity.children.push(child_node_ref);
+        parser.add_child_to_node(current_entity_ref, child_node_ref);
+        continue;
+      }
       if AstEntityNode::can_parse(&parser) {
         let child_node_ref = AstEntityNode::parse(parser, current_entity_ref)?;
         //entity.children.push(child_node_ref);
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
+
       let curr_token = parser
         .get_current_token()
         .ok_or(anyhow!(format!("Unexpected token when parsing entity")))?;

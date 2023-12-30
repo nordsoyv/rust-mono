@@ -5,8 +5,8 @@ use cdl_lexer::{Token, TokenKind};
 use crate::{
   ast_nodes::{
     ast_function::AstFunctionNode, AstColorNode, AstEntityNode, AstIdentifierNode, AstNumberNode,
-    AstOperatorNode, AstPropertyNode, AstReferenceNode, AstScriptNode, AstStringNode, AstTitleNode,
-    AstVPathNode, Parsable,
+    AstOperatorNode, AstPropertyNode, AstReferenceNode, AstScriptNode, AstStringNode,
+    AstTableAliasNode, AstTitleNode, AstVPathNode, Parsable,
   },
   types::NodeRef,
 };
@@ -26,6 +26,7 @@ pub enum Node {
   Reference(AstReferenceNode),
   Function(AstFunctionNode),
   Operator(AstOperatorNode),
+  TableAlias(AstTableAliasNode),
 }
 
 #[derive(Debug)]
@@ -194,6 +195,7 @@ impl Parser {
       Node::String(node) => node.location = start..end,
       Node::Title(node) => node.location = start..end,
       Node::VPath(node) => node.location = start..end,
+      Node::TableAlias(node)=> node.location= start..end,
     }
   }
 
@@ -213,6 +215,7 @@ impl Parser {
       Node::String(node) => node.location.clone(),
       Node::Title(node) => node.location.clone(),
       Node::VPath(node) => node.location.clone(),
+      Node::TableAlias(node) => node.location.clone(),
     }
   }
 }

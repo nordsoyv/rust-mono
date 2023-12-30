@@ -314,4 +314,31 @@ mod tests {
       assert_eq!(NodeRef(7), node.right);
     }
   }
+
+  #[test]
+  fn can_parse_table_alias() {
+    let ast = parse_text(
+      r#"config hub {
+        table alias = dataset.table
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::TableAlias(node) = &ast.nodes[2] {
+      assert_eq!("alias", node.alias.to_string());
+      assert_eq!("dataset.table", node.table.to_string());
+    }
+  }
+
+  #[test]
+  fn table_alias_not_allowed_outside_config_hub() {
+    let ast = parse_text(
+      r#"config notHub {
+        table alias = dataset.table
+    }   
+    "#,
+    );
+    assert!(ast.is_err());  
+  }
 }
