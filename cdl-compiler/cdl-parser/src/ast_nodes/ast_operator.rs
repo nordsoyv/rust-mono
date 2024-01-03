@@ -72,7 +72,7 @@ impl AstOperatorNode {
     left: NodeRef,
   ) -> Result<NodeRef> {
     let operator_token = parser.get_current_token()?;
-    parser.eat_token();
+    parser.eat_token()?;
     let operator = match operator_token.kind {
       TokenKind::Div => Operator::Div,
       TokenKind::Mul => Operator::Mul,
@@ -106,7 +106,7 @@ impl AstOperatorNode {
     left: NodeRef,
   ) -> Result<NodeRef> {
     let operator_token = parser.get_current_token()?;
-    parser.eat_token();
+    parser.eat_token()?;
     let operator = match operator_token.kind {
       TokenKind::Plus => Operator::Plus,
       TokenKind::Minus => Operator::Minus,

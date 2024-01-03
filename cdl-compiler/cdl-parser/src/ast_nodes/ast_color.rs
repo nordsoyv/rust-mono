@@ -38,7 +38,7 @@ impl Parsable for AstColorNode {
       location: color_token.pos.clone(),
     };
     let node_ref = parser.add_node(Node::Color(ast_node));
-    parser.eat_tokens(1);
+    parser.eat_tokens(1)?;
     Ok(node_ref)
   }
 }

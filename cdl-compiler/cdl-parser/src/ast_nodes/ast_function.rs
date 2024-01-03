@@ -52,7 +52,7 @@ impl Parsable for AstFunctionNode {
     };
 
     let node_ref = parser.add_node(Node::Function(ast_node));
-    parser.eat_tokens(2);
+    parser.eat_tokens(2)?;
 
     let args = parse_arg_list(parser, node_ref)?;
 
@@ -61,7 +61,7 @@ impl Parsable for AstFunctionNode {
       .for_each(|a| parser.add_child_to_node(node_ref, *a));
 
     let end_pos = parser.eat_token_of_type(TokenKind::ParenClose)?;
-    parser.update_location_on_node(node_ref, start_pos, end_pos);
+    parser.update_location_on_node(node_ref, start_pos, end_pos.end);
     Ok(node_ref)
   }
 }

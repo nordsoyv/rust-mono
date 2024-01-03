@@ -53,7 +53,7 @@ impl Parsable for AstTableAliasNode {
       location: table_token.pos.start..vpath_token.pos.end,
     };
     let node_ref = parser.add_node(Node::TableAlias(ast_node));
-    parser.eat_tokens(4);
+    parser.eat_tokens(4)?;
     Ok(node_ref)
   }
 }

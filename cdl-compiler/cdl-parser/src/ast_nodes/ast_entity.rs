@@ -67,7 +67,6 @@ impl Parsable for AstEntityNode {
       parser.eat_eol_and_comments();
       if AstPropertyNode::can_parse(&parser) {
         let child_node_ref = AstPropertyNode::parse(parser, current_entity_ref)?;
-        //entity.children.push(child_node_ref);
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
@@ -76,21 +75,18 @@ impl Parsable for AstEntityNode {
           return Err(anyhow!("Table Alias not allowed outside config hub"));
         }
         let child_node_ref = AstTableAliasNode::parse(parser, current_entity_ref)?;
-        //entity.children.push(child_node_ref);
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
       if AstEntityNode::can_parse(&parser) {
         let child_node_ref = AstEntityNode::parse(parser, current_entity_ref)?;
-        //entity.children.push(child_node_ref);
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
 
       let curr_token = parser.get_current_token()?;
       if curr_token.kind == TokenKind::BraceClose {
-        parser.eat_token();
-        //parser.add_node(Node::Entity(entity));
+        parser.eat_token()?;
         parser.update_location_on_node(current_entity_ref, header.start_loc, curr_token.pos.end);
         return Ok(current_entity_ref);
       }
@@ -107,11 +103,11 @@ impl AstEntityNode {
       .into_iter()
       .map(|t| t.text.as_ref().unwrap().clone())
       .collect::<Vec<Rc<str>>>();
-    parser.eat_tokens(terms.len());
+    parser.eat_tokens(terms.len())?;
 
     let label_token = parser.get_tokens_of_kind(TokenKind::String);
     let label = if label_token.len() > 0 {
-      parser.eat_token();
+      parser.eat_token()?;
       label_token[0].text.clone()
     } else {
       None
@@ -119,7 +115,7 @@ impl AstEntityNode {
 
     let ref_tokens = parser.get_tokens_of_kind(TokenKind::Reference);
     let refs = if ref_tokens.len() > 0 {
-      parser.eat_tokens(ref_tokens.len());
+      parser.eat_tokens(ref_tokens.len())?;
       ref_tokens.iter().map(|r| r.text.clone().unwrap()).collect()
     } else {
       vec![]
@@ -128,7 +124,7 @@ impl AstEntityNode {
     let ident = if parser.is_next_token_of_type(TokenKind::Hash) {
       let ident_token = parser.get_next_token(1);
       if ident_token.is_ok() {
-        parser.eat_tokens(2);
+        parser.eat_tokens(2)?;
         ident_token.unwrap().text.clone()
       } else {
         None
@@ -142,7 +138,7 @@ impl AstEntityNode {
       if next_token.is_ok() {
         let next_token = next_token.unwrap();
         if let TokenKind::Number(entity_number) = next_token.kind {
-          parser.eat_token();
+          parser.eat_token()?;
           Some(entity_number)
         } else {
           None

@@ -51,7 +51,7 @@ impl Parsable for AstTitleNode {
           location: title_keyword_token.pos.start..title_token.pos.end,
         };
         let node_ref = parser.add_node(Node::Title(ast_node));
-        parser.eat_tokens(3);
+        parser.eat_tokens(3)?;
         return Ok(node_ref);
       }
       _ => return Err(anyhow!("Unknown error occured while parsing Title node")),

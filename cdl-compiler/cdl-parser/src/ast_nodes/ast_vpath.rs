@@ -46,7 +46,7 @@ impl Parsable for AstVPathNode {
 
     let ast_node = match (&first_token.kind, &second_token.kind, &third_token.kind) {
       (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier) => {
-        parser.eat_tokens(3);
+        parser.eat_tokens(3)?;
         AstVPathNode {
           parent,
           table: first_token.text.clone(),
@@ -55,7 +55,7 @@ impl Parsable for AstVPathNode {
         }
       }
       (TokenKind::Identifier, TokenKind::Colon, _) => {
-        parser.eat_tokens(2);
+        parser.eat_tokens(2)?;
         AstVPathNode {
           parent,
           table: first_token.text.clone(),
@@ -64,7 +64,7 @@ impl Parsable for AstVPathNode {
         }
       }
       (TokenKind::Colon, TokenKind::Identifier, _) => {
-        parser.eat_tokens(2);
+        parser.eat_tokens(2)?;
         AstVPathNode {
           parent,
           table: None,
@@ -73,7 +73,7 @@ impl Parsable for AstVPathNode {
         }
       }
       (TokenKind::Colon, _, _) => {
-        parser.eat_tokens(1);
+        parser.eat_tokens(1)?;
         AstVPathNode {
           parent,
           table: None,

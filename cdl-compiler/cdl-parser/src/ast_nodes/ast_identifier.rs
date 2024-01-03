@@ -1,4 +1,4 @@
-use anyhow::{ Result};
+use anyhow::Result;
 use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
@@ -38,7 +38,7 @@ impl Parsable for AstIdentifierNode {
       location: ident_token.pos.clone(),
     };
     let node_ref = parser.add_node(Node::Identifier(ast_node));
-    parser.eat_tokens(1);
+    parser.eat_tokens(1)?;
     Ok(node_ref)
   }
 }

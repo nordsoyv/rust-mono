@@ -52,7 +52,7 @@ impl Parsable for AstStringNode {
       location: string_token.pos.clone(),
     };
     let node_ref = parser.add_node(Node::String(ast_node));
-    parser.eat_tokens(1);
+    parser.eat_tokens(1)?;
     Ok(node_ref)
   }
 }

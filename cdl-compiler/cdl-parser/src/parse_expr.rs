@@ -17,7 +17,9 @@ pub fn parse_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRe
       TokenKind::ParenClose => {
         return Ok(node_refs);
       }
-      TokenKind::Comma => parser.eat_token(),
+      TokenKind::Comma => {
+        let _ = parser.eat_token()?;
+      }
       _ => node_refs.push(parse_expression(parser, parent)?),
     }
   }
@@ -31,7 +33,9 @@ pub fn parse_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> 
       TokenKind::EOL => {
         return Ok(node_refs);
       }
-      TokenKind::Comma => parser.eat_token(),
+      TokenKind::Comma => {
+        let _ = parser.eat_token()?;
+      }
       _ => node_refs.push(parse_expression(parser, parent)?),
     }
   }
@@ -80,11 +84,11 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     return AstColorNode::parse(parser, parent);
   }
   if parser.is_next_token_of_type(TokenKind::ParenOpen) {
-    parser.eat_token();
+    parser.eat_token()?;
     let expr_node = parse_expression(parser, parent)?;
     let location = parser.get_pos_for_node(expr_node);
     let end = parser.eat_token_of_type(TokenKind::ParenClose)?;
-    parser.update_location_on_node(expr_node, location.start, end);
+    parser.update_location_on_node(expr_node, location.start, end.end);
     return Ok(expr_node);
   }
   //dbg!(parser.get_current_token());

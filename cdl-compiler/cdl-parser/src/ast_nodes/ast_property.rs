@@ -47,12 +47,12 @@ impl Parsable for AstPropertyNode {
       let node_ref = parser.add_node(Node::Property(ast_node));
       (node_ref, name_token.pos.start)
     };
-    parser.eat_tokens(2);
+    parser.eat_tokens(2)?;
     let children = parse_list(parser, node_ref)?;
     let last_token_end = parser
       .eat_token_of_type(TokenKind::EOL)
       .expect("Tried parsing property, did not find EOL when exptected");
-    parser.update_location_on_node(node_ref, start_pos, last_token_end);
+    parser.update_location_on_node(node_ref, start_pos, last_token_end.end);
     children
       .iter()
       .for_each(|c| parser.add_child_to_node(node_ref, *c));

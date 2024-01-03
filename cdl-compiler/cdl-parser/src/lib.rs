@@ -2,20 +2,17 @@ mod ast_nodes;
 mod parse_expr;
 mod parser;
 mod types;
+mod token_stream;
 
 use anyhow::Result;
 use cdl_lexer::lex;
 use parser::{Node, Parser};
-use std::cell::RefCell;
+use token_stream::TokenStream;
 use types::NodeRef;
 
 pub fn parse_text(text: &str) -> Result<Ast> {
   let tokens = lex(text)?;
-  let mut parser = Parser {
-    curr_token: RefCell::new(0),
-    nodes: RefCell::new(Vec::new()),
-    tokens: tokens,
-  };
+  let mut parser = Parser::new(TokenStream::new(tokens));
   let root_ref = parser.parse()?;
 
   Ok(Ast {

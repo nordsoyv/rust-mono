@@ -8,9 +8,10 @@ use crate::{
     AstOperatorNode, AstPropertyNode, AstReferenceNode, AstScriptNode, AstStringNode,
     AstTableAliasNode, AstTitleNode, AstVPathNode, Parsable,
   },
+  token_stream::TokenStream,
   types::NodeRef,
 };
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 #[derive(Debug)]
 pub enum Node {
@@ -31,67 +32,41 @@ pub enum Node {
 
 #[derive(Debug)]
 pub struct Parser {
-  pub tokens: Vec<Token>,
-  pub curr_token: RefCell<usize>,
+  tokens: TokenStream,
   pub nodes: RefCell<Vec<Node>>,
 }
 
 impl Parser {
-  pub fn get_current_token(&self) -> Result<&Token> {
-    let curr = self.curr_token.borrow();
-    if *curr < self.tokens.len() {
-      return Ok(&self.tokens[*curr]);
+  pub fn new(tokens: TokenStream) -> Parser {
+    Parser {
+      nodes: RefCell::new(Vec::new()),
+      tokens,
     }
-    Err(anyhow!("Expected to find a token, but got EOF instead"))
+  }
+
+  pub fn get_current_token(&self) -> Result<&Token> {
+    self.tokens.get_current_token()
   }
 
   pub fn get_next_token(&self, num: usize) -> Result<&Token> {
-    let curr = self.curr_token.borrow();
-    if *curr + num < self.tokens.len() {
-      return Ok(&self.tokens[*curr + num]);
-    }
-    Err(anyhow!("Expected to find a token, but got EOF instead"))
+    self.tokens.get_next_token(num)
   }
 
   #[allow(dead_code)]
-  pub fn eat_token(&self) {
-    self.curr_token.replace_with(|&mut old| old + 1);
+  pub fn eat_token(&self) -> Result<Range<usize>> {
+    self.tokens.eat_token()
   }
 
-  pub fn eat_tokens(&self, num: usize) {
-    self.curr_token.replace_with(|&mut old| old + num);
+  pub fn eat_tokens(&self, num: usize) -> Result<Range<usize>> {
+    self.tokens.eat_tokens(num)
   }
 
-  pub fn eat_token_of_type(&self, kind: TokenKind) -> Result<usize> {
-    let end_pos = {
-      let current_token = self.get_current_token();
-      let current_token = if current_token.is_err() {
-        return Err(anyhow!(format!("Expected {:?}, found EOF", kind)));
-      } else {
-        current_token.unwrap()
-      };
-      if current_token.kind != kind {
-        return Err(anyhow!(format!(
-          "Expected {:?}, found {:?}",
-          kind, current_token.kind,
-        )));
-      }
-      current_token.pos.end
-    };
-    self.eat_token();
-    Ok(end_pos)
+  pub fn eat_token_of_type(&self, kind: TokenKind) -> Result<Range<usize>> {
+    self.tokens.eat_token_of_type(kind)
   }
 
   pub fn is_next_token_of_type(&self, kind: TokenKind) -> bool {
-    let curr_token = self.get_current_token();
-    if curr_token.is_err() {
-      return false;
-    }
-    let curr_token = curr_token.unwrap();
-    if curr_token.kind == kind {
-      return true;
-    }
-    return false;
+    return self.tokens.is_next_token_of_type(kind)
   }
 
   pub fn add_node(&self, n: Node) -> NodeRef {
@@ -100,33 +75,12 @@ impl Parser {
     return (nodes.len() - 1).into();
   }
 
-  // pub fn get_next_node_ref(&self) -> NodeRef {
-  //   return self.nodes.borrow().len().into();
-  // }
-
   pub fn parse(&mut self) -> Result<NodeRef> {
     Ok(self.parse_top_level()?)
   }
 
   pub fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {
-    let mut num_tokens = 0;
-    loop {
-      let curr_token = self.get_next_token(num_tokens);
-      if curr_token.is_ok() {
-        let curr_token = curr_token.unwrap();
-        if curr_token.kind == kind {
-          num_tokens += 1;
-        } else {
-          break;
-        }
-      }
-    }
-    if num_tokens > 0 {
-      let curr = *self.curr_token.borrow();
-      let end_token = curr + num_tokens;
-      return &self.tokens[curr..end_token];
-    }
-    return &[];
+    self.tokens.get_tokens_of_kind(kind)
   }
 
   pub fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
@@ -143,7 +97,7 @@ impl Parser {
   }
 
   fn is_tokens_left(&self) -> bool {
-    self.tokens.len() > *self.curr_token.borrow()
+    self.tokens.is_tokens_left()
   }
 
   pub fn eat_eol_and_comments(&mut self) {
@@ -153,7 +107,7 @@ impl Parser {
         || curr_token.kind == TokenKind::LineComment
         || curr_token.kind == TokenKind::MultiLineComment
       {
-        self.eat_token();
+        let _ = self.eat_token();
       } else {
         break;
       }
@@ -163,7 +117,7 @@ impl Parser {
   fn parse_top_level(&mut self) -> Result<NodeRef> {
     let root_node = AstScriptNode {
       children: vec![],
-      location: 0..self.tokens[self.tokens.len() - 1].pos.end,
+      location: 0..100,
     };
     let root_node_ref = self.add_node(Node::Script(root_node));
     while self.is_tokens_left() {
