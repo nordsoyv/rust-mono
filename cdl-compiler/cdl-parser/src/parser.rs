@@ -49,7 +49,7 @@ impl Parser {
   }
 
   pub fn get_next_token(&self, num: usize) -> Result<&Token> {
-    self.tokens.get_next_token(num)
+    self.tokens.get_nth_token(num)
   }
 
   #[allow(dead_code)]
@@ -66,7 +66,7 @@ impl Parser {
   }
 
   pub fn is_next_token_of_type(&self, kind: TokenKind) -> bool {
-    return self.tokens.is_next_token_of_type(kind)
+    return self.tokens.is_next_token_of_type(kind);
   }
 
   pub fn add_node(&self, n: Node) -> NodeRef {
@@ -76,7 +76,7 @@ impl Parser {
   }
 
   pub fn parse(&mut self) -> Result<NodeRef> {
-    Ok(self.parse_top_level()?)
+    AstScriptNode::parse(self, NodeRef(-1))
   }
 
   pub fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {
@@ -96,7 +96,7 @@ impl Parser {
     }
   }
 
-  fn is_tokens_left(&self) -> bool {
+  pub fn is_tokens_left(&self) -> bool {
     self.tokens.is_tokens_left()
   }
 
@@ -112,28 +112,6 @@ impl Parser {
         break;
       }
     }
-  }
-
-  fn parse_top_level(&mut self) -> Result<NodeRef> {
-    let root_node = AstScriptNode {
-      children: vec![],
-      location: 0..100,
-    };
-    let root_node_ref = self.add_node(Node::Script(root_node));
-    while self.is_tokens_left() {
-      self.eat_eol_and_comments();
-      if AstTitleNode::can_parse(self) {
-        let node_ref = AstTitleNode::parse(self, root_node_ref)?;
-        self.add_child_to_node(root_node_ref, node_ref);
-        continue;
-      }
-      if AstEntityNode::can_parse(self) {
-        let node_ref = AstEntityNode::parse(self, root_node_ref)?;
-        self.add_child_to_node(root_node_ref, node_ref);
-        continue;
-      }
-    }
-    Ok(root_node_ref)
   }
 
   pub(crate) fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {

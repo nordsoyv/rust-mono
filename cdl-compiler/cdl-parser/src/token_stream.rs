@@ -17,10 +17,10 @@ impl TokenStream {
     }
   }
   pub fn get_current_token(&self) -> Result<&Token> {
-    return self.get_next_token(0);
+    return self.get_nth_token(0);
   }
 
-  pub fn get_next_token(&self, num: usize) -> Result<&Token> {
+  pub fn get_nth_token(&self, num: usize) -> Result<&Token> {
     let curr = self.curr_token.borrow();
     if *curr + num < self.tokens.len() {
       return Ok(&self.tokens[*curr + num]);
@@ -35,7 +35,7 @@ impl TokenStream {
   pub fn eat_tokens(&self, num: usize) -> Result<Range<usize>> {
     if self.is_many_tokens_left(num - 1) {
       let pos_start = &self.get_current_token()?.pos;
-      let pos_end = &self.get_next_token(num - 1)?.pos;
+      let pos_end = &self.get_nth_token(num - 1)?.pos;
 
       self.curr_token.replace_with(|&mut old| old + num);
       return Ok(pos_start.start..pos_end.end);
@@ -63,7 +63,7 @@ impl TokenStream {
   pub fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {
     let mut num_tokens = 0;
     loop {
-      let curr_token = self.get_next_token(num_tokens);
+      let curr_token = self.get_nth_token(num_tokens);
       if curr_token.is_ok() {
         let curr_token = curr_token.unwrap();
         if curr_token.kind == kind {
@@ -145,7 +145,7 @@ mod tests {
   #[test]
   fn can_get_next_token() {
     let stream = TokenStream::new(create_tokens());
-    let token = stream.get_next_token(1);
+    let token = stream.get_nth_token(1);
     assert!(token.is_ok());
     let token = token.unwrap();
     assert_eq!(cdl_lexer::TokenKind::Identifier, token.kind);
