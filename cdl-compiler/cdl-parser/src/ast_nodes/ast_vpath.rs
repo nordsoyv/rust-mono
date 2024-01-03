@@ -22,7 +22,7 @@ impl Parsable for AstVPathNode {
   fn can_parse(parser: &Parser) -> bool {
     let curr_token = parser.get_current_token();
     let token_1 = parser.get_next_token(1);
-    if curr_token.is_none() {
+    if curr_token.is_err() {
       return false;
     }
 
@@ -40,16 +40,9 @@ impl Parsable for AstVPathNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    let first_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got error unwraping token for VPath"))?;
-    let second_token = parser
-      .get_next_token(1)
-      .ok_or(anyhow!("Got error unwraping token for VPath"))?;
-
-    let third_token = parser
-      .get_next_token(2)
-      .ok_or(anyhow!("Got error unwraping token for VPath"))?;
+    let first_token = parser.get_current_token()?;
+    let second_token = parser.get_next_token(1)?;
+    let third_token = parser.get_next_token(2)?;
 
     let ast_node = match (&first_token.kind, &second_token.kind, &third_token.kind) {
       (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier) => {

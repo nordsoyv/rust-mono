@@ -30,7 +30,7 @@ pub struct AstEntityNode {
 impl Parsable for AstEntityNode {
   fn can_parse(parser: &Parser) -> bool {
     let next_token = parser.get_current_token();
-    if next_token.is_some() {
+    if next_token.is_ok() {
       let next_token = next_token.unwrap();
       if next_token.kind == TokenKind::Identifier {
         return true;
@@ -87,9 +87,7 @@ impl Parsable for AstEntityNode {
         continue;
       }
 
-      let curr_token = parser
-        .get_current_token()
-        .ok_or(anyhow!(format!("Unexpected token when parsing entity")))?;
+      let curr_token = parser.get_current_token()?;
       if curr_token.kind == TokenKind::BraceClose {
         parser.eat_token();
         //parser.add_node(Node::Entity(entity));
@@ -129,7 +127,7 @@ impl AstEntityNode {
 
     let ident = if parser.is_next_token_of_type(TokenKind::Hash) {
       let ident_token = parser.get_next_token(1);
-      if ident_token.is_some() {
+      if ident_token.is_ok() {
         parser.eat_tokens(2);
         ident_token.unwrap().text.clone()
       } else {
@@ -141,7 +139,7 @@ impl AstEntityNode {
 
     let entity_number = {
       let next_token = parser.get_current_token();
-      if next_token.is_some() {
+      if next_token.is_ok() {
         let next_token = next_token.unwrap();
         if let TokenKind::Number(entity_number) = next_token.kind {
           parser.eat_token();

@@ -12,9 +12,7 @@ use cdl_lexer::TokenKind;
 pub fn parse_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
   let mut node_refs = vec![];
   loop {
-    let current_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got unexptected EOF while parsing a list"))?;
+    let current_token = parser.get_current_token()?;
     match current_token.kind {
       TokenKind::ParenClose => {
         return Ok(node_refs);
@@ -28,9 +26,7 @@ pub fn parse_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRe
 pub fn parse_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
   let mut node_refs = vec![];
   loop {
-    let current_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got unexptected EOF while parsing a list"))?;
+    let current_token = parser.get_current_token()?;
     match current_token.kind {
       TokenKind::EOL => {
         return Ok(node_refs);
@@ -91,6 +87,6 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     parser.update_location_on_node(expr_node, location.start, end);
     return Ok(expr_node);
   }
-  dbg!(parser.get_current_token());
+  //dbg!(parser.get_current_token());
   return Err(anyhow!("Error parsing expression"));
 }

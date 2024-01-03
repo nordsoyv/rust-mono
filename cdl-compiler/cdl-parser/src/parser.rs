@@ -37,20 +37,20 @@ pub struct Parser {
 }
 
 impl Parser {
-  pub fn get_current_token(&self) -> Option<&Token> {
+  pub fn get_current_token(&self) -> Result<&Token> {
     let curr = self.curr_token.borrow();
     if *curr < self.tokens.len() {
-      return Some(&self.tokens[*curr]);
+      return Ok(&self.tokens[*curr]);
     }
-    None
+    Err(anyhow!("Expected to find a token, but got EOF instead"))
   }
 
-  pub fn get_next_token(&self, num: usize) -> Option<&Token> {
+  pub fn get_next_token(&self, num: usize) -> Result<&Token> {
     let curr = self.curr_token.borrow();
     if *curr + num < self.tokens.len() {
-      return Some(&self.tokens[*curr + num]);
+      return Ok(&self.tokens[*curr + num]);
     }
-    None
+    Err(anyhow!("Expected to find a token, but got EOF instead"))
   }
 
   #[allow(dead_code)]
@@ -62,15 +62,18 @@ impl Parser {
     self.curr_token.replace_with(|&mut old| old + num);
   }
 
-  pub fn eat_token_of_type(&mut self, kind: TokenKind) -> Result<usize> {
+  pub fn eat_token_of_type(&self, kind: TokenKind) -> Result<usize> {
     let end_pos = {
-      let current_token = self
-        .get_current_token()
-        .ok_or(anyhow!(format!("Expected {:?}, found EOF", kind)))?;
+      let current_token = self.get_current_token();
+      let current_token = if current_token.is_err() {
+        return Err(anyhow!(format!("Expected {:?}, found EOF", kind)));
+      } else {
+        current_token.unwrap()
+      };
       if current_token.kind != kind {
         return Err(anyhow!(format!(
           "Expected {:?}, found {:?}",
-          kind, current_token.kind
+          kind, current_token.kind,
         )));
       }
       current_token.pos.end
@@ -81,7 +84,7 @@ impl Parser {
 
   pub fn is_next_token_of_type(&self, kind: TokenKind) -> bool {
     let curr_token = self.get_current_token();
-    if curr_token.is_none() {
+    if curr_token.is_err() {
       return false;
     }
     let curr_token = curr_token.unwrap();
@@ -109,7 +112,7 @@ impl Parser {
     let mut num_tokens = 0;
     loop {
       let curr_token = self.get_next_token(num_tokens);
-      if curr_token.is_some() {
+      if curr_token.is_ok() {
         let curr_token = curr_token.unwrap();
         if curr_token.kind == kind {
           num_tokens += 1;
@@ -195,7 +198,7 @@ impl Parser {
       Node::String(node) => node.location = start..end,
       Node::Title(node) => node.location = start..end,
       Node::VPath(node) => node.location = start..end,
-      Node::TableAlias(node)=> node.location= start..end,
+      Node::TableAlias(node) => node.location = start..end,
     }
   }
 

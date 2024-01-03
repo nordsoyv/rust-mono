@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result};
-use std::{ ops::Range, rc::Rc};
+use anyhow::Result;
+use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
 
@@ -23,7 +23,7 @@ impl Parsable for AstTableAliasNode {
     let table_token = parser.get_current_token();
     let alias_token = parser.get_next_token(1);
     let equal_token = parser.get_next_token(2);
-    if alias_token.is_none() || equal_token.is_none() || table_token.is_none() {
+    if alias_token.is_err() || equal_token.is_err() || table_token.is_err() {
       return false;
     }
     let table_token = table_token.unwrap();
@@ -41,18 +41,10 @@ impl Parsable for AstTableAliasNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    let table_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got error unwraping token for table alias"))?;
-    let alias_token = parser
-      .get_next_token(1)
-      .ok_or(anyhow!("Got error unwraping token for table alias"))?;
-    let _ = parser
-      .get_next_token(2)
-      .ok_or(anyhow!("Got error unwraping token for table alias"))?;
-    let vpath_token = parser
-      .get_next_token(3)
-      .ok_or(anyhow!("Got error unwraping token for table alias"))?;
+    let table_token = parser.get_current_token()?;
+    let alias_token = parser.get_next_token(1)?;
+    let _ = parser.get_next_token(2)?;
+    let vpath_token = parser.get_next_token(3)?;
 
     let ast_node = AstTableAliasNode {
       parent,

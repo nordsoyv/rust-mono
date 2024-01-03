@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result};
-use std::{rc::Rc, ops::Range};
+use anyhow::Result;
+use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
 
@@ -14,13 +14,13 @@ use super::Parsable;
 pub struct AstReferenceNode {
   pub ident: Rc<str>,
   pub parent: NodeRef,
-  pub location: Range<usize>
+  pub location: Range<usize>,
 }
 
 impl Parsable for AstReferenceNode {
   fn can_parse(parser: &Parser) -> bool {
     let curr_token = parser.get_current_token();
-    if curr_token.is_none() {
+    if curr_token.is_err() {
       return false;
     }
     let curr_token = curr_token.unwrap();
@@ -31,13 +31,11 @@ impl Parsable for AstReferenceNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    let ref_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got error unwraping token for color"))?;
+    let ref_token = parser.get_current_token()?;
     let ast_node = AstReferenceNode {
       parent,
       ident: ref_token.text.as_ref().unwrap().clone(),
-      location: ref_token.pos.clone()
+      location: ref_token.pos.clone(),
     };
     let node_ref = parser.add_node(Node::Reference(ast_node));
     parser.eat_tokens(1);

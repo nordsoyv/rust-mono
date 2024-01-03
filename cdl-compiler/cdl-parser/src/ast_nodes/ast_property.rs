@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
@@ -23,7 +23,7 @@ impl Parsable for AstPropertyNode {
   fn can_parse(parser: &Parser) -> bool {
     let curr_token = parser.get_current_token();
     let token_1 = parser.get_next_token(1);
-    if curr_token.is_none() || token_1.is_none() {
+    if curr_token.is_err() || token_1.is_err() {
       return false;
     }
     let curr_token = curr_token.unwrap();
@@ -36,9 +36,7 @@ impl Parsable for AstPropertyNode {
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let (node_ref, start_pos) = {
-      let name_token = parser
-        .get_current_token()
-        .ok_or(anyhow!("Got error unwraping token for property name"))?;
+      let name_token = parser.get_current_token()?;
       let ast_node = AstPropertyNode {
         parent,
         name: name_token.text.as_ref().unwrap().clone(),

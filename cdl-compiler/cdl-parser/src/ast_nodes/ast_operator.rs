@@ -37,7 +37,7 @@ pub struct AstOperatorNode {
 impl AstOperatorNode {
   pub fn can_parse_term(parser: &mut Parser) -> bool {
     let curr_token = parser.get_current_token();
-    if curr_token.is_none() {
+    if curr_token.is_err() {
       return false;
     }
     let curr_token = curr_token.unwrap();
@@ -56,7 +56,7 @@ impl AstOperatorNode {
 
   pub fn can_parse_factor(parser: &mut Parser) -> bool {
     let curr_token = parser.get_current_token();
-    if curr_token.is_none() {
+    if curr_token.is_err() {
       return false;
     }
     let curr_token = curr_token.unwrap();
@@ -71,9 +71,7 @@ impl AstOperatorNode {
     parent: NodeRef,
     left: NodeRef,
   ) -> Result<NodeRef> {
-    let operator_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got unexpected EOF while parsing operator"))?;
+    let operator_token = parser.get_current_token()?;
     parser.eat_token();
     let operator = match operator_token.kind {
       TokenKind::Div => Operator::Div,
@@ -107,9 +105,7 @@ impl AstOperatorNode {
     parent: NodeRef,
     left: NodeRef,
   ) -> Result<NodeRef> {
-    let operator_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got unexpected EOF while parsing operator"))?;
+    let operator_token = parser.get_current_token()?;
     parser.eat_token();
     let operator = match operator_token.kind {
       TokenKind::Plus => Operator::Plus,

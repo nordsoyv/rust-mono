@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result};
-use std::{rc::Rc, ops::Range};
+use anyhow::Result;
+use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
 
@@ -21,13 +21,13 @@ pub struct AstStringNode {
   pub text: Rc<str>,
   pub parent: NodeRef,
   pub quote_kind: QuoteKind,
-  pub location: Range<usize>
+  pub location: Range<usize>,
 }
 
 impl Parsable for AstStringNode {
   fn can_parse(parser: &Parser) -> bool {
     let curr_token = parser.get_current_token();
-    if curr_token.is_none() {
+    if curr_token.is_err() {
       return false;
     }
     let curr_token = curr_token.unwrap();
@@ -38,9 +38,7 @@ impl Parsable for AstStringNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    let string_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got error unwraping token for string"))?;
+    let string_token = parser.get_current_token()?;
     let text = string_token.text.clone().unwrap();
     let quote_kind = if text.starts_with("'") {
       QuoteKind::SingleQuote
@@ -51,7 +49,7 @@ impl Parsable for AstStringNode {
       parent,
       text,
       quote_kind,
-      location: string_token.pos.clone()
+      location: string_token.pos.clone(),
     };
     let node_ref = parser.add_node(Node::String(ast_node));
     parser.eat_tokens(1);

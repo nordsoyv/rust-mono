@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
@@ -25,7 +25,7 @@ impl Parsable for AstFunctionNode {
   fn can_parse(parser: &Parser) -> bool {
     let curr_token = parser.get_current_token();
     let next_token = parser.get_next_token(1);
-    if curr_token.is_none() || next_token.is_none() {
+    if curr_token.is_err() || next_token.is_err() {
       return false;
     }
     let curr_token = curr_token.unwrap();
@@ -40,9 +40,7 @@ impl Parsable for AstFunctionNode {
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let (ast_node, start_pos) = {
-      let func_name_token = parser
-        .get_current_token()
-        .ok_or(anyhow!("Got error unwraping token for color"))?;
+      let func_name_token = parser.get_current_token()?;
 
       let ast_node = AstFunctionNode {
         parent,

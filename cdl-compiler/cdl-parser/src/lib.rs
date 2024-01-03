@@ -143,6 +143,7 @@ mod tests {
     }   
     "#,
     );
+    
     assert!(ast.is_ok());
     let ast = ast.unwrap();
     if let Node::Reference(node) = &ast.nodes[3] {

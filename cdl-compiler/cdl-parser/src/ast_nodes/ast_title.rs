@@ -23,7 +23,7 @@ impl Parsable for AstTitleNode {
     let token_1 = parser.get_next_token(1);
     let token_2 = parser.get_next_token(2);
 
-    if curr_token.is_none() || token_1.is_none() || token_2.is_none() {
+    if curr_token.is_err() || token_1.is_err() || token_2.is_err() {
       return false;
     }
 
@@ -41,12 +41,8 @@ impl Parsable for AstTitleNode {
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
-    let title_keyword_token = parser
-      .get_current_token()
-      .ok_or(anyhow!("Got error unwraping token for title"))?;
-    let title_token = parser
-      .get_next_token(1)
-      .ok_or(anyhow!("Got error unwraping token for title"))?;
+    let title_keyword_token = parser.get_current_token()?;
+    let title_token = parser.get_next_token(1)?;
     match &title_token.kind {
       TokenKind::String => {
         let ast_node = AstTitleNode {
