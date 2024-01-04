@@ -3,5 +3,6 @@ resolver = "2"
 
 members = [
     "cdl-lexer",
-    "cdl-parser"
+    "cdl-parser",
+    "cdl-cli"
 ]

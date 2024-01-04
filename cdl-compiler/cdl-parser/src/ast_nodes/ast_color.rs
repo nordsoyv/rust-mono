@@ -14,7 +14,6 @@ use super::Parsable;
 pub struct AstColorNode {
   pub color: Rc<str>,
   pub parent: NodeRef,
-  pub location: Range<usize>,
 }
 
 impl Parsable for AstColorNode {
@@ -35,9 +34,8 @@ impl Parsable for AstColorNode {
     let ast_node = AstColorNode {
       parent,
       color: color_token.text.as_ref().unwrap().clone(),
-      location: color_token.pos.clone(),
     };
-    let node_ref = parser.add_node(Node::Color(ast_node));
+    let node_ref = parser.add_node(Node::Color(ast_node),color_token.pos.clone());
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

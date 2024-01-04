@@ -15,7 +15,6 @@ pub struct AstTableAliasNode {
   pub table: Rc<str>,
   pub alias: Rc<str>,
   pub parent: NodeRef,
-  pub location: Range<usize>,
 }
 
 impl Parsable for AstTableAliasNode {
@@ -50,9 +49,8 @@ impl Parsable for AstTableAliasNode {
       parent,
       alias: alias_token.text.as_ref().unwrap().clone(),
       table: vpath_token.text.as_ref().unwrap().clone(),
-      location: table_token.pos.start..vpath_token.pos.end,
     };
-    let node_ref = parser.add_node(Node::TableAlias(ast_node));
+    let node_ref = parser.add_node(Node::TableAlias(ast_node),table_token.pos.start..vpath_token.pos.end);
     parser.eat_tokens(4)?;
     Ok(node_ref)
   }

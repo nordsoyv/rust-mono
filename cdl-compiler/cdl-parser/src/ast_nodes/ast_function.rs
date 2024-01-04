@@ -16,7 +16,6 @@ pub struct AstFunctionNode {
   pub name: Rc<str>,
   pub children: Vec<NodeRef>,
   pub parent: NodeRef,
-  pub location: Range<usize>,
 }
 
 impl AstFunctionNode {}
@@ -46,12 +45,11 @@ impl Parsable for AstFunctionNode {
         parent,
         children: vec![],
         name: func_name_token.text.as_ref().unwrap().clone(),
-        location: func_name_token.pos.start..usize::MAX,
       };
       (ast_node, func_name_token.pos.start)
     };
 
-    let node_ref = parser.add_node(Node::Function(ast_node));
+    let node_ref = parser.add_node(Node::Function(ast_node),start_pos..usize::MAX);
     parser.eat_tokens(2).context("Error while parsing Function")?;
 
     let args = parse_arg_list(parser, node_ref)?;

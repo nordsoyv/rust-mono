@@ -16,7 +16,6 @@ pub struct AstPropertyNode {
   pub name: Rc<str>,
   pub parent: NodeRef,
   pub child: Vec<NodeRef>,
-  pub location: Range<usize>,
 }
 
 impl Parsable for AstPropertyNode {
@@ -41,10 +40,9 @@ impl Parsable for AstPropertyNode {
         parent,
         name: name_token.text.as_ref().unwrap().clone(),
         child: vec![],
-        location: name_token.pos.start..usize::MAX,
       };
 
-      let node_ref = parser.add_node(Node::Property(ast_node));
+      let node_ref = parser.add_node(Node::Property(ast_node),  name_token.pos.start..usize::MAX);
       (node_ref, name_token.pos.start)
     };
     parser.eat_tokens(2)?;

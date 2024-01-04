@@ -15,7 +15,6 @@ pub struct AstVPathNode {
   pub parent: NodeRef,
   pub table: Option<Rc<str>>,
   pub variable: Option<Rc<str>>,
-  pub location: Range<usize>,
 }
 
 impl Parsable for AstVPathNode {
@@ -44,46 +43,42 @@ impl Parsable for AstVPathNode {
     let second_token = parser.get_next_token(1)?;
     let third_token = parser.get_next_token(2)?;
 
-    let ast_node = match (&first_token.kind, &second_token.kind, &third_token.kind) {
+    let (ast_node,pos) = match (&first_token.kind, &second_token.kind, &third_token.kind) {
       (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier) => {
         parser.eat_tokens(3)?;
-        AstVPathNode {
+        (AstVPathNode {
           parent,
           table: first_token.text.clone(),
           variable: third_token.text.clone(),
-          location: first_token.pos.start..third_token.pos.end,
-        }
+        },first_token.pos.start..third_token.pos.end)
       }
       (TokenKind::Identifier, TokenKind::Colon, _) => {
         parser.eat_tokens(2)?;
-        AstVPathNode {
+        (AstVPathNode {
           parent,
           table: first_token.text.clone(),
           variable: None,
-          location: first_token.pos.start..second_token.pos.end,
-        }
+        },first_token.pos.start..second_token.pos.end)
       }
       (TokenKind::Colon, TokenKind::Identifier, _) => {
         parser.eat_tokens(2)?;
-        AstVPathNode {
+        (AstVPathNode {
           parent,
           table: None,
           variable: second_token.text.clone(),
-          location: first_token.pos.start..second_token.pos.end,
-        }
+        },first_token.pos.start..second_token.pos.end)
       }
       (TokenKind::Colon, _, _) => {
         parser.eat_tokens(1)?;
-        AstVPathNode {
+        (AstVPathNode {
           parent,
           table: None,
           variable: None,
-          location: first_token.pos.clone(),
-        }
+        },first_token.pos.clone())
       }
       (_, _, _) => return Err(anyhow!("Unknown error occured while parsing VPath node")),
     };
-    let node_ref = parser.add_node(Node::VPath(ast_node));
+    let node_ref = parser.add_node(Node::VPath(ast_node),pos);
     return Ok(node_ref);
   }
 }

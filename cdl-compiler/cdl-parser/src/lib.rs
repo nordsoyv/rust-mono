@@ -4,6 +4,8 @@ mod parser;
 mod token_stream;
 mod types;
 
+use std::ops::Range;
+
 use anyhow::Result;
 use cdl_lexer::lex;
 use parser::{Node, Parser};
@@ -17,6 +19,7 @@ pub fn parse_text(text: &str) -> Result<Ast> {
 
   Ok(Ast {
     nodes: parser.nodes.take(),
+    locations: parser.locations.take(),
     script_entity: root_ref,
   })
 }
@@ -24,6 +27,7 @@ pub fn parse_text(text: &str) -> Result<Ast> {
 #[derive(Debug)]
 pub struct Ast {
   pub nodes: Vec<Node>,
+  pub locations: Vec<Range<usize>>,
   pub script_entity: NodeRef,
 }
 

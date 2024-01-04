@@ -15,7 +15,6 @@ use super::Parsable;
 pub struct AstBooleanNode {
   pub value: bool,
   pub parent: NodeRef,
-  pub location: Range<usize>,
 }
 
 impl Parsable for AstBooleanNode {
@@ -40,9 +39,8 @@ impl Parsable for AstBooleanNode {
     let ast_node = AstBooleanNode {
       parent,
       value,
-      location: bool_token.pos.clone(),
     };
-    let node_ref = parser.add_node(Node::Boolean(ast_node));
+    let node_ref = parser.add_node(Node::Boolean(ast_node), bool_token.pos.clone());
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

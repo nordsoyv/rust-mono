@@ -14,7 +14,6 @@ use super::Parsable;
 pub struct AstTitleNode {
   pub title: Rc<str>,
   pub parent: NodeRef,
-  pub location: Range<usize>,
 }
 
 impl Parsable for AstTitleNode {
@@ -48,9 +47,8 @@ impl Parsable for AstTitleNode {
         let ast_node = AstTitleNode {
           parent,
           title: title_token.text.as_ref().unwrap().clone(),
-          location: title_keyword_token.pos.start..title_token.pos.end,
         };
-        let node_ref = parser.add_node(Node::Title(ast_node));
+        let node_ref = parser.add_node(Node::Title(ast_node),title_keyword_token.pos.start..title_token.pos.end);
         parser.eat_tokens(3)?;
         return Ok(node_ref);
       }

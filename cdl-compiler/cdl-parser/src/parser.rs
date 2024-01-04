@@ -36,6 +36,7 @@ pub struct Parser {
   text: String,
   tokens: TokenStream,
   pub nodes: RefCell<Vec<Node>>,
+  pub locations: RefCell<Vec<Range<usize>>>
 }
 
 impl Parser {
@@ -44,6 +45,7 @@ impl Parser {
       nodes: RefCell::new(Vec::new()),
       tokens,
       text: text.to_string(),
+      locations: RefCell::new(Vec::new())
     }
   }
   pub fn parse(&mut self) -> Result<NodeRef> {
@@ -89,9 +91,11 @@ impl Parser {
     return self.tokens.is_next_token_of_type(kind);
   }
 
-  pub(crate) fn add_node(&self, n: Node) -> NodeRef {
+  pub(crate) fn add_node(&self, n: Node, location: Range<usize>) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
     nodes.push(n);
+    let mut locations = self.locations.borrow_mut();
+    locations.push(location);
     return (nodes.len() - 1).into();
   }
 
@@ -131,44 +135,12 @@ impl Parser {
   }
 
   pub(crate) fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {
-    let mut nodes = self.nodes.borrow_mut();
-    let node = nodes.get_mut(node_ref.0 as usize).unwrap();
-    match node {
-      Node::Color(node) => node.location = start..end,
-      Node::Entity(node) => node.location = start..end,
-      Node::Function(node) => node.location = start..end,
-      Node::Identifier(node) => node.location = start..end,
-      Node::Number(node) => node.location = start..end,
-      Node::Operator(node) => node.location = start..end,
-      Node::Property(node) => node.location = start..end,
-      Node::Reference(node) => node.location = start..end,
-      Node::Script(node) => node.location = start..end,
-      Node::String(node) => node.location = start..end,
-      Node::Title(node) => node.location = start..end,
-      Node::VPath(node) => node.location = start..end,
-      Node::TableAlias(node) => node.location = start..end,
-      Node::Boolean(node) =>node.location = start..end,
-    }
+    let mut locations = self.locations.borrow_mut();
+    locations[node_ref.0 as usize] = start..end;
   }
 
   pub(crate) fn get_pos_for_node(&self, node_ref: NodeRef) -> Range<usize> {
-    let nodes = self.nodes.borrow();
-    let node = nodes.get(node_ref.0 as usize).unwrap();
-    match node {
-      Node::Property(prop) => prop.location.clone(),
-      Node::Entity(ent) => ent.location.clone(),
-      Node::Function(func) => func.location.clone(),
-      Node::Color(color) => color.location.clone(),
-      Node::Identifier(node) => node.location.clone(),
-      Node::Number(node) => node.location.clone(),
-      Node::Operator(node) => node.location.clone(),
-      Node::Reference(node) => node.location.clone(),
-      Node::Script(node) => node.location.clone(),
-      Node::String(node) => node.location.clone(),
-      Node::Title(node) => node.location.clone(),
-      Node::VPath(node) => node.location.clone(),
-      Node::TableAlias(node) => node.location.clone(),
-      Node::Boolean(node) => node.location.clone(),
-    }
+    let locations = self.locations.borrow();
+    locations[node_ref.0 as usize].clone()
   }
 }

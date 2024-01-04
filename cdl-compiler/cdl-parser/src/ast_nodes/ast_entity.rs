@@ -20,7 +20,6 @@ pub struct AstEntityNode {
   pub parent: NodeRef,
   pub children: Vec<NodeRef>,
   pub terms: Vec<Rc<str>>,
-  pub location: Range<usize>,
   pub label: Option<Rc<str>>,
   pub refs: Vec<Rc<str>>,
   pub ident: Option<Rc<str>>,
@@ -54,13 +53,12 @@ impl Parsable for AstEntityNode {
       children: vec![],
       parent,
       terms: header.terms,
-      location: header.start_loc..0,
       label: header.label,
       refs: header.refs,
       ident: header.ident,
       entity_number: header.entity_number,
     };
-    let current_entity_ref = parser.add_node(Node::Entity(entity));
+    let current_entity_ref = parser.add_node(Node::Entity(entity), header.start_loc..usize::MAX);
 
     let next_token = parser.get_current_token()?;
     if next_token.kind == TokenKind::EOL {
