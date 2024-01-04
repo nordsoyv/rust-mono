@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, Context};
 use std::{ops::Range, rc::Rc};
 
 use cdl_lexer::TokenKind;
@@ -40,7 +40,7 @@ impl Parsable for AstFunctionNode {
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let (ast_node, start_pos) = {
-      let func_name_token = parser.get_current_token()?;
+      let func_name_token = parser.get_current_token().context("Error while parsing Function")?;
 
       let ast_node = AstFunctionNode {
         parent,
@@ -52,7 +52,7 @@ impl Parsable for AstFunctionNode {
     };
 
     let node_ref = parser.add_node(Node::Function(ast_node));
-    parser.eat_tokens(2)?;
+    parser.eat_tokens(2).context("Error while parsing Function")?;
 
     let args = parse_arg_list(parser, node_ref)?;
 

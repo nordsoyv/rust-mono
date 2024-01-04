@@ -49,8 +49,6 @@ impl Parsable for AstEntityNode {
     } else {
       false
     };
-    parser.eat_token_of_type(TokenKind::BraceOpen)?;
-    parser.eat_token_of_type(TokenKind::EOL)?;
 
     let entity = AstEntityNode {
       children: vec![],
@@ -63,6 +61,12 @@ impl Parsable for AstEntityNode {
       entity_number: header.entity_number,
     };
     let current_entity_ref = parser.add_node(Node::Entity(entity));
+
+    let next_token = parser.get_current_token()?;
+    if next_token.kind == TokenKind::EOL {
+      return Ok(current_entity_ref);
+    }
+    parser.eat_token_of_type(TokenKind::BraceOpen)?;
     loop {
       parser.eat_eol_and_comments();
       if AstPropertyNode::can_parse(&parser) {

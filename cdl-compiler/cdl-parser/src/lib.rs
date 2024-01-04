@@ -1,8 +1,8 @@
 mod ast_nodes;
 mod parse_expr;
 mod parser;
-mod types;
 mod token_stream;
+mod types;
 
 use anyhow::Result;
 use cdl_lexer::lex;
@@ -11,8 +11,8 @@ use token_stream::TokenStream;
 use types::NodeRef;
 
 pub fn parse_text(text: &str) -> Result<Ast> {
-  let tokens = lex(text)?;
-  let mut parser = Parser::new(TokenStream::new(tokens));
+  let tokens = lex(&text)?;
+  let mut parser = Parser::new(text, TokenStream::new(tokens));
   let root_ref = parser.parse()?;
 
   Ok(Ast {
@@ -72,6 +72,23 @@ mod tests {
       assert_eq!("id", node.ident.as_ref().unwrap().to_string());
       assert_eq!(3245.0, *node.entity_number.as_ref().unwrap());
     }
+  }
+
+  #[test]
+  fn can_parse_entity_no_body() {
+    let ast = parse_text(
+      r#"maintype subtype  
+    "#,
+    );
+    assert!(ast.is_ok());
+  }
+  #[test]
+  fn can_parse_entity_single_line() {
+    let ast = parse_text(
+      r#"maintype subtype { prop: ident }
+    "#,
+    );
+    assert!(ast.is_ok());
   }
 
   #[test]
@@ -140,7 +157,7 @@ mod tests {
     }   
     "#,
     );
-    
+
     assert!(ast.is_ok());
     let ast = ast.unwrap();
     if let Node::Reference(node) = &ast.nodes[3] {
@@ -337,6 +354,24 @@ mod tests {
     }   
     "#,
     );
-    assert!(ast.is_err());  
+    assert!(ast.is_err());
+  }
+
+ #[test]
+  fn can_parse_large_file() {
+    let file = include_str!("../../test_script/test.cdl");
+    let ast = parse_text(file);
+    assert!(ast.is_ok());
+  }
+
+  #[test]
+  fn can_parse_large_expr() {
+    let ast = parse_text(
+      r#"option checkbox #a {
+        item bar { question: survey:s50 }
+      }
+  "#,
+    );
+    assert!(ast.is_ok());
   }
 }

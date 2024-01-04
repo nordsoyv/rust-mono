@@ -4,7 +4,7 @@ use std::ops::Range;
 use cdl_lexer::TokenKind;
 
 use crate::{
-  parse_expr::{parse_factor, parse_term},
+  parse_expr::parse_expression,
   parser::{Node, Parser},
   types::NodeRef,
 };
@@ -49,7 +49,9 @@ impl AstOperatorNode {
       | TokenKind::LessThan
       | TokenKind::LessThanOrEqual
       | TokenKind::MoreThan
-      | TokenKind::MoreThanOrEqual => true,
+      | TokenKind::MoreThanOrEqual
+      | TokenKind::And
+      | TokenKind::Or => true,
       _ => false,
     }
   }
@@ -82,6 +84,8 @@ impl AstOperatorNode {
       TokenKind::LessThanOrEqual => Operator::LessThanOrEqual,
       TokenKind::MoreThan => Operator::MoreThan,
       TokenKind::MoreThanOrEqual => Operator::MoreThanOrEqual,
+      TokenKind::And => Operator::And,
+      TokenKind::Or => Operator::Or,
       _ => return Err(anyhow!("Unknown token when parsing operator")),
     };
     let operator_node = AstOperatorNode {
@@ -92,7 +96,7 @@ impl AstOperatorNode {
       parent,
     };
     let operator_node_ref = parser.add_node(Node::Operator(operator_node));
-    let right_node = parse_term(parser, operator_node_ref)?;
+    let right_node = parse_expression(parser, operator_node_ref)?;
     parser.add_child_to_node(operator_node_ref, right_node);
     let left_pos = parser.get_pos_for_node(left);
     let right_pos = parser.get_pos_for_node(right_node);
@@ -120,7 +124,7 @@ impl AstOperatorNode {
       parent,
     };
     let operator_node_ref = parser.add_node(Node::Operator(operator_node));
-    let right_node = parse_factor(parser, operator_node_ref)?;
+    let right_node = parse_expression(parser, operator_node_ref)?;
     parser.add_child_to_node(operator_node_ref, right_node);
     let left_pos = parser.get_pos_for_node(left);
     let right_pos = parser.get_pos_for_node(right_node);

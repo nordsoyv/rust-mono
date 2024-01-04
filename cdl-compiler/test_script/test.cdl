@@ -1,7 +1,5 @@
 title "copy of 231 II"
 
-// workaround to avoid Compiler Error for config access block
-config pulse
 
 config hub {
   hub: 14900

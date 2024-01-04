@@ -1,7 +1,7 @@
 use crate::{
   ast_nodes::{
     ast_function::AstFunctionNode, AstColorNode, AstIdentifierNode, AstNumberNode, AstOperatorNode,
-    AstReferenceNode, AstStringNode, AstVPathNode, Parsable,
+    AstReferenceNode, AstStringNode, AstVPathNode, Parsable, ast_boolean::AstBooleanNode,
   },
   parser::Parser,
   types::NodeRef,
@@ -32,6 +32,12 @@ pub fn parse_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> 
     match current_token.kind {
       TokenKind::EOL => {
         return Ok(node_refs);
+      }
+      TokenKind::BraceClose => {
+        return Ok(node_refs);
+      }
+      TokenKind::LineComment => {
+        let _ = parser.eat_token()?;
       }
       TokenKind::Comma => {
         let _ = parser.eat_token()?;
@@ -83,6 +89,13 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   if AstColorNode::can_parse(&parser) {
     return AstColorNode::parse(parser, parent);
   }
+  if AstBooleanNode::can_parse(&parser) {
+    return AstBooleanNode::parse(parser, parent);
+  }
+  if parser.is_next_token_of_type(TokenKind::LineComment) {
+    parser.eat_token()?;
+  }
+  
   if parser.is_next_token_of_type(TokenKind::ParenOpen) {
     parser.eat_token()?;
     let expr_node = parse_expression(parser, parent)?;
@@ -92,5 +105,6 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     return Ok(expr_node);
   }
   //dbg!(parser.get_current_token());
-  return Err(anyhow!("Error parsing expression"));
+  let token = parser.get_current_token()?;
+  return Err(anyhow!("Error parsing expression, current token: {:?}", token.kind));
 }

@@ -77,6 +77,11 @@ enum TokenLexer {
   #[token(">=")]
   MoreThanOrEqual,
 
+  #[regex(r"(?i)and")]
+  And,
+  #[regex(r"(?i)or")]
+  Or,
+
   #[regex(r"-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?", |lex| lex.slice().parse::<f64>().unwrap())]
   Number(f64),
 
@@ -124,6 +129,8 @@ pub enum TokenKind {
   NotEqual,
   LessThan,
   LessThanOrEqual,
+  And,
+  Or,
   MoreThan,
   MoreThanOrEqual,
   Identifier,
@@ -148,7 +155,7 @@ pub struct Location {
   pub end_pos: usize,
 }
 
-pub fn get_location_from_position(text: &str, position: Span) -> Location {
+pub fn get_location_from_position(text: &str, position: &Span) -> Location {
   let mut location = Location::default();
   let mut line_number = 1;
   let mut line_pos = 1;
@@ -178,7 +185,7 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
 
   while let Some(lex_result) = lexer.next() {
     if lex_result.is_err() {
-      let location = get_location_from_position(text, lexer.span());
+      let location = get_location_from_position(text, &lexer.span());
       return Err(anyhow!(format!(
         "[{}:{}]: Unknown token \"{}\"",
         location.start_line,
@@ -296,6 +303,16 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
       },
       TokenLexer::MoreThanOrEqual => Token {
         kind: TokenKind::MoreThanOrEqual,
+        pos: span,
+        text: None,
+      },
+      TokenLexer::And => Token {
+        kind: TokenKind::And,
+        pos: span,
+        text: None,
+      },
+      TokenLexer::Or => Token {
+        kind: TokenKind::Or,
         pos: span,
         text: None,
       },
@@ -462,6 +479,45 @@ mod tests {
       }
     );
   }
+  #[test]
+  fn can_parse_operators() {
+    let tokens = lex("AND and or OR");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::And,
+        text: None,
+        pos: 0..3
+      }
+    );
+    assert_eq!(
+      res[1],
+      Token {
+        kind: TokenKind::And,
+        text: None,
+        pos: 4..7
+      }
+    );
+    assert_eq!(
+      res[2],
+      Token {
+        kind: TokenKind::Or,
+        text: None,
+        pos: 8..10
+      }
+    );
+    assert_eq!(
+      res[3],
+      Token {
+        kind: TokenKind::Or,
+        text: None,
+        pos: 11..13
+      }
+    );
+  }
+  
   #[test]
   fn can_parse_line_comments() {
     let tokens = lex("// hello comment");
@@ -646,7 +702,7 @@ mod tests {
 
   #[test]
   fn can_parse_large_file() {
-    let file = include_str!("../test_script/test.cdl");
+    let file = include_str!("../../test_script/test.cdl");
     let tokens = lex(file);
     if tokens.is_err() {
       dbg!(&tokens);
@@ -654,7 +710,7 @@ mod tests {
 
     assert!(tokens.is_ok());
     let res = tokens.unwrap();
-    assert_eq!(24538, res.len());
+    assert_eq!(24533, res.len());
   }
   #[test]
   fn can_parse_number() {

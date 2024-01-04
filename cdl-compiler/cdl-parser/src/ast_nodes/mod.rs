@@ -11,6 +11,7 @@ pub mod ast_reference;
 pub mod ast_function;
 pub mod ast_operator;
 pub mod ast_table_alias;
+pub mod ast_boolean;
 
 use anyhow::Result;
 
