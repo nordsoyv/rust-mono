@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::{ops::Range, rc::Rc};
+use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
 
@@ -48,7 +48,10 @@ impl Parsable for AstTitleNode {
           parent,
           title: title_token.text.as_ref().unwrap().clone(),
         };
-        let node_ref = parser.add_node(Node::Title(ast_node),title_keyword_token.pos.start..title_token.pos.end);
+        let node_ref = parser.add_node(
+          Node::Title(ast_node),
+          title_keyword_token.pos.start..title_token.pos.end,
+        );
         parser.eat_tokens(3)?;
         return Ok(node_ref);
       }

@@ -1,7 +1,6 @@
 use anyhow::Result;
-use std::{ops::Range, rc::Rc};
-
 use cdl_lexer::TokenKind;
+use std::rc::Rc;
 
 use crate::{
   parser::{Node, Parser},
@@ -50,7 +49,10 @@ impl Parsable for AstTableAliasNode {
       alias: alias_token.text.as_ref().unwrap().clone(),
       table: vpath_token.text.as_ref().unwrap().clone(),
     };
-    let node_ref = parser.add_node(Node::TableAlias(ast_node),table_token.pos.start..vpath_token.pos.end);
+    let node_ref = parser.add_node(
+      Node::TableAlias(ast_node),
+      table_token.pos.start..vpath_token.pos.end,
+    );
     parser.eat_tokens(4)?;
     Ok(node_ref)
   }

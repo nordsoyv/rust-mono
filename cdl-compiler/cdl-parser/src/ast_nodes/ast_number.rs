@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use anyhow::{anyhow, Result};
 
 use cdl_lexer::TokenKind;

@@ -3,7 +3,6 @@ use crate::{
   types::NodeRef,
 };
 use anyhow::{bail, Result};
-use std::ops::Range;
 
 use super::{AstEntityNode, AstTitleNode, Parsable};
 

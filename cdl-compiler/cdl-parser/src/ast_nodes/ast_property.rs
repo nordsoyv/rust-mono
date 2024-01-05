@@ -1,5 +1,5 @@
-use anyhow::{Result, bail};
-use std::{ops::Range, rc::Rc};
+use anyhow::{bail, Result};
+use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
 
@@ -42,7 +42,7 @@ impl Parsable for AstPropertyNode {
         child: vec![],
       };
 
-      let node_ref = parser.add_node(Node::Property(ast_node),  name_token.pos.start..usize::MAX);
+      let node_ref = parser.add_node(Node::Property(ast_node), name_token.pos.start..usize::MAX);
       (node_ref, name_token.pos.start)
     };
     parser.eat_tokens(2)?;
@@ -51,10 +51,10 @@ impl Parsable for AstPropertyNode {
 
     let last_token_end = if next_token.kind == TokenKind::BraceClose {
       &next_token.pos
-    }else if next_token.kind == TokenKind::EOL {
+    } else if next_token.kind == TokenKind::EOL {
       parser.eat_token()?;
       &next_token.pos
-    }else {
+    } else {
       bail!("Tried parsing property, did not find EOL when exptected");
     };
     // let last_token_end = parser

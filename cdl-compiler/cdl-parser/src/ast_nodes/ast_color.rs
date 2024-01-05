@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::{ops::Range, rc::Rc};
+use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
 
@@ -35,7 +35,7 @@ impl Parsable for AstColorNode {
       parent,
       color: color_token.text.as_ref().unwrap().clone(),
     };
-    let node_ref = parser.add_node(Node::Color(ast_node),color_token.pos.clone());
+    let node_ref = parser.add_node(Node::Color(ast_node), color_token.pos.clone());
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

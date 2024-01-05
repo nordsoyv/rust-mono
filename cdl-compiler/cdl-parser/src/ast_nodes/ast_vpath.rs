@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::{ops::Range, rc::Rc};
+use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
 
@@ -43,42 +43,54 @@ impl Parsable for AstVPathNode {
     let second_token = parser.get_next_token(1)?;
     let third_token = parser.get_next_token(2)?;
 
-    let (ast_node,pos) = match (&first_token.kind, &second_token.kind, &third_token.kind) {
+    let (ast_node, pos) = match (&first_token.kind, &second_token.kind, &third_token.kind) {
       (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier) => {
         parser.eat_tokens(3)?;
-        (AstVPathNode {
-          parent,
-          table: first_token.text.clone(),
-          variable: third_token.text.clone(),
-        },first_token.pos.start..third_token.pos.end)
+        (
+          AstVPathNode {
+            parent,
+            table: first_token.text.clone(),
+            variable: third_token.text.clone(),
+          },
+          first_token.pos.start..third_token.pos.end,
+        )
       }
       (TokenKind::Identifier, TokenKind::Colon, _) => {
         parser.eat_tokens(2)?;
-        (AstVPathNode {
-          parent,
-          table: first_token.text.clone(),
-          variable: None,
-        },first_token.pos.start..second_token.pos.end)
+        (
+          AstVPathNode {
+            parent,
+            table: first_token.text.clone(),
+            variable: None,
+          },
+          first_token.pos.start..second_token.pos.end,
+        )
       }
       (TokenKind::Colon, TokenKind::Identifier, _) => {
         parser.eat_tokens(2)?;
-        (AstVPathNode {
-          parent,
-          table: None,
-          variable: second_token.text.clone(),
-        },first_token.pos.start..second_token.pos.end)
+        (
+          AstVPathNode {
+            parent,
+            table: None,
+            variable: second_token.text.clone(),
+          },
+          first_token.pos.start..second_token.pos.end,
+        )
       }
       (TokenKind::Colon, _, _) => {
         parser.eat_tokens(1)?;
-        (AstVPathNode {
-          parent,
-          table: None,
-          variable: None,
-        },first_token.pos.clone())
+        (
+          AstVPathNode {
+            parent,
+            table: None,
+            variable: None,
+          },
+          first_token.pos.clone(),
+        )
       }
       (_, _, _) => return Err(anyhow!("Unknown error occured while parsing VPath node")),
     };
-    let node_ref = parser.add_node(Node::VPath(ast_node),pos);
+    let node_ref = parser.add_node(Node::VPath(ast_node), pos);
     return Ok(node_ref);
   }
 }
