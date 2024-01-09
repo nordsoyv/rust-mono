@@ -5,6 +5,8 @@ use logos::Logos;
 use logos::Span;
 use std::rc::Rc;
 
+mod token_stream;
+
 fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
   let slice = lex.slice();
   let rc: Rc<str> = slice.into();
@@ -138,6 +140,7 @@ pub enum TokenKind {
   Color,
   LineComment,
   MultiLineComment,
+  Unknown
 }
 
 #[derive(Debug, PartialEq)]
