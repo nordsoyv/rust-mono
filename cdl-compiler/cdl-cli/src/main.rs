@@ -5,7 +5,7 @@ fn main() {
   println!("Starting compile");
 
   let mut total_nodes = 0;
-  for i in 0..100 {
+  for _i in 0..100 {
     let ast = parse_text(file).unwrap();
     total_nodes += ast.nodes.len();
   }
