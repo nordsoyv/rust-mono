@@ -7,14 +7,14 @@ mod types;
 use std::ops::Range;
 
 use anyhow::Result;
-use cdl_lexer::lex;
+use cdl_lexer::{lex, TokenStream};
 use parser::{Node, Parser};
-use token_stream::TokenStream;
+//use token_stream::TokenStream;
 use types::NodeRef;
 
 pub fn parse_text(text: &str) -> Result<Ast> {
-  let tokens = lex(&text)?;
-  let mut parser = Parser::new(text, TokenStream::new(tokens));
+  //let tokens = lex(&text)?;
+  let mut parser = Parser::new(text, TokenStream::init(text)?);
   let root_ref = parser.parse()?;
 
   Ok(Ast {

@@ -1,14 +1,13 @@
-use std::{cell::RefCell, ops::Range};
+use std::{cell::RefCell, ops::Range, rc::Rc};
 
-use cdl_lexer::{get_location_from_position, Token, TokenKind};
+use cdl_lexer::{get_location_from_position, Token, TokenKind, TokenStream};
 
 use crate::{
   ast_nodes::{
-    ast_function::AstFunctionNode, AstColorNode, AstEntityNode, AstIdentifierNode, AstNumberNode,
-    AstOperatorNode, AstPropertyNode, AstReferenceNode, AstScriptNode, AstStringNode,
-    AstTableAliasNode, AstTitleNode, AstVPathNode, Parsable, ast_boolean::AstBooleanNode,
+    ast_boolean::AstBooleanNode, ast_function::AstFunctionNode, AstColorNode, AstEntityNode,
+    AstIdentifierNode, AstNumberNode, AstOperatorNode, AstPropertyNode, AstReferenceNode,
+    AstScriptNode, AstStringNode, AstTableAliasNode, AstTitleNode, AstVPathNode, Parsable,
   },
-  token_stream::TokenStream,
   types::NodeRef,
 };
 use anyhow::{Context, Result};
@@ -32,20 +31,20 @@ pub enum Node {
 }
 
 #[derive(Debug)]
-pub struct Parser {
+pub struct Parser<'a> {
   text: String,
-  tokens: TokenStream,
+  tokens: RefCell<TokenStream<'a>>,
   pub nodes: RefCell<Vec<Node>>,
-  pub locations: RefCell<Vec<Range<usize>>>
+  pub locations: RefCell<Vec<Range<usize>>>,
 }
 
-impl Parser {
-  pub fn new(text: &str, tokens: TokenStream) -> Parser {
+impl<'a> Parser<'a> {
+  pub fn new(text: &'a str, tokens: TokenStream<'a>) -> Parser<'a> {
     Parser {
       nodes: RefCell::new(Vec::new()),
-      tokens,
+      tokens: RefCell::new(tokens),
       text: text.to_string(),
-      locations: RefCell::new(Vec::new())
+      locations: RefCell::new(Vec::new()),
     }
   }
   pub fn parse(&mut self) -> Result<NodeRef> {
@@ -53,12 +52,12 @@ impl Parser {
   }
 
   fn get_top_level_error_message(&self) -> String {
-    let token = self.get_current_token();
-    if token.is_err() {
+    let pos = self.get_current_token();
+    if pos.is_err() {
       "Unknown error".to_string()
     } else {
-      let token = token.unwrap();
-      let location = get_location_from_position(&self.text, &token.pos);
+      let pos = pos.unwrap();
+      let location = get_location_from_position(&self.text, &pos.pos);
       format!(
         "Error while parsing at {}:{}",
         location.start_line, location.start_pos
@@ -66,29 +65,47 @@ impl Parser {
     }
   }
 
-  pub(crate) fn get_current_token(&self) -> Result<&Token> {
-    self.tokens.get_current_token()
+  pub(crate) fn get_current_token(&self) -> Result<Token> {
+    Ok(self.tokens.borrow_mut().get_current_token()?.clone())
   }
 
-  pub(crate) fn get_next_token(&self, num: usize) -> Result<&Token> {
-    self.tokens.get_nth_token(num)
+  // pub(crate) fn get_current_token_text(&self) -> Result<Option<Rc<str>>> {
+  //   let token = self.tokens.borrow_mut().get_current_token()?;
+  //   Ok(token.text)
+  // }
+
+  // pub(crate) fn get_current_token_pos(&self) -> Result<&Range<usize>> {
+  //   let token = self.tokens.borrow_mut().get_current_token()?;
+  //   Ok(&token.pos)
+  // }
+
+  pub(crate) fn get_next_token(&self, num: usize) -> Result<Token> {
+    Ok(self.tokens.borrow_mut().get_nth_token(num)?.clone())
   }
+  // pub(crate) fn get_next_token_text(&self, num: usize) -> Result<Option<Rc<str>>> {
+  //   let token = self.tokens.borrow_mut().get_nth_token(num)?;
+  //   Ok(token.text)
+  // }
+  // pub(crate) fn get_next_token_pos(&self, num: usize) -> Result<&Range<usize>> {
+  //   let token = self.tokens.borrow_mut().get_nth_token(num)?;
+  //   Ok(&token.pos)
+  // }
 
   #[allow(dead_code)]
   pub(crate) fn eat_token(&self) -> Result<Range<usize>> {
-    self.tokens.eat_token()
+    self.tokens.borrow_mut().eat_token()
   }
 
   pub(crate) fn eat_tokens(&self, num: usize) -> Result<Range<usize>> {
-    self.tokens.eat_tokens(num)
+    self.tokens.borrow_mut().eat_tokens(num)
   }
 
   pub(crate) fn eat_token_of_type(&self, kind: TokenKind) -> Result<Range<usize>> {
-    self.tokens.eat_token_of_type(kind)
+    self.tokens.borrow_mut().eat_token_of_type(kind)
   }
 
   pub(crate) fn is_next_token_of_type(&self, kind: TokenKind) -> bool {
-    return self.tokens.is_next_token_of_type(kind);
+    return self.tokens.borrow_mut().is_next_token_of_type(kind);
   }
 
   pub(crate) fn add_node(&self, n: Node, location: Range<usize>) -> NodeRef {
@@ -99,8 +116,10 @@ impl Parser {
     return (nodes.len() - 1).into();
   }
 
-  pub(crate) fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {
-    self.tokens.get_tokens_of_kind(kind)
+  pub(crate) fn get_tokens_of_kind(&self, kind: TokenKind) -> Vec<Token> {
+    let tokens = self.tokens.borrow_mut().get_tokens_of_kind(kind);
+    let cloned_tokens =tokens.iter().map(|t|t.clone()).collect::<Vec<Token>>();
+    return cloned_tokens;
   }
 
   pub(crate) fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
@@ -116,20 +135,19 @@ impl Parser {
     }
   }
 
-  pub(crate) fn is_tokens_left(&self) -> bool {
-    self.tokens.is_tokens_left()
-  }
-
   pub(crate) fn eat_eol_and_comments(&mut self) {
-    while self.is_tokens_left() {
-      let curr_token = self.get_current_token().unwrap();
-      if curr_token.kind == TokenKind::EOL
-        || curr_token.kind == TokenKind::LineComment
-        || curr_token.kind == TokenKind::MultiLineComment
-      {
-        let _ = self.eat_token();
-      } else {
-        break;
+    loop {
+      let curr_token = self.get_current_token();
+      if curr_token.is_ok() {
+        let curr_token = curr_token.unwrap();
+        if curr_token.kind == TokenKind::EOL
+          || curr_token.kind == TokenKind::LineComment
+          || curr_token.kind == TokenKind::MultiLineComment
+        {
+          let _ = self.eat_token();
+        } else {
+          break;
+        }
       }
     }
   }
@@ -142,5 +160,21 @@ impl Parser {
   pub(crate) fn get_pos_for_node(&self, node_ref: NodeRef) -> Range<usize> {
     let locations = self.locations.borrow();
     locations[node_ref.0 as usize].clone()
+  }
+
+  pub(crate) fn is_tokens_left(&self) -> bool {
+    let token = self.get_current_token();
+    if token.is_err() {
+      return false;
+    }
+    
+    let token = token.unwrap();
+    if token.kind == TokenKind::EOF {
+      return false
+    }
+    // if kind.kind == TokenKind::EOL {
+    //   return false;
+    // }
+    true
   }
 }

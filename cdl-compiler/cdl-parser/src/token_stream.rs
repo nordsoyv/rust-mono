@@ -4,14 +4,14 @@ use anyhow::{anyhow, Result};
 use cdl_lexer::{Token, TokenKind};
 
 #[derive(Debug)]
-pub struct TokenStream {
+pub struct TokenStreamOld {
   tokens: Vec<Token>,
   curr_token: RefCell<usize>,
 }
 
-impl TokenStream {
-  pub fn new(tokens: Vec<Token>) -> TokenStream {
-    TokenStream {
+impl TokenStreamOld {
+  pub fn new(tokens: Vec<Token>) -> TokenStreamOld {
+    TokenStreamOld {
       tokens,
       curr_token: RefCell::new(0),
     }
@@ -115,7 +115,7 @@ impl TokenStream {
 mod tests {
   use cdl_lexer::{Token, TokenKind};
 
-  use super::TokenStream;
+  use super::TokenStreamOld;
 
   fn create_tokens() -> Vec<Token> {
     vec![
@@ -134,7 +134,7 @@ mod tests {
 
   #[test]
   fn can_get_token() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let token = stream.get_current_token();
     assert!(token.is_ok());
     let token = token.unwrap();
@@ -144,7 +144,7 @@ mod tests {
 
   #[test]
   fn can_get_next_token() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let token = stream.get_nth_token(1);
     assert!(token.is_ok());
     let token = token.unwrap();
@@ -154,7 +154,7 @@ mod tests {
 
   #[test]
   fn can_eat_token() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let pos = stream.eat_token();
     assert!(pos.is_ok());
     let pos = pos.unwrap();
@@ -164,7 +164,7 @@ mod tests {
 
   #[test]
   fn can_eat_tokens() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let pos = stream.eat_tokens(1);
     assert!(pos.is_ok());
     let pos = pos.unwrap();
@@ -174,7 +174,7 @@ mod tests {
 
   #[test]
   fn can_eat_tokens2() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let pos = stream.eat_tokens(2);
     assert!(pos.is_ok());
     let pos = pos.unwrap();
@@ -184,14 +184,14 @@ mod tests {
 
   #[test]
   fn eating_to_many_tokens_fail() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let pos = stream.eat_tokens(3);
     assert!(pos.is_err());
   }
 
   #[test]
   fn can_eat_token_of_type() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let pos = stream.eat_token_of_type(TokenKind::Identifier);
     assert!(pos.is_ok());
     let pos = pos.unwrap();
@@ -200,7 +200,7 @@ mod tests {
 
   #[test]
   fn is_next_token_of_type() {
-    let stream = TokenStream::new(create_tokens());
+    let stream = TokenStreamOld::new(create_tokens());
     let res = stream.is_next_token_of_type(TokenKind::Identifier);
     assert!(res);
   }

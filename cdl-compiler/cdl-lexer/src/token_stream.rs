@@ -13,6 +13,7 @@ pub struct TokenStream<'a> {
   current_token: usize, // pointer to the next token to return to user. Should always be smaller or equal to  read_token
   read_token: usize,    // pointer to how many tokens we have read into the array
   lexer: Lexer<'a, TokenLexer>,
+  end_of_stream: bool,
 }
 
 impl<'a> TokenStream<'a> {
@@ -52,6 +53,7 @@ impl<'a> TokenStream<'a> {
       current_token: 0,
       read_token: 0,
       lexer,
+      end_of_stream: false,
     })
   }
 
@@ -85,14 +87,17 @@ impl<'a> TokenStream<'a> {
     if self.read_token - self.current_token > MAX_TOKEN_ELEM {
       return Err(anyhow!("Tried to read too far ahead"));
     }
-    let token = &self.tokens[self.current_token + nth % MAX_TOKEN_ELEM];
+    let index = (self.current_token + nth) % MAX_TOKEN_ELEM;
+    let token = &self.tokens[index];
     Ok(token)
   }
 
   fn get_token_from_lexer(&mut self) -> Result<TokenLexer> {
     let first_token = self.lexer.next();
     if first_token.is_none() {
-      return Err(anyhow!("Could not read token from stream"));
+      self.end_of_stream = true;
+      return Ok(TokenLexer::EOF);
+      //return Err(anyhow!("Could not read token from stream"));
     }
     let first_token = first_token.unwrap();
     if first_token.is_err() {
@@ -145,9 +150,36 @@ impl<'a> TokenStream<'a> {
       }
       current_token.pos.clone()
     };
-    
+
     self.eat_token()?;
     return Ok(pos.clone());
+  }
+
+  pub fn get_tokens_of_kind(&mut self, kind: TokenKind) -> Vec<Token> {
+    let mut tokens: Vec<Token> = vec![];
+    let mut num_tokens = 0;
+    loop {
+      let curr_token = {
+        let curr_token = self.get_nth_token(num_tokens);
+        if curr_token.is_ok() {
+          let curr_token = curr_token.unwrap();
+          if curr_token.kind == kind {
+            num_tokens += 1;
+            Some(curr_token)
+          } else {
+            None
+          }
+        } else {
+          None
+        }
+      };
+      if let Some(token) = curr_token {
+        tokens.push(token.clone());
+      } else {
+        break;
+      }
+    }
+    return tokens;
   }
 }
 
@@ -184,6 +216,7 @@ fn map_to_token_lexer(token: &TokenLexer) -> (TokenKind, Option<Rc<str>>) {
     TokenLexer::Color(c) => (TokenKind::Color, Some(c.clone())),
     TokenLexer::LineComment(l) => (TokenKind::LineComment, Some(l.clone())),
     TokenLexer::MultiLineComment(l) => (TokenKind::MultiLineComment, Some(l.clone())),
+    TokenLexer::EOF => (TokenKind::EOF, None),
   }
 }
 
@@ -307,6 +340,16 @@ mod tests {
   }
 
   #[test]
+  fn can_eat_many_tokens() {
+    let mut stream = create_test_stream("1 2 3 4 5 6 7 8 9 10");
+    for _num in 0..7 {
+      let pos = stream.eat_token();
+      dbg!(&pos);
+      assert!(pos.is_ok());
+    }
+  }
+
+  #[test]
   fn can_eat_token_of_type() {
     let mut stream = create_identifier_stream();
     let pos = stream.eat_token_of_type(TokenKind::Identifier);
@@ -320,5 +363,12 @@ mod tests {
     let mut stream = create_identifier_stream();
     let res = stream.is_next_token_of_type(TokenKind::Identifier);
     assert!(res);
+  }
+
+  #[test]
+  fn can_get_tokens_of_type() {
+    let mut stream = create_identifier_stream();
+    let tokens = stream.get_tokens_of_kind(TokenKind::Identifier);
+    assert_eq!(2, tokens.len());
   }
 }

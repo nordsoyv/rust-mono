@@ -7,6 +7,8 @@ use std::rc::Rc;
 
 mod token_stream;
 
+pub use token_stream::TokenStream;
+
 fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
   let slice = lex.slice();
   let rc: Rc<str> = slice.into();
@@ -29,6 +31,8 @@ enum TokenLexer {
   #[token("\n")]
   #[token("\r\n")]
   EOL,
+
+  EOF,
 
   #[token("{")]
   BraceOpen,
@@ -107,7 +111,7 @@ enum TokenLexer {
   MultiLineComment(Rc<str>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenKind {
   Boolean(bool),
   EOL,
@@ -140,10 +144,11 @@ pub enum TokenKind {
   Color,
   LineComment,
   MultiLineComment,
-  Unknown
+  Unknown,
+  EOF,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token {
   pub kind: TokenKind,
   pub pos: Span,
@@ -206,6 +211,11 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
       },
       TokenLexer::EOL => Token {
         kind: TokenKind::EOL,
+        pos: span,
+        text: None,
+      },
+      TokenLexer::EOF => Token {
+        kind: TokenKind::EOF,
         pos: span,
         text: None,
       },
@@ -520,7 +530,7 @@ mod tests {
       }
     );
   }
-  
+
   #[test]
   fn can_parse_line_comments() {
     let tokens = lex("// hello comment");
