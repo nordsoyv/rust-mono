@@ -3,10 +3,11 @@ use crate::{
   types::NodeRef,
 };
 use anyhow::{bail, Result};
+use serde::Serialize;
 
 use super::{AstEntityNode, AstTitleNode, Parsable};
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct AstScriptNode {
   pub children: Vec<NodeRef>,
 }

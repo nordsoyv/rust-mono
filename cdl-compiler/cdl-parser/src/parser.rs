@@ -1,6 +1,7 @@
 use std::{cell::RefCell, ops::Range};
 
 use cdl_lexer::{get_location_from_position, Token, TokenKind};
+use serde::Serialize;
 
 use crate::{
   ast_nodes::{
@@ -13,7 +14,7 @@ use crate::{
 };
 use anyhow::{Context, Result};
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub enum Node {
   Title(AstTitleNode),
   Entity(AstEntityNode),

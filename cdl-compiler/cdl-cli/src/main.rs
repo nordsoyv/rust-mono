@@ -5,10 +5,12 @@ fn main() {
   println!("Starting compile");
 
   let mut total_nodes = 0;
-  for _i in 0..100 {
+  //for _i in 0..100 {
     let ast = parse_text(file).unwrap();
     total_nodes += ast.nodes.len();
-  }
+  //}
   println!("Done");
   println!("num nodes: {}", total_nodes);
+  let json = serde_json::to_string(&ast).unwrap();
+  print!("{}", json);
 }

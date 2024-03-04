@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 
 use cdl_lexer::TokenKind;
+use serde::Serialize;
 
 use crate::{
   parser::{Node, Parser},
@@ -9,7 +10,7 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct AstNumberNode {
   pub value: f64,
   pub parent: NodeRef,

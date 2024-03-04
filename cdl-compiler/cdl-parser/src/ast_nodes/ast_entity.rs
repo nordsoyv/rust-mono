@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
+use serde::Serialize;
 use std::rc::Rc;
 use std::vec;
 
@@ -14,7 +15,7 @@ use super::ast_property::AstPropertyNode;
 use super::AstTableAliasNode;
 use super::Parsable;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct AstEntityNode {
   pub parent: NodeRef,
   pub children: Vec<NodeRef>,

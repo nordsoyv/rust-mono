@@ -1,5 +1,6 @@
 use anyhow::Result;
 use cdl_lexer::TokenKind;
+use serde::Serialize;
 use std::rc::Rc;
 
 use crate::{
@@ -9,7 +10,7 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct AstTableAliasNode {
   pub table: Rc<str>,
   pub alias: Rc<str>,

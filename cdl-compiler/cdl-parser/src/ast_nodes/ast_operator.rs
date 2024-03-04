@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 
 use cdl_lexer::TokenKind;
+use serde::Serialize;
 
 use crate::{
   parse_expr::parse_expression,
@@ -8,7 +9,7 @@ use crate::{
   types::NodeRef,
 };
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub enum Operator {
   Plus,
   Minus,
@@ -24,7 +25,7 @@ pub enum Operator {
   MoreThanOrEqual,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct AstOperatorNode {
   pub operator: Operator,
   pub left: NodeRef,

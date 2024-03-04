@@ -1,4 +1,5 @@
 use anyhow::Result;
+use serde::Serialize;
 use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
@@ -10,13 +11,13 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub enum QuoteKind {
   SingleQuote,
   DoubleQuote,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct AstStringNode {
   pub text: Rc<str>,
   pub parent: NodeRef,

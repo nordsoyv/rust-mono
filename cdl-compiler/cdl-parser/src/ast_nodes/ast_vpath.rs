@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use serde::Serialize;
 use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
@@ -10,7 +11,7 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct AstVPathNode {
   pub parent: NodeRef,
   pub table: Option<Rc<str>>,

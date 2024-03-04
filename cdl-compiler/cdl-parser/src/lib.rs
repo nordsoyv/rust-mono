@@ -9,6 +9,7 @@ use std::ops::Range;
 use anyhow::Result;
 use cdl_lexer::lex;
 use parser::{Node, Parser};
+use serde::Serialize;
 use token_stream::TokenStream;
 use types::NodeRef;
 
@@ -24,7 +25,7 @@ pub fn parse_text(text: &str) -> Result<Ast> {
   })
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct Ast {
   pub nodes: Vec<Node>,
   pub locations: Vec<Range<usize>>,
