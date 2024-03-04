@@ -32,7 +32,7 @@ impl Parsable for AstBooleanNode {
     let bool_token = parser.get_current_token()?;
     let value = match bool_token.kind {
       TokenKind::Boolean(b) => b,
-      _ => return Err(anyhow!("Did not find number when trying to parse a number")),
+      _ => return Err(anyhow!("Did not find boolean when trying to parse a boolean")),
     };
     let ast_node = AstBooleanNode {
       parent,
