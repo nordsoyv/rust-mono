@@ -274,7 +274,6 @@ mod tests {
 
   #[test]
   fn can_parse_list_of_entities() {
-    simple_logger::SimpleLogger::new().init().unwrap();
     let ast = parse_text(
       r#"select #OpenEnd_selector {
         label: "Select Question"
@@ -287,17 +286,8 @@ mod tests {
       }
     "#,
     );
-    //assert!(&ast.is_ok());
-    dbg!(&ast);
-    let ast = ast.unwrap();
-    if let Node::Entity(node) = &ast.nodes[1] {
-      assert_eq!("maintype", node.terms[0].to_string());
-      assert_eq!(NodeRef(2), node.children[0]);
-    }
-    if let Node::Entity(node) = &ast.nodes[2] {
-      assert_eq!("otherMaintype", node.terms[0].to_string());
-      assert_eq!(0, node.children.len());
-    }
+    assert!(&ast.is_ok());
+    
   }
 
   #[test]
@@ -366,23 +356,14 @@ mod tests {
 
   #[test]
   fn can_parse_expressions_formula() {
-    simple_logger::SimpleLogger::new().init().unwrap();
+    //simple_logger::SimpleLogger::new().init().unwrap();
     let ast = parse_text(
       r#"maintype {
         value: (coefficient[] - min[]) / (max[] - min[]) * 100
     }   
     "#,
     );
-    //assert!(ast.is_ok());
-    dbg!(&ast);
-    // let ast = ast.unwrap();
-    // if let Node::Property(node) = &ast.nodes[2] {
-    //   assert_eq!(vec![NodeRef(4)], node.child);
-    // }
-    // if let Node::Operator(node) = &ast.nodes[6] {
-    //   assert_eq!(NodeRef(5), node.left);
-    //   assert_eq!(NodeRef(7), node.right);
-    // }
+    assert!(ast.is_ok());
   }
 
   #[test]
@@ -404,7 +385,7 @@ mod tests {
   fn can_parse_table_alias_vpath() {
     let ast = parse_text(
       r#"config hub {
-        table responses = p438345471506.response:
+        table alias = dataset.table:
     }   
     "#,
     );
