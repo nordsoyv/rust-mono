@@ -9,7 +9,7 @@ use crate::{
   types::NodeRef,
 };
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub enum Operator {
   Plus,
   Minus,
@@ -25,7 +25,7 @@ pub enum Operator {
   MoreThanOrEqual,
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstOperatorNode {
   pub operator: Operator,
   pub left: NodeRef,

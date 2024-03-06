@@ -12,6 +12,7 @@ pub mod ast_function;
 pub mod ast_operator;
 pub mod ast_table_alias;
 pub mod ast_boolean;
+pub mod ast_formula;
 
 use anyhow::Result;
 
@@ -29,6 +30,7 @@ pub use ast_vpath::AstVPathNode;
 pub use ast_reference::AstReferenceNode;
 pub use ast_operator::AstOperatorNode;
 pub use ast_table_alias::AstTableAliasNode;
+pub use ast_formula::AstFormulaNode;
 
 pub trait Parsable {
   fn can_parse(parser: &Parser) -> bool;

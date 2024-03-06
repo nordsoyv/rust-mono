@@ -10,14 +10,13 @@ use crate::{
 };
 
 use super::Parsable;
-
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub enum QuoteKind {
   SingleQuote,
   DoubleQuote,
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstStringNode {
   pub text: Rc<str>,
   pub parent: NodeRef,
@@ -40,6 +39,7 @@ impl Parsable for AstStringNode {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let string_token = parser.get_current_token()?;
     let text = string_token.text.clone().unwrap();
+//    parser.trace(&format!("Parsing String \"{:?}\"", text ));
     let quote_kind = if text.starts_with("'") {
       QuoteKind::SingleQuote
     } else {

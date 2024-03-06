@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use super::{AstEntityNode, AstTitleNode, Parsable};
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstScriptNode {
   pub children: Vec<NodeRef>,
 }

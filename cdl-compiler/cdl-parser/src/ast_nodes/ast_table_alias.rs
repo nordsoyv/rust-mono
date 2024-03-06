@@ -8,9 +8,9 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
+use super::{AstVPathNode, Parsable};
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstTableAliasNode {
   pub table: Rc<str>,
   pub alias: Rc<str>,
@@ -43,7 +43,8 @@ impl Parsable for AstTableAliasNode {
     let table_token = parser.get_current_token()?;
     let alias_token = parser.get_next_token(1)?;
     let _ = parser.get_next_token(2)?;
-    let vpath_token = parser.get_next_token(3)?;
+    parser.eat_tokens(3)?;
+    let vpath_token = parser.get_current_token()?;
 
     let ast_node = AstTableAliasNode {
       parent,
@@ -54,7 +55,10 @@ impl Parsable for AstTableAliasNode {
       Node::TableAlias(ast_node),
       table_token.pos.start..vpath_token.pos.end,
     );
-    parser.eat_tokens(4)?;
+    parser.eat_tokens(1)?;
+    if parser.is_next_token_of_type(TokenKind::Colon) {
+      parser.eat_token()?;
+    }
     Ok(node_ref)
   }
 }

@@ -11,7 +11,7 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstIdentifierNode {
   pub identifier: Rc<str>,
   pub parent: NodeRef,

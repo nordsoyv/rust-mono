@@ -8,10 +8,11 @@ use std::ops::Range;
 
 use anyhow::Result;
 use cdl_lexer::lex;
-use parser::{Node, Parser};
+pub use parser::Node;
+use parser::Parser;
 use serde::Serialize;
 use token_stream::TokenStream;
-use types::NodeRef;
+pub use types::NodeRef;
 
 pub fn parse_text(text: &str) -> Result<Ast> {
   let tokens = lex(&text)?;
@@ -25,7 +26,7 @@ pub fn parse_text(text: &str) -> Result<Ast> {
   })
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Ast {
   pub nodes: Vec<Node>,
   pub locations: Vec<Range<usize>>,
@@ -272,6 +273,34 @@ mod tests {
   }
 
   #[test]
+  fn can_parse_list_of_entities() {
+    simple_logger::SimpleLogger::new().init().unwrap();
+    let ast = parse_text(
+      r#"select #OpenEnd_selector {
+        label: "Select Question"
+        options: item {
+          label: "Visit Comments"
+        },
+        item {
+          label: "Lodging Comments"
+        }
+      }
+    "#,
+    );
+    //assert!(&ast.is_ok());
+    dbg!(&ast);
+    let ast = ast.unwrap();
+    if let Node::Entity(node) = &ast.nodes[1] {
+      assert_eq!("maintype", node.terms[0].to_string());
+      assert_eq!(NodeRef(2), node.children[0]);
+    }
+    if let Node::Entity(node) = &ast.nodes[2] {
+      assert_eq!("otherMaintype", node.terms[0].to_string());
+      assert_eq!(0, node.children.len());
+    }
+  }
+
+  #[test]
   fn can_parse_function() {
     let ast = parse_text(
       r#"maintype {
@@ -336,10 +365,46 @@ mod tests {
   }
 
   #[test]
+  fn can_parse_expressions_formula() {
+    simple_logger::SimpleLogger::new().init().unwrap();
+    let ast = parse_text(
+      r#"maintype {
+        value: (coefficient[] - min[]) / (max[] - min[]) * 100
+    }   
+    "#,
+    );
+    //assert!(ast.is_ok());
+    dbg!(&ast);
+    // let ast = ast.unwrap();
+    // if let Node::Property(node) = &ast.nodes[2] {
+    //   assert_eq!(vec![NodeRef(4)], node.child);
+    // }
+    // if let Node::Operator(node) = &ast.nodes[6] {
+    //   assert_eq!(NodeRef(5), node.left);
+    //   assert_eq!(NodeRef(7), node.right);
+    // }
+  }
+
+  #[test]
   fn can_parse_table_alias() {
     let ast = parse_text(
       r#"config hub {
         table alias = dataset.table
+    }   
+    "#,
+    );
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    if let Node::TableAlias(node) = &ast.nodes[2] {
+      assert_eq!("alias", node.alias.to_string());
+      assert_eq!("dataset.table", node.table.to_string());
+    }
+  }
+  #[test]
+  fn can_parse_table_alias_vpath() {
+    let ast = parse_text(
+      r#"config hub {
+        table responses = p438345471506.response:
     }   
     "#,
     );
@@ -362,9 +427,10 @@ mod tests {
     assert!(ast.is_err());
   }
 
- #[test]
+  #[test]
   fn can_parse_large_file() {
-    let file = include_str!("../../test_script/test.cdl");
+    let file = include_str!("../../test_script/workforce.cdl");
+    simple_logger::SimpleLogger::new().init().unwrap();
     let ast = parse_text(file);
     assert!(ast.is_ok());
   }

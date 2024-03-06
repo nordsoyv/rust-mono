@@ -5,14 +5,14 @@ use std::rc::Rc;
 use cdl_lexer::TokenKind;
 
 use crate::{
-  parse_expr::parse_arg_list,
+  parse_expr::{parse_arg_list, parse_bracket_arg_list},
   parser::{Node, Parser},
   types::NodeRef,
 };
 
 use super::Parsable;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstFunctionNode {
   pub name: Rc<str>,
   pub children: Vec<NodeRef>,
@@ -34,6 +34,9 @@ impl Parsable for AstFunctionNode {
       if next_token.kind == TokenKind::ParenOpen {
         return true;
       }
+      if next_token.kind == TokenKind::BracketOpen {
+        return true;
+      }
     }
     return false;
   }
@@ -49,18 +52,39 @@ impl Parsable for AstFunctionNode {
       };
       (ast_node, func_name_token.pos.start)
     };
-
+    //parser.start_group(format!("Function {:?}", &ast_node.name));
     let node_ref = parser.add_node(Node::Function(ast_node),start_pos..usize::MAX);
-    parser.eat_tokens(2).context("Error while parsing Function")?;
+    parser.eat_tokens(1).context("Error while parsing Function")?;
+    let is_paren = {
+      let token = parser.get_current_token()?;
+      parser.eat_token()?;
+      if token.kind == TokenKind::ParenOpen{
+        true
+      }else {
+          false
+      }
+    };
 
-    let args = parse_arg_list(parser, node_ref)?;
+    let args = if is_paren {
+      parse_arg_list(parser, node_ref)?
+    } else {
+      parse_bracket_arg_list(parser, node_ref)?
+    };
 
     args
       .iter()
       .for_each(|a| parser.add_child_to_node(node_ref, *a));
 
-    let end_pos = parser.eat_token_of_type(TokenKind::ParenClose)?;
+      
+    let end_pos = {
+      if is_paren {
+        parser.eat_token_of_type(TokenKind::ParenClose)?
+      }else {
+        parser.eat_token_of_type(TokenKind::BracketClose)?
+      }
+    };
     parser.update_location_on_node(node_ref, start_pos, end_pos.end);
+  //  parser.end_group("");
     Ok(node_ref)
   }
 }

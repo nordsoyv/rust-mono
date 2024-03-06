@@ -1,7 +1,8 @@
 use crate::{
   ast_nodes::{
-    ast_function::AstFunctionNode, AstColorNode, AstIdentifierNode, AstNumberNode, AstOperatorNode,
-    AstReferenceNode, AstStringNode, AstVPathNode, Parsable, ast_boolean::AstBooleanNode,
+    ast_boolean::AstBooleanNode, ast_function::AstFunctionNode, AstColorNode, AstEntityNode,
+    AstFormulaNode, AstIdentifierNode, AstNumberNode, AstOperatorNode, AstReferenceNode,
+    AstStringNode, AstVPathNode, Parsable,
   },
   parser::Parser,
   types::NodeRef,
@@ -25,22 +26,50 @@ pub fn parse_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRe
   }
 }
 
-pub fn parse_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
+pub fn parse_bracket_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
   let mut node_refs = vec![];
   loop {
     let current_token = parser.get_current_token()?;
     match current_token.kind {
+      TokenKind::BracketClose => {
+        return Ok(node_refs);
+      }
+      TokenKind::Comma => {
+        let _ = parser.eat_token()?;
+      }
+      _ => {
+        parser.eat_token()?;
+      }
+    }
+  }
+}
+
+pub fn parse_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
+  let mut node_refs = vec![];
+  //parser.start_group("List".to_string());
+  loop {
+    let current_token = parser.get_current_token()?;
+    match current_token.kind {
       TokenKind::EOL => {
+        //    parser.end_group("EOL");
         return Ok(node_refs);
       }
       TokenKind::BraceClose => {
+        //    parser.end_group("BraceClose");
         return Ok(node_refs);
       }
       TokenKind::LineComment => {
         let _ = parser.eat_token()?;
       }
       TokenKind::Comma => {
+        //      parser.trace("Found comma in list");
         let _ = parser.eat_token()?;
+        let next_token = parser.get_current_token()?;
+        if next_token.kind == TokenKind::EOL {
+          //      parser.trace("Found EOL after comma in list");
+          parser.eat_token()?;
+          node_refs.push(parse_expression(parser, parent)?);
+        }
       }
       _ => node_refs.push(parse_expression(parser, parent)?),
     }
@@ -68,11 +97,17 @@ pub fn parse_term(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
 }
 
 pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
+  if AstEntityNode::can_parse_anonymous_entity(parser) {
+    return AstEntityNode::parse_anonymous_entity(parser, parent);
+  }
   if AstVPathNode::can_parse(&parser) {
     return AstVPathNode::parse(parser, parent);
   }
   if AstFunctionNode::can_parse(&parser) {
     return AstFunctionNode::parse(parser, parent);
+  }
+  if AstFormulaNode::can_parse(&parser) {
+    return AstFormulaNode::parse(parser, parent);
   }
   if AstIdentifierNode::can_parse(&parser) {
     return AstIdentifierNode::parse(parser, parent);
@@ -92,10 +127,14 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   if AstBooleanNode::can_parse(&parser) {
     return AstBooleanNode::parse(parser, parent);
   }
+  if AstEntityNode::can_parse(parser) {
+    return AstEntityNode::parse(parser, parent);
+  }
+
   if parser.is_next_token_of_type(TokenKind::LineComment) {
     parser.eat_token()?;
   }
-  
+
   if parser.is_next_token_of_type(TokenKind::ParenOpen) {
     parser.eat_token()?;
     let expr_node = parse_expression(parser, parent)?;
@@ -106,5 +145,8 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   }
   //dbg!(parser.get_current_token());
   let token = parser.get_current_token()?;
-  return Err(anyhow!("Error parsing expression, current token: {:?}", token.kind));
+  return Err(anyhow!(
+    "Error parsing expression, current token: {:?}",
+    token.kind
+  ));
 }

@@ -11,7 +11,7 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstTitleNode {
   pub title: Rc<str>,
   pub parent: NodeRef,

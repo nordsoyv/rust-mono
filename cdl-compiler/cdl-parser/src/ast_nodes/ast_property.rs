@@ -4,15 +4,14 @@ use std::rc::Rc;
 
 use cdl_lexer::TokenKind;
 
+use super::Parsable;
 use crate::{
   parse_expr::parse_list,
   parser::{Node, Parser},
   types::NodeRef,
 };
 
-use super::Parsable;
-
-#[derive(Debug,Serialize)]
+#[derive(Debug, Serialize,Clone)]
 pub struct AstPropertyNode {
   pub name: Rc<str>,
   pub parent: NodeRef,
@@ -37,12 +36,13 @@ impl Parsable for AstPropertyNode {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let (node_ref, start_pos) = {
       let name_token = parser.get_current_token()?;
+
       let ast_node = AstPropertyNode {
         parent,
         name: name_token.text.as_ref().unwrap().clone(),
         child: vec![],
       };
-
+      //parser.start_group(format!("Property {:?}", &ast_node.name));
       let node_ref = parser.add_node(Node::Property(ast_node), name_token.pos.start..usize::MAX);
       (node_ref, name_token.pos.start)
     };
@@ -66,6 +66,7 @@ impl Parsable for AstPropertyNode {
       .iter()
       .for_each(|c| parser.add_child_to_node(node_ref, *c));
     //parser.add_child_to_node(node_ref, children);
+    // parser.end_group("Done");
     Ok(node_ref)
   }
 }

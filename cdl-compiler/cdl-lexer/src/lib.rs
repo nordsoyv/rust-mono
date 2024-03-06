@@ -89,11 +89,15 @@ enum TokenLexer {
   #[regex(r#"'(?:[^']|\\')*'"#, to_rcstr)]
   String(Rc<str>),
 
-  #[regex("_?[a-zA-Z0-9_\\-\\.]*", to_rcstr)]
+  #[regex("_?[$a-zA-Z0-9_\\-\\.]*", to_rcstr)]
   Identifier(Rc<str>),
 
+  
   #[regex("@[a-zA-Z0-9_\\-\\.]*", to_rcstr_skip1)]
   Reference(Rc<str>),
+
+  #[regex("\\^[a-zA-Z0-9_\\-\\.]*", to_rcstr_skip1)]
+  HierarchyReference(Rc<str>),
 
   #[regex("#[0-9a-fA-F]{6}", to_rcstr_skip1)]
   Color(Rc<str>),
@@ -135,6 +139,7 @@ pub enum TokenKind {
   MoreThanOrEqual,
   Identifier,
   Reference,
+  HierarchyReference,
   Color,
   LineComment,
   MultiLineComment,
@@ -333,6 +338,11 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
       },
       TokenLexer::Reference(r) => Token {
         kind: TokenKind::Reference,
+        pos: span,
+        text: Some(r.clone()),
+      },
+      TokenLexer::HierarchyReference(r) => Token {
+        kind: TokenKind::HierarchyReference,
         pos: span,
         text: Some(r.clone()),
       },
@@ -622,6 +632,37 @@ mod tests {
         kind: TokenKind::Color,
         text: Some("acFF23".into()),
         pos: 8..15
+      }
+    );
+  }
+
+  #[test]
+  fn can_parse_vpath() {
+    let tokens = lex("SitesHierarchySimplified:^hierarchy");
+    assert!(tokens.is_ok());
+    let res = tokens.unwrap();
+    assert_eq!(
+      res[0],
+      Token {
+        kind: TokenKind::Identifier,
+        text: Some("SitesHierarchySimplified".into()),
+        pos: 0..24
+      }
+    );
+    assert_eq!(
+      res[1],
+      Token {
+        kind: TokenKind::Colon,
+        text: None,
+        pos: 24..25
+      }
+    );
+    assert_eq!(
+      res[2],
+      Token {
+        kind: TokenKind::HierarchyReference,
+        text: Some("hierarchy".into()),
+        pos: 25..35
       }
     );
   }

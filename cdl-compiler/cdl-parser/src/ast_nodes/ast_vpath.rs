@@ -11,11 +11,13 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstVPathNode {
   pub parent: NodeRef,
   pub table: Option<Rc<str>>,
   pub variable: Option<Rc<str>>,
+  pub function : Option<Rc<str>>,
+  pub is_hierarchy: bool,
 }
 
 impl Parsable for AstVPathNode {
@@ -43,53 +45,116 @@ impl Parsable for AstVPathNode {
     let first_token = parser.get_current_token()?;
     let second_token = parser.get_next_token(1)?;
     let third_token = parser.get_next_token(2)?;
+    let fourth_token = parser.get_next_token(3)?;
 
-    let (ast_node, pos) = match (&first_token.kind, &second_token.kind, &third_token.kind) {
-      (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier) => {
+    let (ast_node, pos) = match (&first_token.kind, &second_token.kind, &third_token.kind,&fourth_token.kind) {
+      (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier, TokenKind::ParenOpen) => {
+        parser.eat_tokens(4)?;
+        let parent_close_pos = parser.eat_token_of_type(TokenKind::ParenClose)?;
+        (
+          AstVPathNode {
+            parent,
+            table: first_token.text.clone(),
+            variable: None,
+            function: third_token.text.clone(),
+            is_hierarchy: false,
+          },
+          first_token.pos.start..parent_close_pos.end,
+        )
+      }
+      (TokenKind::Identifier, TokenKind::Colon, TokenKind::Identifier, _) => {
         parser.eat_tokens(3)?;
         (
           AstVPathNode {
             parent,
             table: first_token.text.clone(),
             variable: third_token.text.clone(),
+            function: None,
+            is_hierarchy: false,
           },
           first_token.pos.start..third_token.pos.end,
         )
       }
-      (TokenKind::Identifier, TokenKind::Colon, _) => {
+      (TokenKind::Identifier, TokenKind::Colon, TokenKind::HierarchyReference, _) => {
+        parser.eat_tokens(3)?;
+        (
+          AstVPathNode {
+            parent,
+            table: first_token.text.clone(),
+            variable: third_token.text.clone(),
+            function: None,
+            is_hierarchy: true,
+          },
+          first_token.pos.start..third_token.pos.end,
+        )
+      }
+      (TokenKind::Identifier, TokenKind::Colon, _,_) => {
         parser.eat_tokens(2)?;
         (
           AstVPathNode {
             parent,
             table: first_token.text.clone(),
             variable: None,
+            function: None,
+            is_hierarchy: false,
           },
           first_token.pos.start..second_token.pos.end,
         )
       }
-      (TokenKind::Colon, TokenKind::Identifier, _) => {
+      (TokenKind::Colon, TokenKind::Identifier, TokenKind::ParenOpen,  _) => {
+        parser.eat_tokens(3)?;
+        let parent_close_pos = parser.eat_token_of_type(TokenKind::ParenClose)?;
+        (
+          AstVPathNode {
+            parent,
+            table: None,
+            variable: None,
+            function:second_token.text.clone(),
+            is_hierarchy: false,
+          },
+          first_token.pos.start..parent_close_pos.end,
+        )
+      }
+      (TokenKind::Colon, TokenKind::Identifier, _,_) => {
         parser.eat_tokens(2)?;
         (
           AstVPathNode {
             parent,
             table: None,
             variable: second_token.text.clone(),
+            function: None,
+            is_hierarchy: false,
           },
           first_token.pos.start..second_token.pos.end,
         )
       }
-      (TokenKind::Colon, _, _) => {
+      (TokenKind::Colon, TokenKind::HierarchyReference, _,_) => {
+        parser.eat_tokens(2)?;
+        (
+          AstVPathNode {
+            parent,
+            table: None,
+            variable: second_token.text.clone(),
+            function: None,
+            is_hierarchy: true,
+          },
+          first_token.pos.start..second_token.pos.end,
+        )
+      }
+      (TokenKind::Colon, _, _,_) => {
         parser.eat_tokens(1)?;
         (
           AstVPathNode {
             parent,
             table: None,
             variable: None,
+            function: None,
+            is_hierarchy: false,
           },
           first_token.pos.clone(),
         )
       }
-      (_, _, _) => return Err(anyhow!("Unknown error occured while parsing VPath node")),
+      (_, _, _,_) => return Err(anyhow!("Unknown error occured while parsing VPath node")),
     };
     let node_ref = parser.add_node(Node::VPath(ast_node), pos);
     return Ok(node_ref);

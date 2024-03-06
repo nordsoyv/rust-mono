@@ -10,7 +10,7 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstNumberNode {
   pub value: f64,
   pub parent: NodeRef,

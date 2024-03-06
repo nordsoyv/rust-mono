@@ -10,7 +10,7 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,Serialize,Clone)]
 pub struct AstBooleanNode {
   pub value: bool,
   pub parent: NodeRef,
