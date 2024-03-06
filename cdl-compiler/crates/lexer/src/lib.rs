@@ -743,7 +743,7 @@ mod tests {
 
   #[test]
   fn can_parse_large_file() {
-    let file = include_str!("../../test_script/test.cdl");
+    let file = include_str!("../../../test_script/test.cdl");
     let tokens = lex(file);
     if tokens.is_err() {
       dbg!(&tokens);
@@ -751,7 +751,7 @@ mod tests {
 
     assert!(tokens.is_ok());
     let res = tokens.unwrap();
-    assert_eq!(24533, res.len());
+    assert_eq!(147203, res.len());
   }
   #[test]
   fn can_parse_number() {

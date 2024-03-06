@@ -120,12 +120,12 @@ mod tests {
   fn create_tokens() -> Vec<Token> {
     vec![
       Token {
-        kind: cdl_lexer::TokenKind::Identifier,
+        kind: lexer::TokenKind::Identifier,
         pos: 0..10,
         text: Some("identifier".into()),
       },
       Token {
-        kind: cdl_lexer::TokenKind::Identifier,
+        kind: lexer::TokenKind::Identifier,
         pos: 11..20,
         text: Some("identifier2".into()),
       },
@@ -138,7 +138,7 @@ mod tests {
     let token = stream.get_current_token();
     assert!(token.is_ok());
     let token = token.unwrap();
-    assert_eq!(cdl_lexer::TokenKind::Identifier, token.kind);
+    assert_eq!(lexer::TokenKind::Identifier, token.kind);
     assert_eq!("identifier", token.text.as_ref().unwrap().to_string());
   }
 
@@ -148,7 +148,7 @@ mod tests {
     let token = stream.get_nth_token(1);
     assert!(token.is_ok());
     let token = token.unwrap();
-    assert_eq!(cdl_lexer::TokenKind::Identifier, token.kind);
+    assert_eq!(lexer::TokenKind::Identifier, token.kind);
     assert_eq!("identifier2", token.text.as_ref().unwrap().to_string());
   }
 

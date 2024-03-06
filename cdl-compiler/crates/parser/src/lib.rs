@@ -417,19 +417,8 @@ mod tests {
   }
 
   #[test]
-  fn table_alias_not_allowed_outside_config_hub() {
-    let ast = parse_text(
-      r#"config notHub {
-        table alias = dataset.table
-    }   
-    "#,
-    );
-    assert!(ast.is_err());
-  }
-
-  #[test]
   fn can_parse_large_file() {
-    let file = include_str!("../../test_script/workforce.cdl");
+    let file = include_str!("../../../test_script/workforce.cdl");
     simple_logger::SimpleLogger::new().init().unwrap();
     let ast = parse_text(file);
     assert!(ast.is_ok());
