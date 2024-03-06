@@ -7,7 +7,7 @@ mod types;
 use std::ops::Range;
 
 use anyhow::Result;
-use cdl_lexer::lex;
+use lexer::lex;
 pub use parser::Node;
 use parser::Parser;
 use serde::Serialize;

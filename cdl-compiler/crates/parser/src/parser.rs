@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Range};
 
-use cdl_lexer::{get_location_from_position, Token, TokenKind};
+use lexer::{get_location_from_position, Token, TokenKind};
 use serde::Serialize;
 
 use crate::{

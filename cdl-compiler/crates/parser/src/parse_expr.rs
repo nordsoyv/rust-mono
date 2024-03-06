@@ -8,7 +8,7 @@ use crate::{
   types::NodeRef,
 };
 use anyhow::{anyhow, Result};
-use cdl_lexer::TokenKind;
+use lexer::TokenKind;
 
 pub fn parse_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
   let mut node_refs = vec![];

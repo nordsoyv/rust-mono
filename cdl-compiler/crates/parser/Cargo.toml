@@ -1,13 +1,18 @@
 [package]
-name = "cdl-lexer"
+name = "parser"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+lexer = { path = "../lexer" }
 anyhow = "1.0.75"
-logos = "0.13.0"
+serde = { version = "1.0.197" , features =["derive","rc"] }
+serde_json = "1.0.114"
+log = "0.4.21"
+simple_logger = "4.3.3"
+
 
 [dev-dependencies]
 criterion = { version = "0.4" }

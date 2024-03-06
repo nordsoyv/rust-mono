@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::Serialize;
 use std::rc::Rc;
 
-use cdl_lexer::TokenKind;
+use lexer::TokenKind;
 
 use crate::{
   parser::{Node, Parser},

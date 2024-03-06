@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 
-use cdl_lexer::TokenKind;
+use lexer::TokenKind;
 use serde::Serialize;
 
 use crate::{

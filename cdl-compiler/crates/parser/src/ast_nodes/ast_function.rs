@@ -2,7 +2,7 @@ use anyhow::{Result, Context};
 use serde::Serialize;
 use std::rc::Rc;
 
-use cdl_lexer::TokenKind;
+use lexer::TokenKind;
 
 use crate::{
   parse_expr::{parse_arg_list, parse_bracket_arg_list},

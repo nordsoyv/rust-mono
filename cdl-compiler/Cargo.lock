@@ -113,39 +113,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
 
 [[package]]
-name = "cdl-cli"
-version = "0.1.0"
-dependencies = [
- "cdl-parser",
- "clap 4.5.1",
- "serde",
- "serde_json",
- "simple_logger",
-]
-
-[[package]]
-name = "cdl-lexer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "criterion",
- "logos",
-]
-
-[[package]]
-name = "cdl-parser"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "cdl-lexer",
- "criterion",
- "log",
- "serde",
- "serde_json",
- "simple_logger",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -238,6 +205,17 @@ name = "clap_lex"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
+
+[[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "clap 4.5.1",
+ "parser",
+ "serde",
+ "serde_json",
+ "simple_logger",
+]
 
 [[package]]
 name = "colorchoice"
@@ -413,6 +391,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "lexer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "criterion",
+ "logos",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -512,6 +499,19 @@ name = "os_str_bytes"
 version = "6.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1"
+
+[[package]]
+name = "parser"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "criterion",
+ "lexer",
+ "log",
+ "serde",
+ "serde_json",
+ "simple_logger",
+]
 
 [[package]]
 name = "plotters"

@@ -1,6 +1,6 @@
 use std::{fs, rc::Rc, time::Instant};
 
-use cdl_parser::{parse_text, Ast, Node, NodeRef};
+use parser::{parse_text, Ast, Node, NodeRef};
 use clap::Parser;
 use simple_logger::SimpleLogger;
 

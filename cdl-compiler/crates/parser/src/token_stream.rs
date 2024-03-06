@@ -1,7 +1,7 @@
 use std::{cell::RefCell, ops::Range};
 
 use anyhow::{anyhow, Result};
-use cdl_lexer::{Token, TokenKind};
+use lexer::{Token, TokenKind};
 
 #[derive(Debug)]
 pub struct TokenStream {
@@ -113,7 +113,7 @@ impl TokenStream {
 
 #[cfg(test)]
 mod tests {
-  use cdl_lexer::{Token, TokenKind};
+  use lexer::{Token, TokenKind};
 
   use super::TokenStream;
 
