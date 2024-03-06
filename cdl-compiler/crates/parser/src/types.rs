@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use serde::Serialize;
 
-#[derive(Clone, Copy,PartialEq, Eq, PartialOrd, Ord,Serialize)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct NodeRef(pub isize);
 
 impl From<usize> for NodeRef {

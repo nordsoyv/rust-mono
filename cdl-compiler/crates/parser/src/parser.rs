@@ -32,6 +32,15 @@ pub enum Node {
   Formula(AstFormulaNode),
 }
 
+impl Node {
+  pub fn is_reference(&self)-> bool {
+    match self {
+      Node::Reference(_) => true,
+      _ => false
+    }
+  }
+}
+
 #[derive(Debug)]
 struct LogGroup {
   name : String

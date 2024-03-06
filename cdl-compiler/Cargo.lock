@@ -459,6 +459,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "node-processing"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "parser",
+]
+
+[[package]]
 name = "num-conv"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

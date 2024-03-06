@@ -15,6 +15,7 @@ use super::Parsable;
 pub struct AstReferenceNode {
   pub ident: Rc<str>,
   pub parent: NodeRef,
+  pub resolved_node: NodeRef,
 }
 
 impl Parsable for AstReferenceNode {
@@ -35,6 +36,7 @@ impl Parsable for AstReferenceNode {
     let ast_node = AstReferenceNode {
       parent,
       ident: ref_token.text.as_ref().unwrap().clone(),
+      resolved_node: NodeRef(-1)
     };
     let node_ref = parser.add_node(Node::Reference(ast_node),ref_token.pos.clone());
     parser.eat_tokens(1)?;
