@@ -1,4 +1,4 @@
-use std::{fs, iter::Filter, rc::Rc, time::Instant};
+use std::{fs, rc::Rc, time::Instant};
 
 use cdl_parser::{parse_text, Ast, Node, NodeRef};
 use clap::Parser;
@@ -27,7 +27,7 @@ fn find_filters(ast: &Ast, filters: &Vec<&str>) -> Vec<NodeRef> {
       Node::Entity(ent) => {
         if let Some(id) = &ent.ident {
           if compare_rc_str_to_filters(id, filters) {
-            result.push(NodeRef( index as isize));
+            result.push(NodeRef(index as isize));
           }
         }
       }
@@ -62,7 +62,7 @@ fn main() {
     println!("time taken for cloning: {:.2?}", elepsed);
 
     let now = Instant::now();
-    let json = serde_json::to_string(&ast).unwrap();
+    let _json = serde_json::to_string(&ast).unwrap();
     let elepsed = now.elapsed();
     println!("time taken for json sericalizing: {:.2?}", elepsed);
 
@@ -122,6 +122,6 @@ fn main() {
     let found = find_filters(&ast, &filters);
 
     let elepsed = now.elapsed();
-    println!("time taken to find {} nodes: {:.2?}",found.len(),  elepsed);
-  }  
+    println!("time taken to find {} nodes: {:.2?}", found.len(), elepsed);
+  }
 }

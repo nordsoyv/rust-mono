@@ -39,15 +39,6 @@ impl Parsable for AstEntityNode {
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let header = AstEntityNode::parse_entity_header(parser)?;
-    let is_config_hub = if header.terms.len() > 1
-      && header.terms[0] == "config".into()
-      && header.terms[1] == "hub".into()
-    {
-      true
-    } else {
-      false
-    };
-
     let entity = AstEntityNode {
       children: vec![],
       parent,

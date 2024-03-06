@@ -26,8 +26,8 @@ pub fn parse_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRe
   }
 }
 
-pub fn parse_bracket_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
-  let mut node_refs = vec![];
+pub fn parse_bracket_arg_list(parser: &mut Parser, _parent: NodeRef) -> Result<Vec<NodeRef>> {
+  let node_refs = vec![];
   loop {
     let current_token = parser.get_current_token()?;
     match current_token.kind {

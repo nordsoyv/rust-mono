@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use cdl_lexer::TokenKind;
 use serde::Serialize;
 
@@ -28,19 +26,22 @@ impl Parsable for AstFormulaNode {
   }
 
   fn parse(parser: &mut crate::parser::Parser, parent: NodeRef) -> anyhow::Result<NodeRef> {
-   // parser.trace("Parsing formula");
+    // parser.trace("Parsing formula");
     let open_bracket_token = parser.get_current_token()?;
     parser.eat_token()?;
     let node = AstFormulaNode {
-        children: vec![],
-        parent
+      children: vec![],
+      parent,
     };
     loop {
-        let next_token = parser.get_current_token()?;
-        parser.eat_token()?;
-        if next_token.kind == TokenKind::BracketClose {
-            return Ok(parser.add_node(Node::Formula(node), open_bracket_token.pos.start..next_token.pos.end));
-        }
+      let next_token = parser.get_current_token()?;
+      parser.eat_token()?;
+      if next_token.kind == TokenKind::BracketClose {
+        return Ok(parser.add_node(
+          Node::Formula(node),
+          open_bracket_token.pos.start..next_token.pos.end,
+        ));
+      }
     }
   }
 }

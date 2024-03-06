@@ -8,9 +8,9 @@ use crate::{
   types::NodeRef,
 };
 
-use super::{AstVPathNode, Parsable};
+use super::Parsable;
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstTableAliasNode {
   pub table: Rc<str>,
   pub alias: Rc<str>,
