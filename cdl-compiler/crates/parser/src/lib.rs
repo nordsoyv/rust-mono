@@ -4,7 +4,7 @@ mod parser;
 mod token_stream;
 mod types;
 
-use std::ops::Range;
+use std::{fmt::Write, ops::Range};
 
 use anyhow::Result;
 use lexer::lex;
@@ -31,12 +31,302 @@ pub struct Ast {
   pub nodes: Vec<Node>,
   pub locations: Vec<Range<usize>>,
   pub script_entity: NodeRef,
+}
+
+impl Ast {
+  pub fn to_cdl(&self) -> Result<String> {
+    //let script = &self.nodes[self.script_entity.0 as usize];
+    let mut cdl = String::new();
+    //write!(cdl, "");
+    self.print_node(&mut cdl, self.script_entity, 0)?;
+    return Ok(cdl);
   }
+
+  fn print_node(
+    &self,
+    cdl: &mut dyn std::fmt::Write,
+    node_ref: NodeRef,
+    indent: usize,
+  ) -> Result<()> {
+    match &self.nodes[node_ref.0 as usize] {
+      Node::Title(title) => self.title_to_cdl(cdl, title, indent)?,
+      Node::Entity(entity) => self.entity_to_cdl(cdl, entity, indent)?,
+      Node::Property(prop) => self.property_to_cdl(cdl, prop, indent)?,
+      Node::Identifier(identifier) => self.identifier_to_cdl(cdl, identifier, indent)?,
+      Node::Script(script) => self.script_to_cdl(cdl, script, indent)?,
+      Node::String(string) => self.string_to_cdl(cdl, string, indent)?,
+      Node::Number(number) => self.number_to_cdl(cdl, number, indent)?,
+      Node::Boolean(boolean) => self.boolean_to_cdl(cdl, boolean, indent)?,
+      Node::VPath(vpath) => self.vpath_to_cdl(cdl, vpath, indent)?,
+      Node::Color(color) => self.color_to_cdl(cdl, color, indent)?,
+      Node::Reference(r) => self.reference_to_cdl(cdl, r, indent)?,
+      Node::Function(func) => self.func_to_cdl(cdl, func, indent)?,
+      Node::Operator(op) => self.op_to_cdl(cdl, op, indent)?,
+      Node::TableAlias(alias) => self.alias_to_cdl(cdl, alias, indent)?,
+      Node::Formula(formula) =>self.formula_to_cdl(cdl, formula, indent)?,
+    }
+    Ok(())
+  }
+
+  fn script_to_cdl(
+    &self,
+    cdl: &mut dyn std::fmt::Write,
+    s: &ast_nodes::AstScriptNode,
+    indent: usize,
+  ) -> Result<()> {
+    for child in &s.children {
+      self.print_node(cdl, *child, indent)?;
+    }
+    Ok(())
+  }
+
+  fn title_to_cdl(
+    &self,
+    cdl: &mut dyn std::fmt::Write,
+    title: &ast_nodes::AstTitleNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "title: {}\n", title.title)?;
+    Ok(())
+  }
+
+  fn entity_to_cdl(
+    &self,
+    cdl: &mut dyn std::fmt::Write,
+    entity: &ast_nodes::AstEntityNode,
+    indent: usize,
+  ) -> Result<()> {
+    let indent_str = create_indent(indent);
+    // r#"maintype subtype "label" @ref1 @ref2 #id 3245{
+    write!(cdl, "{}{}", indent_str, entity.terms.join(" "))?;
+
+    if let Some(label) = &entity.label {
+      write!(cdl, " {}", label)?;
+    }
+
+    for r in &entity.refs {
+      write!(cdl, " @{}", r)?;
+    }
+
+    if let Some(id) = &entity.ident {
+      write!(cdl, " #{}", id)?;
+    }
+
+    if let Some(num) = &entity.entity_number {
+      write!(cdl, " {}", num)?;
+    }
+    write!(cdl, " {{\n")?;
+    for child in &entity.children {
+      self.print_node(cdl, *child, indent + 1)?;
+    }
+    write!(cdl, "{}}}\n", indent_str)?;
+    Ok(())
+  }
+
+  fn property_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    prop: &ast_nodes::AstPropertyNode,
+    indent: usize,
+  ) -> Result<()> {
+    let indent_str = create_indent(indent);
+    write!(cdl, "{}{}: ", indent_str, prop.name)?;
+    self.print_node(cdl, *prop.child.first().unwrap(), indent)?;
+    write!(cdl, "\n")?;
+    Ok(())
+  }
+
+  fn identifier_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    identifier: &ast_nodes::AstIdentifierNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "{}", identifier.identifier)?;
+    Ok(())
+  }
+
+  fn string_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    string: &ast_nodes::AstStringNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "{}", string.text)?;
+    Ok(())
+  }
+
+  fn number_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    number: &ast_nodes::AstNumberNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "{}", number.value.to_string())?;
+    Ok(())
+  }
+
+  fn boolean_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    boolean: &ast_nodes::ast_boolean::AstBooleanNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "{}", boolean.value.to_string())?;
+    Ok(())
+  }
+
+  fn color_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    color: &ast_nodes::AstColorNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "#{}", color.color)?;
+    Ok(())
+  }
+
+  fn reference_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    r: &ast_nodes::AstReferenceNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "@{}", r.ident)?;
+    Ok(())
+  }
+
+  fn vpath_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    vpath: &ast_nodes::AstVPathNode,
+    indent: usize,
+  ) -> Result<()> {
+    if let Some(table) = &vpath.table {
+      write!(cdl, "{}", table)?;
+    }
+    write!(cdl, ":")?;
+
+    if vpath.is_hierarchy {
+      write!(cdl, "^")?;
+    }
+    if let Some(variable) = &vpath.variable {
+      write!(cdl, "{}", variable)?;
+    }
+    if let Some(func) = &vpath.function {
+      write!(cdl, "{}()", func)?;
+    }
+    Ok(())
+  }
+
+  fn func_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    func: &ast_nodes::ast_function::AstFunctionNode,
+    indent: usize,
+  ) -> Result<()> {
+    write!(cdl, "{}(", func.name)?;
+    for child in &func.children {
+      self.print_node(cdl, *child, indent)?;
+      write!(cdl, ", ")?;
+    }
+    write!(cdl, ")")?;
+    Ok(())
+  }
+
+  fn op_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    op: &ast_nodes::AstOperatorNode,
+    indent: usize,
+  ) -> Result<()> {
+    self.print_node(cdl, op.left, indent)?;
+    match op.operator {
+      ast_nodes::ast_operator::Operator::Plus => write!(cdl, " + ")?,
+      ast_nodes::ast_operator::Operator::Minus => write!(cdl, " - ")?,
+      ast_nodes::ast_operator::Operator::Mul => write!(cdl, " * ")?,
+      ast_nodes::ast_operator::Operator::Div => write!(cdl, " / ")?,
+      ast_nodes::ast_operator::Operator::Equal => write!(cdl, " = ")?,
+      ast_nodes::ast_operator::Operator::And => write!(cdl, " AND ")?,
+      ast_nodes::ast_operator::Operator::Or => write!(cdl, " OR ")?,
+      ast_nodes::ast_operator::Operator::NotEqual => write!(cdl, " != ")?,
+      ast_nodes::ast_operator::Operator::LessThan => write!(cdl, " < ")?,
+      ast_nodes::ast_operator::Operator::LessThanOrEqual => write!(cdl, " <= ")?,
+      ast_nodes::ast_operator::Operator::MoreThan => write!(cdl, " > ")?,
+      ast_nodes::ast_operator::Operator::MoreThanOrEqual => write!(cdl, " >= ")?,
+    }
+    self.print_node(cdl, op.right, indent)?;
+    Ok(())
+  }
+
+  fn alias_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    alias: &ast_nodes::AstTableAliasNode,
+    indent: usize,
+  ) -> Result<()> {
+    //table alias = dataset.table: // TODO: print this
+    let indent_str = create_indent(indent);
+    write!(cdl, "{}table {} = {}\n",indent_str, alias.alias, alias.table)?;
+    Ok(())
+  }
+  
+  fn formula_to_cdl(&self, cdl: &mut dyn Write, formula: &ast_nodes::AstFormulaNode, indent: usize) -> Result<()> {
+    write!(cdl, "[")?;
+    for child in &formula.children {
+      self.print_node(cdl, *child, indent)?;
+      write!(cdl, ", ")?;
+    }
+    write!(cdl, "]")?;
+    Ok(())
+    }
+}
+
+fn create_indent(indent_size: usize) -> String {
+  "  ".repeat(indent_size)
+}
 
 #[cfg(test)]
 mod tests {
 
   use super::*;
+
+  #[test]
+  fn can_call_to_cdl() {
+    let ast = parse_text(
+      r#"title "dashboard title"
+      config hub {
+        table alias1 = dataset.table:
+        table alias2 = dataset.table
+      }
+      
+      maintype subtype "label" @ref1 @ref2 #id 3245{
+        prop: ident
+        prop: "string"
+        prop: 'string'
+        prop: 1234
+        prop: true
+        prop: #aabbcc
+        prop: @foo.bar
+        prop: table:variable
+        prop: table:
+        prop: dataset.table:variable.field
+        prop: :^variable
+        prop: :variable()
+        prop: func()
+        prop: func(foo, bar)
+        prop: 1 + 2 
+        prop: func(1 + 2 )
+        prop: score[column = %.current] - score[] // should be this
+      }
+      "#,
+    );
+    //dbg!(&ast);
+    assert!(ast.is_ok());
+    let ast = ast.unwrap();
+    let cdl = ast.to_cdl().unwrap();
+    println!("{}", cdl);
+  }
 
   #[test]
   fn can_parse_title() {
@@ -287,7 +577,6 @@ mod tests {
     "#,
     );
     assert!(&ast.is_ok());
-    
   }
 
   #[test]

@@ -1,3 +1,5 @@
+use std::process::Output;
+
 use crate::{
   parser::{Node, Parser},
   types::NodeRef,

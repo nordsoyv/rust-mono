@@ -1,8 +1,4 @@
-use std::borrow::Borrow;
-use std::cell::Ref;
 use std::{cell::RefCell, ops::Range};
-use std::ops::Deref;
-use std::rc::Rc;
 
 use lexer::{get_location_from_position, Token, TokenKind};
 use serde::Serialize;
