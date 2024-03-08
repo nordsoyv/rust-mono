@@ -11,10 +11,9 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstTitleNode {
   pub title: Rc<str>,
-  pub parent: NodeRef,
 }
 
 impl Parsable for AstTitleNode {
@@ -46,17 +45,17 @@ impl Parsable for AstTitleNode {
     match &title_token.kind {
       TokenKind::String => {
         let ast_node = AstTitleNode {
-          parent,
           title: title_token.text.as_ref().unwrap().clone(),
         };
         let node_ref = parser.add_node(
           Node::Title(ast_node),
           title_keyword_token.pos.start..title_token.pos.end,
+          parent,
         );
         parser.eat_tokens(3)?;
         return Ok(node_ref);
       }
-      _ => return Err(anyhow!("Unknown error occured while parsing Title node")),
+      _ => return Err(anyhow!("Unknown error occurred while parsing Title node")),
     }
   }
 }

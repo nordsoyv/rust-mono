@@ -10,10 +10,9 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstBooleanNode {
   pub value: bool,
-  pub parent: NodeRef,
 }
 
 impl Parsable for AstBooleanNode {
@@ -33,13 +32,14 @@ impl Parsable for AstBooleanNode {
     let bool_token = parser.get_current_token()?;
     let value = match bool_token.kind {
       TokenKind::Boolean(b) => b,
-      _ => return Err(anyhow!("Did not find boolean when trying to parse a boolean")),
+      _ => {
+        return Err(anyhow!(
+          "Did not find boolean when trying to parse a boolean"
+        ))
+      }
     };
-    let ast_node = AstBooleanNode {
-      parent,
-      value,
-    };
-    let node_ref = parser.add_node(Node::Boolean(ast_node), bool_token.pos.clone());
+    let ast_node = AstBooleanNode { value };
+    let node_ref = parser.add_node(Node::Boolean(ast_node), bool_token.pos.clone(), parent);
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

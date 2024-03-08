@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use super::{AstEntityNode, AstTitleNode, Parsable};
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstScriptNode {
   pub children: Vec<NodeRef>,
 }
@@ -19,7 +19,7 @@ impl Parsable for AstScriptNode {
 
   fn parse(parser: &mut Parser, _: NodeRef) -> Result<NodeRef> {
     let root_node = AstScriptNode { children: vec![] };
-    let root_node_ref = parser.add_node(Node::Script(root_node), 0..usize::MAX);
+    let root_node_ref = parser.add_node(Node::Script(root_node), 0..usize::MAX, NodeRef(-1));
     while parser.is_tokens_left() {
       parser.eat_eol_and_comments();
       if AstTitleNode::can_parse(parser) {

@@ -14,7 +14,6 @@ use super::Parsable;
 pub struct AstTableAliasNode {
   pub table: Rc<str>,
   pub alias: Rc<str>,
-  pub parent: NodeRef,
 }
 
 impl Parsable for AstTableAliasNode {
@@ -47,13 +46,12 @@ impl Parsable for AstTableAliasNode {
     let vpath_token = parser.get_current_token()?;
 
     let ast_node = AstTableAliasNode {
-      parent,
       alias: alias_token.text.as_ref().unwrap().clone(),
       table: vpath_token.text.as_ref().unwrap().clone(),
     };
     let node_ref = parser.add_node(
       Node::TableAlias(ast_node),
-      table_token.pos.start..vpath_token.pos.end,
+      table_token.pos.start..vpath_token.pos.end,parent,
     );
     parser.eat_tokens(1)?;
     if parser.is_next_token_of_type(TokenKind::Colon) {

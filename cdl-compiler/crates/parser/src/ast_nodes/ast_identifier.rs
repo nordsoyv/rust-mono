@@ -11,10 +11,9 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstIdentifierNode {
   pub identifier: Rc<str>,
-  pub parent: NodeRef,
 }
 
 impl Parsable for AstIdentifierNode {
@@ -33,10 +32,9 @@ impl Parsable for AstIdentifierNode {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let ident_token = parser.get_current_token()?;
     let ast_node = AstIdentifierNode {
-      parent,
       identifier: ident_token.text.as_ref().unwrap().clone(),
     };
-    let node_ref = parser.add_node(Node::Identifier(ast_node), ident_token.pos.clone());
+    let node_ref = parser.add_node(Node::Identifier(ast_node), ident_token.pos.clone(), parent);
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

@@ -30,7 +30,6 @@ pub struct AstOperatorNode {
   pub operator: Operator,
   pub left: NodeRef,
   pub right: NodeRef,
-  pub parent: NodeRef,
 }
 
 impl AstOperatorNode {
@@ -91,9 +90,8 @@ impl AstOperatorNode {
       left,
       right: NodeRef(0),
       operator,
-      parent,
     };
-    let operator_node_ref = parser.add_node(Node::Operator(operator_node),operator_token.pos.start..usize::MAX);
+    let operator_node_ref = parser.add_node(Node::Operator(operator_node),operator_token.pos.start..usize::MAX, parent);
     let right_node = parse_expression(parser, operator_node_ref)?;
     parser.add_child_to_node(operator_node_ref, right_node);
     let left_pos = parser.get_pos_for_node(left);
@@ -118,9 +116,8 @@ impl AstOperatorNode {
       left,
       right: NodeRef(0),
       operator,
-      parent,
     };
-    let operator_node_ref = parser.add_node(Node::Operator(operator_node),operator_token.pos.start..usize::MAX);
+    let operator_node_ref = parser.add_node(Node::Operator(operator_node),operator_token.pos.start..usize::MAX, parent);
     let right_node = parse_expression(parser, operator_node_ref)?;
     parser.add_child_to_node(operator_node_ref, right_node);
     let left_pos = parser.get_pos_for_node(left);

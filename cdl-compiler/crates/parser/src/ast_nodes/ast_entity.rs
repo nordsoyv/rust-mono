@@ -16,7 +16,6 @@ use super::Parsable;
 
 #[derive(Debug, Serialize,Clone)]
 pub struct AstEntityNode {
-  pub parent: NodeRef,
   pub children: Vec<NodeRef>,
   pub terms: Vec<Rc<str>>,
   pub label: Option<Rc<str>>,
@@ -41,7 +40,6 @@ impl Parsable for AstEntityNode {
     let header = AstEntityNode::parse_entity_header(parser)?;
     let entity = AstEntityNode {
       children: vec![],
-      parent,
       terms: header.terms,
       label: header.label,
       refs: header.refs,
@@ -49,7 +47,7 @@ impl Parsable for AstEntityNode {
       entity_number: header.entity_number,
     };
    // parser.start_group(format!("Parsing entity {:?} #{:?}", &entity.terms, &entity.ident));
-    let current_entity_ref = parser.add_node(Node::Entity(entity), header.start_loc..usize::MAX);
+    let current_entity_ref = parser.add_node(Node::Entity(entity), header.start_loc..usize::MAX, parent);
 
     let next_token = parser.get_current_token()?;
     if next_token.kind == TokenKind::EOL {
@@ -108,7 +106,6 @@ impl AstEntityNode {
     };
     let entity = AstEntityNode {
       children: vec![],
-      parent,
       terms: vec![],
       label: None,
       refs: vec![],
@@ -116,7 +113,7 @@ impl AstEntityNode {
       entity_number: None,
     };
     let current_entity_ref =
-      parser.add_node(Node::Entity(entity), open_brace_token_pos..usize::MAX);
+      parser.add_node(Node::Entity(entity), open_brace_token_pos..usize::MAX, parent);
 
     // let next_token = parser.get_current_token()?;
     // if next_token.kind == TokenKind::EOL {

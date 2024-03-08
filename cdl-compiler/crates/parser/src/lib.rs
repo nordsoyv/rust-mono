@@ -31,7 +31,7 @@ pub struct Ast {
   pub nodes: Vec<Node>,
   pub locations: Vec<Range<usize>>,
   pub script_entity: NodeRef,
-}
+  }
 
 #[cfg(test)]
 mod tests {

@@ -8,7 +8,6 @@ use super::Parsable;
 #[derive(Debug, Serialize, Clone)]
 pub struct AstFormulaNode {
   pub children: Vec<NodeRef>,
-  pub parent: NodeRef,
 }
 
 impl Parsable for AstFormulaNode {
@@ -29,10 +28,7 @@ impl Parsable for AstFormulaNode {
     // parser.trace("Parsing formula");
     let open_bracket_token = parser.get_current_token()?;
     parser.eat_token()?;
-    let node = AstFormulaNode {
-      children: vec![],
-      parent,
-    };
+    let node = AstFormulaNode { children: vec![] };
     loop {
       let next_token = parser.get_current_token()?;
       parser.eat_token()?;
@@ -40,6 +36,7 @@ impl Parsable for AstFormulaNode {
         return Ok(parser.add_node(
           Node::Formula(node),
           open_bracket_token.pos.start..next_token.pos.end,
+          parent,
         ));
       }
     }

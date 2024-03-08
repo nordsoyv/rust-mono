@@ -10,10 +10,9 @@ use crate::{
 
 use super::Parsable;
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstNumberNode {
   pub value: f64,
-  pub parent: NodeRef,
 }
 
 impl Parsable for AstNumberNode {
@@ -41,11 +40,8 @@ impl Parsable for AstNumberNode {
       value = value / 100.0;
       parser.eat_token()?;
     }
-    let ast_node = AstNumberNode {
-      parent,
-      value,
-    };
-    let node_ref = parser.add_node(Node::Number(ast_node), number_token.pos.clone());    
+    let ast_node = AstNumberNode { value };
+    let node_ref = parser.add_node(Node::Number(ast_node), number_token.pos.clone(), parent);
     Ok(node_ref)
   }
 }

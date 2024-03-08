@@ -11,10 +11,9 @@ use crate::{
   types::NodeRef,
 };
 
-#[derive(Debug, Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstPropertyNode {
   pub name: Rc<str>,
-  pub parent: NodeRef,
   pub child: Vec<NodeRef>,
 }
 
@@ -38,12 +37,15 @@ impl Parsable for AstPropertyNode {
       let name_token = parser.get_current_token()?;
 
       let ast_node = AstPropertyNode {
-        parent,
         name: name_token.text.as_ref().unwrap().clone(),
         child: vec![],
       };
       //parser.start_group(format!("Property {:?}", &ast_node.name));
-      let node_ref = parser.add_node(Node::Property(ast_node), name_token.pos.start..usize::MAX);
+      let node_ref = parser.add_node(
+        Node::Property(ast_node),
+        name_token.pos.start..usize::MAX,
+        parent,
+      );
       (node_ref, name_token.pos.start)
     };
     parser.eat_tokens(2)?;
@@ -56,11 +58,11 @@ impl Parsable for AstPropertyNode {
       parser.eat_token()?;
       &next_token.pos
     } else {
-      bail!("Tried parsing property, did not find EOL when exptected");
+      bail!("Tried parsing property, did not find EOL when expected");
     };
     // let last_token_end = parser
     //   .eat_token_of_type(TokenKind::EOL)
-    //   .expect("Tried parsing property, did not find EOL when exptected");
+    //   .expect("Tried parsing property, did not find EOL when expected");
     parser.update_location_on_node(node_ref, start_pos, last_token_end.end);
     children
       .iter()

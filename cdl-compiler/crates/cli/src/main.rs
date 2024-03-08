@@ -49,22 +49,22 @@ fn main() {
     let mut total_nodes = 0;
 
     let ast = parse_text(&file_content).unwrap();
-    let elepsed = now.elapsed();
+    let elapsed = now.elapsed();
     total_nodes += ast.nodes.len();
     println!("Done");
     println!("num nodes: {}", total_nodes);
-    println!("time taken: {:.2?}", elepsed);
+    println!("time taken: {:.2?}", elapsed);
 
     let now = Instant::now();
     let clone = ast.clone();
     println!("num nodes: {}", clone.nodes.len());
-    let elepsed = now.elapsed();
-    println!("time taken for cloning: {:.2?}", elepsed);
+    let elapsed = now.elapsed();
+    println!("time taken for cloning: {:.2?}", elapsed);
 
     let now = Instant::now();
     let _json = serde_json::to_string(&ast).unwrap();
-    let elepsed = now.elapsed();
-    println!("time taken for json sericalizing: {:.2?}", elepsed);
+    let elapsed = now.elapsed();
+    println!("time taken for json sericalizing: {:.2?}", elapsed);
 
     let filters = vec![
       "fromQuestionFilter_NP_LOB",
@@ -121,7 +121,7 @@ fn main() {
     let now = Instant::now();
     let found = find_filters(&ast, &filters);
 
-    let elepsed = now.elapsed();
-    println!("time taken to find {} nodes: {:.2?}", found.len(), elepsed);
+    let elapsed = now.elapsed();
+    println!("time taken to find {} nodes: {:.2?}", found.len(), elapsed);
   }
 }

@@ -19,7 +19,6 @@ pub enum QuoteKind {
 #[derive(Debug,Serialize,Clone)]
 pub struct AstStringNode {
   pub text: Rc<str>,
-  pub parent: NodeRef,
   pub quote_kind: QuoteKind,
 }
 
@@ -46,11 +45,10 @@ impl Parsable for AstStringNode {
       QuoteKind::DoubleQuote
     };
     let ast_node = AstStringNode {
-      parent,
       text,
       quote_kind,
     };
-    let node_ref = parser.add_node(Node::String(ast_node), string_token.pos.clone());
+    let node_ref = parser.add_node(Node::String(ast_node), string_token.pos.clone(),parent);
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }
