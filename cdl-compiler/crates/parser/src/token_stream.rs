@@ -101,7 +101,6 @@ impl TokenStream {
     return false;
   }
 
-
   fn is_many_tokens_left(&self, num: usize) -> bool {
     let curr = self.curr_token.borrow();
     if *curr + num < self.tokens.len() {
@@ -204,5 +203,4 @@ mod tests {
     let res = stream.is_next_token_of_type(TokenKind::Identifier);
     assert!(res);
   }
-
 }

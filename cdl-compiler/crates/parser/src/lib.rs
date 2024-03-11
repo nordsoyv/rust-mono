@@ -64,7 +64,7 @@ impl Ast {
       Node::Function(func) => self.func_to_cdl(cdl, func, indent)?,
       Node::Operator(op) => self.op_to_cdl(cdl, op, indent)?,
       Node::TableAlias(alias) => self.alias_to_cdl(cdl, alias, indent)?,
-      Node::Formula(formula) =>self.formula_to_cdl(cdl, formula, indent)?,
+      Node::Formula(formula) => self.formula_to_cdl(cdl, formula, indent)?,
     }
     Ok(())
   }
@@ -268,11 +268,20 @@ impl Ast {
   ) -> Result<()> {
     //table alias = dataset.table: // TODO: print this
     let indent_str = create_indent(indent);
-    write!(cdl, "{}table {} = {}\n",indent_str, alias.alias, alias.table)?;
+    write!(
+      cdl,
+      "{}table {} = {}\n",
+      indent_str, alias.alias, alias.table
+    )?;
     Ok(())
   }
-  
-  fn formula_to_cdl(&self, cdl: &mut dyn Write, formula: &ast_nodes::AstFormulaNode, indent: usize) -> Result<()> {
+
+  fn formula_to_cdl(
+    &self,
+    cdl: &mut dyn Write,
+    formula: &ast_nodes::AstFormulaNode,
+    indent: usize,
+  ) -> Result<()> {
     write!(cdl, "[")?;
     for child in &formula.children {
       self.print_node(cdl, *child, indent)?;
@@ -280,7 +289,7 @@ impl Ast {
     }
     write!(cdl, "]")?;
     Ok(())
-    }
+  }
 }
 
 fn create_indent(indent_size: usize) -> String {

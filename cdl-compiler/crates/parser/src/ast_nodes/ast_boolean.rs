@@ -39,8 +39,8 @@ impl Parsable for AstBooleanNode {
       }
     };
     let node_data = AstBooleanNode { value };
-    let ast_node = AstNode::new(Node::Boolean( node_data), parent);
-    let node_ref = parser.add_node(ast_node, bool_token.pos.clone(), );
+    let ast_node = AstNode::new(Node::Boolean(node_data), parent);
+    let node_ref = parser.add_node(ast_node, bool_token.pos.clone());
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }
