@@ -9,9 +9,9 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
+use super::{AstNode, Parsable};
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstColorNode {
   pub color: Rc<str>,
 }
@@ -31,10 +31,13 @@ impl Parsable for AstColorNode {
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let color_token = parser.get_current_token()?;
-    let ast_node = AstColorNode {
-      color: color_token.text.as_ref().unwrap().clone(),
-    };
-    let node_ref = parser.add_node(Node::Color(ast_node), color_token.pos.clone(), parent);
+    let ast_node = AstNode::new(
+      Node::Color(AstColorNode {
+        color: color_token.text.as_ref().unwrap().clone(),
+      }),
+      parent,
+    );
+    let node_ref = parser.add_node(ast_node, color_token.pos.clone());
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

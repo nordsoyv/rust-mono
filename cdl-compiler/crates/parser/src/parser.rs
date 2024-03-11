@@ -5,10 +5,7 @@ use serde::Serialize;
 
 use crate::{
     ast_nodes::{
-        ast_boolean::AstBooleanNode, ast_function::AstFunctionNode, AstColorNode, AstEntityNode,
-        AstFormulaNode, AstIdentifierNode, AstNumberNode, AstOperatorNode, AstPropertyNode,
-        AstReferenceNode, AstScriptNode, AstStringNode, AstTableAliasNode, AstTitleNode, AstVPathNode,
-        Parsable,
+        ast_boolean::AstBooleanNode, ast_function::AstFunctionNode, AstColorNode, AstEntityNode, AstFormulaNode, AstIdentifierNode, AstNode, AstNumberNode, AstOperatorNode, AstPropertyNode, AstReferenceNode, AstScriptNode, AstStringNode, AstTableAliasNode, AstTitleNode, AstVPathNode, Parsable
     },
     token_stream::TokenStream,
     types::NodeRef,
@@ -53,9 +50,9 @@ struct LogGroup {
 pub struct Parser {
     text: String,
     tokens: TokenStream,
-    pub nodes: RefCell<Vec<Node>>,
+    pub nodes: RefCell<Vec<AstNode>>,
     pub locations: RefCell<Vec<Range<usize>>>,
-    parents: RefCell<Vec<NodeRef>>,
+    //parents: RefCell<Vec<NodeRef>>,
     log_groups : RefCell<Vec<LogGroup>>,
 }
 
@@ -87,7 +84,7 @@ impl Parser {
             nodes: RefCell::new(Vec::new()),
             tokens,
             text: text.to_string(),
-            parents: RefCell::new(Vec::new()),
+//            parents: RefCell::new(Vec::new()),
             locations: RefCell::new(Vec::new()),
             log_groups: RefCell::new(Vec::new()),
         }
@@ -136,13 +133,11 @@ impl Parser {
     }
 
 
-    pub(crate) fn add_node(&self, n: Node, location: Range<usize>, parent: NodeRef) -> NodeRef {
+    pub(crate) fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
         let mut nodes = self.nodes.borrow_mut();
         nodes.push(n);
         let mut locations = self.locations.borrow_mut();
         locations.push(location);
-        let mut parents = self.parents.borrow_mut();
-        parents.push(parent);
         return (nodes.len() - 1).into();
     }
 
@@ -153,14 +148,7 @@ impl Parser {
     pub(crate) fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
         let mut nodes = self.nodes.borrow_mut();
         let node = nodes.get_mut(parent.0 as usize).unwrap();
-        match node {
-            Node::Entity(ent) => ent.children.push(child),
-            Node::Script(script) => script.children.push(child),
-            Node::Property(prop) => prop.child.push(child),
-            Node::Function(func) => func.children.push(child),
-            Node::Operator(op) => op.right = child,
-            _ => panic!("Unknown type to set as parent {:?}", node),
-        }
+        node.add_child_to_node(child);
     }
 
     pub(crate) fn is_tokens_left(&self) -> bool {

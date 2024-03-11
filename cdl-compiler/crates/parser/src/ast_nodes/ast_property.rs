@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use lexer::TokenKind;
 
-use super::Parsable;
+use super::{AstNode, Parsable};
 use crate::{
   parse_expr::parse_list,
   parser::{Node, Parser},
@@ -42,9 +42,8 @@ impl Parsable for AstPropertyNode {
       };
       //parser.start_group(format!("Property {:?}", &ast_node.name));
       let node_ref = parser.add_node(
-        Node::Property(ast_node),
+        AstNode::new(Node::Property(ast_node), parent),
         name_token.pos.start..usize::MAX,
-        parent,
       );
       (node_ref, name_token.pos.start)
     };

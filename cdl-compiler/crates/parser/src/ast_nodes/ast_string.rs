@@ -9,14 +9,14 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
-#[derive(Debug,Serialize,Clone)]
+use super::{AstNode, Parsable};
+#[derive(Debug, Serialize, Clone)]
 pub enum QuoteKind {
   SingleQuote,
   DoubleQuote,
 }
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstStringNode {
   pub text: Rc<str>,
   pub quote_kind: QuoteKind,
@@ -38,17 +38,17 @@ impl Parsable for AstStringNode {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let string_token = parser.get_current_token()?;
     let text = string_token.text.clone().unwrap();
-//    parser.trace(&format!("Parsing String \"{:?}\"", text ));
+    //    parser.trace(&format!("Parsing String \"{:?}\"", text ));
     let quote_kind = if text.starts_with("'") {
       QuoteKind::SingleQuote
     } else {
       QuoteKind::DoubleQuote
     };
-    let ast_node = AstStringNode {
-      text,
-      quote_kind,
-    };
-    let node_ref = parser.add_node(Node::String(ast_node), string_token.pos.clone(),parent);
+    let ast_node = AstStringNode { text, quote_kind };
+    let node_ref = parser.add_node(
+      AstNode::new(Node::String(ast_node), parent),
+      string_token.pos.clone(),
+    );
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

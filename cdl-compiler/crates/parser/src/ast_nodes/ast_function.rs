@@ -10,7 +10,7 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
+use super::{AstNode, Parsable};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstFunctionNode {
@@ -53,7 +53,10 @@ impl Parsable for AstFunctionNode {
       (ast_node, func_name_token.pos.start)
     };
     //parser.start_group(format!("Function {:?}", &ast_node.name));
-    let node_ref = parser.add_node(Node::Function(ast_node), start_pos..usize::MAX, parent);
+    let node_ref = parser.add_node(
+      AstNode::new(Node::Function(ast_node), parent),
+      start_pos..usize::MAX,
+    );
     parser
       .eat_tokens(1)
       .context("Error while parsing Function")?;

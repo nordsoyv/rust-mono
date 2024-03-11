@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use crate::{parser::Node, types::NodeRef};
 
-use super::Parsable;
+use super::{AstNode, Parsable};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstFormulaNode {
@@ -34,9 +34,8 @@ impl Parsable for AstFormulaNode {
       parser.eat_token()?;
       if next_token.kind == TokenKind::BracketClose {
         return Ok(parser.add_node(
-          Node::Formula(node),
+          AstNode::new(Node::Formula(node), parent),
           open_bracket_token.pos.start..next_token.pos.end,
-          parent,
         ));
       }
     }

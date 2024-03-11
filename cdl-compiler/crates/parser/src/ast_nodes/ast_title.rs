@@ -9,7 +9,7 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
+use super::{AstNode, Parsable};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstTitleNode {
@@ -48,9 +48,8 @@ impl Parsable for AstTitleNode {
           title: title_token.text.as_ref().unwrap().clone(),
         };
         let node_ref = parser.add_node(
-          Node::Title(ast_node),
+          AstNode::new(Node::Title(ast_node), parent),
           title_keyword_token.pos.start..title_token.pos.end,
-          parent,
         );
         parser.eat_tokens(3)?;
         return Ok(node_ref);

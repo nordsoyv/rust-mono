@@ -7,6 +7,7 @@ mod types;
 use std::{fmt::Write, ops::Range};
 
 use anyhow::Result;
+use ast_nodes::AstNode;
 use lexer::lex;
 pub use parser::Node;
 use parser::Parser;
@@ -26,9 +27,9 @@ pub fn parse_text(text: &str) -> Result<Ast> {
   })
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize)]
 pub struct Ast {
-  pub nodes: Vec<Node>,
+  pub nodes: Vec<AstNode>,
   pub locations: Vec<Range<usize>>,
   pub script_entity: NodeRef,
 }
@@ -48,7 +49,7 @@ impl Ast {
     node_ref: NodeRef,
     indent: usize,
   ) -> Result<()> {
-    match &self.nodes[node_ref.0 as usize] {
+    match &self.nodes[node_ref.0 as usize].node_data {
       Node::Title(title) => self.title_to_cdl(cdl, title, indent)?,
       Node::Entity(entity) => self.entity_to_cdl(cdl, entity, indent)?,
       Node::Property(prop) => self.property_to_cdl(cdl, prop, indent)?,
@@ -84,7 +85,7 @@ impl Ast {
     &self,
     cdl: &mut dyn std::fmt::Write,
     title: &ast_nodes::AstTitleNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     write!(cdl, "title: {}\n", title.title)?;
     Ok(())
@@ -140,7 +141,7 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     identifier: &ast_nodes::AstIdentifierNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     write!(cdl, "{}", identifier.identifier)?;
     Ok(())
@@ -150,7 +151,7 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     string: &ast_nodes::AstStringNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     write!(cdl, "{}", string.text)?;
     Ok(())
@@ -160,7 +161,7 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     number: &ast_nodes::AstNumberNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     write!(cdl, "{}", number.value.to_string())?;
     Ok(())
@@ -170,7 +171,7 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     boolean: &ast_nodes::ast_boolean::AstBooleanNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     write!(cdl, "{}", boolean.value.to_string())?;
     Ok(())
@@ -180,7 +181,7 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     color: &ast_nodes::AstColorNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     write!(cdl, "#{}", color.color)?;
     Ok(())
@@ -190,7 +191,7 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     r: &ast_nodes::AstReferenceNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     write!(cdl, "@{}", r.ident)?;
     Ok(())
@@ -200,7 +201,7 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     vpath: &ast_nodes::AstVPathNode,
-    indent: usize,
+    _indent: usize,
   ) -> Result<()> {
     if let Some(table) = &vpath.table {
       write!(cdl, "{}", table)?;
@@ -343,7 +344,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Entity(node) = &ast.nodes[1] {
+    if let Node::Entity(node) = &ast.nodes[1].node_data {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
     }
@@ -359,7 +360,7 @@ mod tests {
     assert!(ast.is_ok());
 
     let ast = ast.unwrap();
-    if let Node::Entity(node) = &ast.nodes[1] {
+    if let Node::Entity(node) = &ast.nodes[1].node_data {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
       assert_eq!("\"label\"", node.label.as_ref().unwrap().to_string());
@@ -397,7 +398,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Identifier(node) = &ast.nodes[3] {
+    if let Node::Identifier(node) = &ast.nodes[3].node_data {
       assert_eq!("identifier", node.identifier.to_string());
     }
   }
@@ -412,7 +413,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::String(node) = &ast.nodes[3] {
+    if let Node::String(node) = &ast.nodes[3].node_data {
       assert_eq!("\"string\"", node.text.to_string());
     }
   }
@@ -427,7 +428,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Number(node) = &ast.nodes[3] {
+    if let Node::Number(node) = &ast.nodes[3].node_data {
       assert_eq!("1234", node.value.to_string());
     }
   }
@@ -441,7 +442,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Color(node) = &ast.nodes[3] {
+    if let Node::Color(node) = &ast.nodes[3].node_data {
       assert_eq!("00aabb", node.color.to_string());
     }
   }
@@ -456,7 +457,7 @@ mod tests {
 
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Reference(node) = &ast.nodes[3] {
+    if let Node::Reference(node) = &ast.nodes[3].node_data {
       assert_eq!("identifier", node.ident.to_string());
     }
   }
@@ -471,7 +472,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3] {
+    if let Node::VPath(node) = &ast.nodes[3].node_data {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable", node.variable.as_ref().unwrap().to_string());
     }
@@ -487,7 +488,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3] {
+    if let Node::VPath(node) = &ast.nodes[3].node_data {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!(None, node.variable);
     }
@@ -502,7 +503,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3] {
+    if let Node::VPath(node) = &ast.nodes[3].node_data {
       assert_eq!(None, node.table);
       assert_eq!("q1", node.variable.as_ref().unwrap().to_string());
     }
@@ -518,7 +519,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3] {
+    if let Node::VPath(node) = &ast.nodes[3].node_data {
       assert_eq!(None, node.table);
       assert_eq!(None, node.variable);
     }
@@ -534,7 +535,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3] {
+    if let Node::VPath(node) = &ast.nodes[3].node_data {
       assert_eq!("p1234.table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable.4", node.variable.as_ref().unwrap().to_string());
     }
@@ -552,11 +553,11 @@ mod tests {
     );
     assert!(&ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Entity(node) = &ast.nodes[1] {
+    if let Node::Entity(node) = &ast.nodes[1].node_data {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(NodeRef(2), node.children[0]);
     }
-    if let Node::Entity(node) = &ast.nodes[2] {
+    if let Node::Entity(node) = &ast.nodes[2].node_data {
       assert_eq!("otherMaintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
     }
@@ -589,7 +590,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Function(node) = &ast.nodes[3] {
+    if let Node::Function(node) = &ast.nodes[3].node_data {
       assert_eq!("func", node.name.to_string());
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children);
     }
@@ -605,7 +606,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Property(node) = &ast.nodes[3] {
+    if let Node::Property(node) = &ast.nodes[3].node_data {
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.child);
     }
   }
@@ -619,7 +620,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Property(node) = &ast.nodes[2] {
+    if let Node::Property(node) = &ast.nodes[2].node_data {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
   }
@@ -634,10 +635,10 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Property(node) = &ast.nodes[2] {
+    if let Node::Property(node) = &ast.nodes[2].node_data {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
-    if let Node::Operator(node) = &ast.nodes[6] {
+    if let Node::Operator(node) = &ast.nodes[6].node_data {
       assert_eq!(NodeRef(5), node.left);
       assert_eq!(NodeRef(7), node.right);
     }
@@ -665,7 +666,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::TableAlias(node) = &ast.nodes[2] {
+    if let Node::TableAlias(node) = &ast.nodes[2].node_data {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
     }
@@ -680,7 +681,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::TableAlias(node) = &ast.nodes[2] {
+    if let Node::TableAlias(node) = &ast.nodes[2].node_data {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
     }

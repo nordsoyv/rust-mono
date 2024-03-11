@@ -9,7 +9,7 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
+use super::{AstNode, Parsable};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstVPathNode {
@@ -152,7 +152,7 @@ impl Parsable for AstVPathNode {
       }
       (_, _, _, _) => return Err(anyhow!("Unknown error occurred while parsing VPath node")),
     };
-    let node_ref = parser.add_node(Node::VPath(ast_node), pos, parent);
+    let node_ref = parser.add_node(AstNode::new(Node::VPath(ast_node), parent), pos);
     return Ok(node_ref);
   }
 }

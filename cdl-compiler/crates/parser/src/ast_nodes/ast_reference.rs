@@ -9,9 +9,9 @@ use crate::{
   types::NodeRef,
 };
 
-use super::Parsable;
+use super::{AstNode, Parsable};
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstReferenceNode {
   pub ident: Rc<str>,
   pub resolved_node: NodeRef,
@@ -34,9 +34,12 @@ impl Parsable for AstReferenceNode {
     let ref_token = parser.get_current_token()?;
     let ast_node = AstReferenceNode {
       ident: ref_token.text.as_ref().unwrap().clone(),
-      resolved_node: NodeRef(-1)
+      resolved_node: NodeRef(-1),
     };
-    let node_ref = parser.add_node(Node::Reference(ast_node),ref_token.pos.clone(),parent);
+    let node_ref = parser.add_node(
+      AstNode::new(Node::Reference(ast_node), parent),
+      ref_token.pos.clone(),
+    );
     parser.eat_tokens(1)?;
     Ok(node_ref)
   }

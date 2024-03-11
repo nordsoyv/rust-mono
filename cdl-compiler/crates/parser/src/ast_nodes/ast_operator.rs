@@ -9,7 +9,9 @@ use crate::{
   types::NodeRef,
 };
 
-#[derive(Debug,Serialize,Clone)]
+use super::AstNode;
+
+#[derive(Debug, Serialize, Clone)]
 pub enum Operator {
   Plus,
   Minus,
@@ -25,7 +27,7 @@ pub enum Operator {
   MoreThanOrEqual,
 }
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstOperatorNode {
   pub operator: Operator,
   pub left: NodeRef,
@@ -91,7 +93,10 @@ impl AstOperatorNode {
       right: NodeRef(0),
       operator,
     };
-    let operator_node_ref = parser.add_node(Node::Operator(operator_node),operator_token.pos.start..usize::MAX, parent);
+    let operator_node_ref = parser.add_node(
+      AstNode::new(Node::Operator(operator_node), parent),
+      operator_token.pos.start..usize::MAX,
+    );
     let right_node = parse_expression(parser, operator_node_ref)?;
     parser.add_child_to_node(operator_node_ref, right_node);
     let left_pos = parser.get_pos_for_node(left);
@@ -117,7 +122,10 @@ impl AstOperatorNode {
       right: NodeRef(0),
       operator,
     };
-    let operator_node_ref = parser.add_node(Node::Operator(operator_node),operator_token.pos.start..usize::MAX, parent);
+    let operator_node_ref = parser.add_node(
+      AstNode::new(Node::Operator(operator_node), parent),
+      operator_token.pos.start..usize::MAX,
+    );
     let right_node = parse_expression(parser, operator_node_ref)?;
     parser.add_child_to_node(operator_node_ref, right_node);
     let left_pos = parser.get_pos_for_node(left);

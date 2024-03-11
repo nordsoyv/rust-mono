@@ -11,10 +11,11 @@ use crate::{
 };
 
 use super::ast_property::AstPropertyNode;
+use super::AstNode;
 use super::AstTableAliasNode;
 use super::Parsable;
 
-#[derive(Debug, Serialize,Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct AstEntityNode {
   pub children: Vec<NodeRef>,
   pub terms: Vec<Rc<str>>,
@@ -46,8 +47,9 @@ impl Parsable for AstEntityNode {
       ident: header.ident,
       entity_number: header.entity_number,
     };
-   // parser.start_group(format!("Parsing entity {:?} #{:?}", &entity.terms, &entity.ident));
-    let current_entity_ref = parser.add_node(Node::Entity(entity), header.start_loc..usize::MAX, parent);
+    let ast_node = AstNode::new(Node::Entity(entity), parent);
+    // parser.start_group(format!("Parsing entity {:?} #{:?}", &entity.terms, &entity.ident));
+    let current_entity_ref = parser.add_node(ast_node, header.start_loc..usize::MAX);
 
     let next_token = parser.get_current_token()?;
     if next_token.kind == TokenKind::EOL {
@@ -79,7 +81,7 @@ impl Parsable for AstEntityNode {
       if curr_token.kind == TokenKind::BraceClose {
         parser.eat_token()?;
         parser.update_location_on_node(current_entity_ref, header.start_loc, curr_token.pos.end);
-      //  parser.end_group("Done parsing entity ");
+        //  parser.end_group("Done parsing entity ");
         return Ok(current_entity_ref);
       }
       return Err(anyhow!("Unexpected error while parsing entity"));
@@ -112,8 +114,10 @@ impl AstEntityNode {
       ident: None,
       entity_number: None,
     };
-    let current_entity_ref =
-      parser.add_node(Node::Entity(entity), open_brace_token_pos..usize::MAX, parent);
+    let current_entity_ref = parser.add_node(
+      AstNode::new(Node::Entity(entity), parent),
+      open_brace_token_pos..usize::MAX,
+    );
 
     // let next_token = parser.get_current_token()?;
     // if next_token.kind == TokenKind::EOL {
