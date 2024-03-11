@@ -1,11 +1,11 @@
-use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, ops::Range, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, ops::Range, rc::Rc};
 
 use anyhow::Result;
-use parser::{Ast, Node, NodeRef};
+use parser::{Ast, AstNode, Node, NodeRef};
 
 #[derive(Debug)]
 pub struct ProcessedAst {
-  nodes: Vec<Node>,
+  nodes: Vec<RefCell<AstNode>>,
   locations: Vec<Range<usize>>,
   script_entity: NodeRef,
 }
@@ -40,9 +40,8 @@ impl RefKey {
 
 #[derive(Debug)]
 pub struct NodeProcessor {
-  nodes: RefCell<Vec<Node>>,
+  nodes: RefCell<Vec<RefCell<AstNode>>>,
   locations: Vec<Range<usize>>,
-  parents: RefCell<Vec<NodeRef>>,
   script_entity: NodeRef,
   ref_targets: HashMap<RefKey, NodeRef>,
 }
@@ -53,22 +52,13 @@ impl NodeProcessor {
       ref_targets: HashMap::new(),
       nodes: RefCell::from(ast.nodes),
       locations: ast.locations,
-      parents: RefCell::from(vec![]),
       script_entity: ast.script_entity,
     }
   }
 
-  // fn borrow_node_mut(&self, id: NodeRef) -> &Option<&mut Node> {
-  //   let node = self.nodes.borrow_mut().get_mut(id.0 as usize);
-  //   return &node;
-  // }
-  // fn borrow_node(&self, id: NodeRef) -> Option<&Node> {
-  //   self.nodes.borrow().get(id.0 as usize)
-  // }
-
-  pub fn process(mut self) -> Result<ProcessedAst> {
+  pub fn process(mut self) -> Result<Ast> {
     self.resolve_refs()?;
-    Ok(ProcessedAst {
+    Ok(Ast {
       nodes: self.nodes.take(),
       locations: self.locations,
       script_entity: self.script_entity,
@@ -80,25 +70,26 @@ impl NodeProcessor {
     let all_refs = self.find_all_reference_nodes();
     dbg!(&all_refs);
 
-    // for node_ref in all_refs {
-    //   let node = self.borrow_node_mut(node_ref);
-    //   if let Some(Node::Reference(r)) = node {
-    //     let parts: Vec<&str> = r.ident.split(".").collect();
-    //     let mut key = RefKey::new();
-    //     parts
-    //       .into_iter()
-    //       .rev()
-    //       .for_each(|p| key.add_name(&Rc::from(p)));
-    //     let found_node = self.ref_targets.get(&key);
-    //     dbg!(&found_node);
-    //     if let Some(found_node_ref) = found_node {
-    //       let target = self.borrow_node(*found_node_ref);
-    //       if let Some(Node::Property(prop)) = target {
-    //         r.resolved_node = prop.child[0];
-    //       }
-    //     }
-    //   }
-    // }
+    for node_ref in all_refs {
+      let nodes = self.nodes.borrow();
+      let mut node = nodes[node_ref.0 as usize].borrow_mut();
+      if let Node::Reference(ref mut reference_node) = node.node_data {
+        let parts: Vec<&str> = reference_node.ident.split(".").collect();
+        let mut key = RefKey::new();
+        parts
+          .into_iter()
+          .rev()
+          .for_each(|p| key.add_name(&Rc::from(p)));
+        let found_node = self.ref_targets.get(&key);
+        dbg!(&found_node);
+        if let Some(found_node_ref) = found_node {
+          let target = nodes[found_node_ref.0 as usize].borrow();
+          if let Node::Property(prop) = &target.node_data {
+            reference_node.resolved_node = prop.child[0];
+          }
+        }
+      }
+    }
 
     Ok(())
   }
@@ -110,7 +101,7 @@ impl NodeProcessor {
       .iter()
       .enumerate()
       .filter_map(|(index, node)| {
-        if node.is_reference() {
+        if node.borrow().node_data.is_reference() {
           Some(NodeRef(index as isize))
         } else {
           None
@@ -120,13 +111,12 @@ impl NodeProcessor {
   }
 
   fn create_ref_targets(&mut self) {
-    //let nodes = &self.nodes;
     let reftargets: Vec<(RefKey, NodeRef)> = self
       .nodes
       .borrow()
       .iter()
       .enumerate()
-      .filter_map(|(index, node)| match node {
+      .filter_map(|(index, node)| match &node.borrow().node_data {
         Node::Entity(ent) => {
           let mut ref_key = RefKey::new();
           let mut current_id = index.into();
@@ -134,7 +124,7 @@ impl NodeProcessor {
             ref_key.add_name(ident)
           }
           while let Some(node_id) = self.get_parent(current_id) {
-            match &self.nodes.borrow()[node_id.0 as usize] {
+            match &self.nodes.borrow()[node_id.0 as usize].borrow().node_data {
               Node::Entity(ent) => {
                 if let Some(ident) = &ent.ident {
                   ref_key.add_name(ident)
@@ -155,7 +145,7 @@ impl NodeProcessor {
           let mut current_id = index.into();
           ref_key.add_name(&prop.name);
           while let Some(node_id) = self.get_parent(current_id) {
-            match &self.nodes.borrow()[node_id.0 as usize] {
+            match &self.nodes.borrow()[node_id.0 as usize].borrow().node_data {
               Node::Entity(ent) => {
                 if let Some(ident) = &ent.ident {
                   ref_key.add_name(ident)
@@ -185,7 +175,7 @@ impl NodeProcessor {
     if node_ref == NodeRef(0) {
       None
     } else {
-      Some(self.parents.borrow()[node_ref.0 as usize])
+      Some(self.nodes.borrow()[node_ref.0 as usize].borrow().parent)
     }
   }
 }
@@ -211,12 +201,11 @@ mod tests {
       }
     }"#;
     let ast = parser::parse_text(text).unwrap();
-    let mut np = NodeProcessor::new(ast);
+    let np = NodeProcessor::new(ast);
     let processed_ast = np.process().unwrap();
-    //dbg!(&np.ref_targets);
-    // dbg!(&processed_ast.nodes[11]);
-    if let Node::Reference(node) = &processed_ast.nodes[11] {
-      // dbg!(node);
+    print!("{}", processed_ast.to_cdl().unwrap());
+    let ref_node = processed_ast.nodes[11].borrow();
+    if let Node::Reference(node) = &ref_node.node_data {
       assert_eq!(NodeRef(6), node.resolved_node);
     }
   }

@@ -1,23 +1,25 @@
 mod ast_nodes;
 mod parse_expr;
 mod parser;
+mod parser_logger;
 mod token_stream;
 mod types;
 
-use std::{fmt::Write, ops::Range};
+use std::{cell::RefCell, fmt::Write, ops::Range};
 
 use anyhow::Result;
-use ast_nodes::AstNode;
+pub use ast_nodes::AstNode;
 use lexer::lex;
 pub use parser::Node;
 use parser::Parser;
+use parser_logger::MockLogger;
 use serde::Serialize;
 use token_stream::TokenStream;
 pub use types::NodeRef;
 
 pub fn parse_text(text: &str) -> Result<Ast> {
   let tokens = lex(&text)?;
-  let mut parser = Parser::new(text, TokenStream::new(tokens));
+  let mut parser = Parser::new(text, TokenStream::new(tokens), Box::new(MockLogger::new()));
   let root_ref = parser.parse()?;
 
   Ok(Ast {
@@ -27,18 +29,16 @@ pub fn parse_text(text: &str) -> Result<Ast> {
   })
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Ast {
-  pub nodes: Vec<AstNode>,
+  pub nodes: Vec<RefCell<AstNode>>,
   pub locations: Vec<Range<usize>>,
   pub script_entity: NodeRef,
 }
 
 impl Ast {
   pub fn to_cdl(&self) -> Result<String> {
-    //let script = &self.nodes[self.script_entity.0 as usize];
     let mut cdl = String::new();
-    //write!(cdl, "");
     self.print_node(&mut cdl, self.script_entity, 0)?;
     return Ok(cdl);
   }
@@ -49,22 +49,23 @@ impl Ast {
     node_ref: NodeRef,
     indent: usize,
   ) -> Result<()> {
-    match &self.nodes[node_ref.0 as usize].node_data {
-      Node::Title(title) => self.title_to_cdl(cdl, title, indent)?,
-      Node::Entity(entity) => self.entity_to_cdl(cdl, entity, indent)?,
-      Node::Property(prop) => self.property_to_cdl(cdl, prop, indent)?,
-      Node::Identifier(identifier) => self.identifier_to_cdl(cdl, identifier, indent)?,
-      Node::Script(script) => self.script_to_cdl(cdl, script, indent)?,
-      Node::String(string) => self.string_to_cdl(cdl, string, indent)?,
-      Node::Number(number) => self.number_to_cdl(cdl, number, indent)?,
-      Node::Boolean(boolean) => self.boolean_to_cdl(cdl, boolean, indent)?,
-      Node::VPath(vpath) => self.vpath_to_cdl(cdl, vpath, indent)?,
-      Node::Color(color) => self.color_to_cdl(cdl, color, indent)?,
-      Node::Reference(r) => self.reference_to_cdl(cdl, r, indent)?,
-      Node::Function(func) => self.func_to_cdl(cdl, func, indent)?,
-      Node::Operator(op) => self.op_to_cdl(cdl, op, indent)?,
-      Node::TableAlias(alias) => self.alias_to_cdl(cdl, alias, indent)?,
-      Node::Formula(formula) => self.formula_to_cdl(cdl, formula, indent)?,
+    let node_data = &self.nodes[node_ref.0 as usize].borrow().node_data;
+    match node_data {
+      Node::Title(title) => self.title_to_cdl(cdl, &title, indent)?,
+      Node::Entity(entity) => self.entity_to_cdl(cdl, &entity, indent)?,
+      Node::Property(prop) => self.property_to_cdl(cdl, &prop, indent)?,
+      Node::Identifier(identifier) => self.identifier_to_cdl(cdl, &identifier, indent)?,
+      Node::Script(script) => self.script_to_cdl(cdl, &script, indent)?,
+      Node::String(string) => self.string_to_cdl(cdl, &string, indent)?,
+      Node::Number(number) => self.number_to_cdl(cdl, &number, indent)?,
+      Node::Boolean(boolean) => self.boolean_to_cdl(cdl, &boolean, indent)?,
+      Node::VPath(vpath) => self.vpath_to_cdl(cdl, &vpath, indent)?,
+      Node::Color(color) => self.color_to_cdl(cdl, &color, indent)?,
+      Node::Reference(r) => self.reference_to_cdl(cdl, &r, indent)?,
+      Node::Function(func) => self.func_to_cdl(cdl, &func, indent)?,
+      Node::Operator(op) => self.op_to_cdl(cdl, &op, indent)?,
+      Node::TableAlias(alias) => self.alias_to_cdl(cdl, &alias, indent)?,
+      Node::Formula(formula) => self.formula_to_cdl(cdl, &formula, indent)?,
     }
     Ok(())
   }
@@ -98,21 +99,16 @@ impl Ast {
     indent: usize,
   ) -> Result<()> {
     let indent_str = create_indent(indent);
-    // r#"maintype subtype "label" @ref1 @ref2 #id 3245{
     write!(cdl, "{}{}", indent_str, entity.terms.join(" "))?;
-
     if let Some(label) = &entity.label {
       write!(cdl, " {}", label)?;
     }
-
     for r in &entity.refs {
       write!(cdl, " @{}", r)?;
     }
-
     if let Some(id) = &entity.ident {
       write!(cdl, " #{}", id)?;
     }
-
     if let Some(num) = &entity.entity_number {
       write!(cdl, " {}", num)?;
     }
@@ -191,9 +187,13 @@ impl Ast {
     &self,
     cdl: &mut dyn Write,
     r: &ast_nodes::AstReferenceNode,
-    _indent: usize,
+    indent: usize,
   ) -> Result<()> {
-    write!(cdl, "@{}", r.ident)?;
+    if r.resolved_node == NodeRef(-1) {
+      write!(cdl, "@{}", r.ident)?;
+    } else {
+      self.print_node(cdl, r.resolved_node, indent)?;
+    }
     Ok(())
   }
 
@@ -266,7 +266,6 @@ impl Ast {
     alias: &ast_nodes::AstTableAliasNode,
     indent: usize,
   ) -> Result<()> {
-    //table alias = dataset.table: // TODO: print this
     let indent_str = create_indent(indent);
     write!(
       cdl,
@@ -331,7 +330,6 @@ mod tests {
       }
       "#,
     );
-    //dbg!(&ast);
     assert!(ast.is_ok());
     let ast = ast.unwrap();
     let cdl = ast.to_cdl().unwrap();
@@ -353,7 +351,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Entity(node) = &ast.nodes[1].node_data {
+    let data = &ast.nodes[1].borrow().node_data;
+    if let Node::Entity(node) = data {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
     }
@@ -369,7 +368,8 @@ mod tests {
     assert!(ast.is_ok());
 
     let ast = ast.unwrap();
-    if let Node::Entity(node) = &ast.nodes[1].node_data {
+    let data = &ast.nodes[1].borrow().node_data;
+    if let Node::Entity(node) = data {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
       assert_eq!("\"label\"", node.label.as_ref().unwrap().to_string());
@@ -407,7 +407,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Identifier(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::Identifier(node) = node {
       assert_eq!("identifier", node.identifier.to_string());
     }
   }
@@ -422,7 +423,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::String(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::String(node) = node {
       assert_eq!("\"string\"", node.text.to_string());
     }
   }
@@ -437,7 +439,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Number(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::Number(node) = node {
       assert_eq!("1234", node.value.to_string());
     }
   }
@@ -451,7 +454,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Color(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::Color(node) = node {
       assert_eq!("00aabb", node.color.to_string());
     }
   }
@@ -466,7 +470,8 @@ mod tests {
 
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Reference(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::Reference(node) = node {
       assert_eq!("identifier", node.ident.to_string());
     }
   }
@@ -481,7 +486,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::VPath(node) = node {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable", node.variable.as_ref().unwrap().to_string());
     }
@@ -497,7 +503,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::VPath(node) = node {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!(None, node.variable);
     }
@@ -512,7 +519,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::VPath(node) = node {
       assert_eq!(None, node.table);
       assert_eq!("q1", node.variable.as_ref().unwrap().to_string());
     }
@@ -528,7 +536,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::VPath(node) = node {
       assert_eq!(None, node.table);
       assert_eq!(None, node.variable);
     }
@@ -544,7 +553,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::VPath(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::VPath(node) = node {
       assert_eq!("p1234.table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable.4", node.variable.as_ref().unwrap().to_string());
     }
@@ -562,11 +572,13 @@ mod tests {
     );
     assert!(&ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Entity(node) = &ast.nodes[1].node_data {
+    let node = &ast.nodes[1].borrow().node_data;
+    if let Node::Entity(node) = node {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(NodeRef(2), node.children[0]);
     }
-    if let Node::Entity(node) = &ast.nodes[2].node_data {
+    let node = &ast.nodes[2].borrow().node_data;
+    if let Node::Entity(node) = node {
       assert_eq!("otherMaintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
     }
@@ -599,7 +611,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Function(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::Function(node) = node {
       assert_eq!("func", node.name.to_string());
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children);
     }
@@ -615,7 +628,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Property(node) = &ast.nodes[3].node_data {
+    let node = &ast.nodes[3].borrow().node_data;
+    if let Node::Property(node) = node {
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.child);
     }
   }
@@ -629,7 +643,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Property(node) = &ast.nodes[2].node_data {
+    let node = &ast.nodes[2].borrow().node_data;
+    if let Node::Property(node) = node {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
   }
@@ -644,10 +659,12 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::Property(node) = &ast.nodes[2].node_data {
+    let node = &ast.nodes[2].borrow().node_data;
+    if let Node::Property(node) = node {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
-    if let Node::Operator(node) = &ast.nodes[6].node_data {
+    let node = &ast.nodes[6].borrow().node_data;
+    if let Node::Operator(node) = node {
       assert_eq!(NodeRef(5), node.left);
       assert_eq!(NodeRef(7), node.right);
     }
@@ -655,7 +672,6 @@ mod tests {
 
   #[test]
   fn can_parse_expressions_formula() {
-    //simple_logger::SimpleLogger::new().init().unwrap();
     let ast = parse_text(
       r#"maintype {
         value: (coefficient[] - min[]) / (max[] - min[]) * 100
@@ -675,7 +691,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::TableAlias(node) = &ast.nodes[2].node_data {
+    let node = &ast.nodes[2].borrow().node_data;
+    if let Node::TableAlias(node) = node {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
     }
@@ -690,7 +707,8 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    if let Node::TableAlias(node) = &ast.nodes[2].node_data {
+    let node = &ast.nodes[2].borrow().node_data;
+    if let Node::TableAlias(node) = node {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
     }

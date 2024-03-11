@@ -38,9 +38,9 @@ pub trait Parsable {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef>;
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize,Clone)]
 pub struct AstNode {
-  parent: NodeRef,
+  pub parent: NodeRef,
   pub node_data: Node,
 }
 
@@ -53,14 +53,14 @@ impl AstNode {
   }
 
   pub fn add_child_to_node(&mut self, child: NodeRef) {
-    let node = &mut self.node_data;
-    match node {
-      Node::Entity(ent) => ent.children.push(child),
-      Node::Script(script) => script.children.push(child),
-      Node::Property(prop) => prop.child.push(child),
-      Node::Function(func) => func.children.push(child),
-      Node::Operator(op) => op.right = child,
-      _ => panic!("Unknown type to set as parent {:?}", node),
-    }
+    let node_data = &mut self.node_data;
+    match node_data {
+      Node::Entity(ref mut ent) => ent.children.push(child),
+      Node::Script(ref mut script) => script.children.push(child),
+      Node::Property(ref mut prop) => prop.child.push(child),
+      Node::Function(ref mut func) => func.children.push(child),
+      Node::Operator(ref mut op) => op.right = child,
+      _ => panic!("Unknown type to set as parent {:?}", node_data),
+    };
   }
 }

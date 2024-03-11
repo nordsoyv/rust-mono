@@ -38,7 +38,7 @@ impl Parsable for AstStringNode {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let string_token = parser.get_current_token()?;
     let text = string_token.text.clone().unwrap();
-    //    parser.trace(&format!("Parsing String \"{:?}\"", text ));
+    //parser.trace("Parsing String");
     let quote_kind = if text.starts_with("'") {
       QuoteKind::SingleQuote
     } else {

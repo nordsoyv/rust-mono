@@ -47,8 +47,8 @@ impl Parsable for AstEntityNode {
       ident: header.ident,
       entity_number: header.entity_number,
     };
-    let ast_node = AstNode::new(Node::Entity(entity), parent);
-    // parser.start_group(format!("Parsing entity {:?} #{:?}", &entity.terms, &entity.ident));
+    parser.start_group("Parsing entity");
+    let ast_node = AstNode::new(Node::Entity(entity), parent);    
     let current_entity_ref = parser.add_node(ast_node, header.start_loc..usize::MAX);
 
     let next_token = parser.get_current_token()?;
@@ -81,7 +81,7 @@ impl Parsable for AstEntityNode {
       if curr_token.kind == TokenKind::BraceClose {
         parser.eat_token()?;
         parser.update_location_on_node(current_entity_ref, header.start_loc, curr_token.pos.end);
-        //  parser.end_group("Done parsing entity ");
+        parser.end_group("Done parsing entity ");
         return Ok(current_entity_ref);
       }
       return Err(anyhow!("Unexpected error while parsing entity"));

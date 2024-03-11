@@ -23,7 +23,8 @@ fn compare_rc_str_to_filters(needle: &Rc<str>, filters: &Vec<&str>) -> bool {
 fn find_filters(ast: &Ast, filters: &Vec<&str>) -> Vec<NodeRef> {
   let mut result = vec![];
   for (index, node) in ast.nodes.iter().enumerate() {
-    match node {
+    let n = node.borrow();
+    match &n.node_data {
       Node::Entity(ent) => {
         if let Some(id) = &ent.ident {
           if compare_rc_str_to_filters(id, filters) {
@@ -39,8 +40,8 @@ fn find_filters(ast: &Ast, filters: &Vec<&str>) -> Vec<NodeRef> {
 }
 
 fn main() {
-  let cli = Cli::parse();
   SimpleLogger::new().init().unwrap();
+  let cli = Cli::parse();
   if let Some(name) = cli.file.as_deref() {
     println!("File: {name}");
     let file_content = fs::read_to_string(name).expect("should be able to read file");

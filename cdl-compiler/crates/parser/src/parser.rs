@@ -9,12 +9,9 @@ use crate::{
     AstFormulaNode, AstIdentifierNode, AstNode, AstNumberNode, AstOperatorNode, AstPropertyNode,
     AstReferenceNode, AstScriptNode, AstStringNode, AstTableAliasNode, AstTitleNode, AstVPathNode,
     Parsable,
-  },
-  token_stream::TokenStream,
-  types::NodeRef,
+  }, parser_logger::ParserLogger, token_stream::TokenStream, types::NodeRef
 };
 use anyhow::{Context, Result};
-use log::trace;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Node {
@@ -44,48 +41,35 @@ impl Node {
   }
 }
 
-#[derive(Debug)]
-struct LogGroup {
-  name: String,
-}
 
 #[derive(Debug)]
 pub struct Parser {
   text: String,
   tokens: TokenStream,
-  pub nodes: RefCell<Vec<AstNode>>,
+  pub nodes: RefCell<Vec<RefCell<AstNode>>>,
   pub locations: RefCell<Vec<Range<usize>>>,
-  log_groups: RefCell<Vec<LogGroup>>,
+  logger: Box<dyn ParserLogger>
 }
 
 impl Parser {
-  pub fn start_group(&self, text: String) {
-    let indent = (0..self.log_groups.borrow().len())
-      .map(|_| " |")
-      .collect::<String>();
-    trace!(target: "parsing event", "{} {}", indent, text );
-    self.log_groups.borrow_mut().push(LogGroup { name: text });
+  
+  pub fn start_group(&self, text: &str) {
+    self.logger.start_group(text);
   }
-  pub fn trace(&self, text: &str) {
-    let i = (0..self.log_groups.borrow().len())
-      .map(|_| " |")
-      .collect::<String>();
-    trace!(target: "parsing event", "{} {}", i, text );
+  pub fn trace(&self, text: &str){
+    self.logger.trace(text);
   }
-  pub fn end_group(&self, text: &str) {
-    let group = self.log_groups.borrow_mut().pop().unwrap();
-    let indent = (0..self.log_groups.borrow().len())
-      .map(|_| " |")
-      .collect::<String>();
-    trace!(target: "parsing event", "{} {}: {}",indent, group.name, text );
+  pub fn end_group(&self, text: &str){
+    self.logger.end_group(text)
   }
-  pub fn new(text: &str, tokens: TokenStream) -> Parser {
+
+  pub fn new(text: &str, tokens: TokenStream, logger: Box<dyn ParserLogger>) -> Parser {
     Parser {
       nodes: RefCell::new(Vec::new()),
       tokens,
       text: text.to_string(),
       locations: RefCell::new(Vec::new()),
-      log_groups: RefCell::new(Vec::new()),
+      logger
     }
   }
   pub fn parse(&mut self) -> Result<NodeRef> {
@@ -132,7 +116,7 @@ impl Parser {
 
   pub(crate) fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
-    nodes.push(n);
+    nodes.push(RefCell::new(n));
     let mut locations = self.locations.borrow_mut();
     locations.push(location);
     return (nodes.len() - 1).into();
@@ -143,8 +127,10 @@ impl Parser {
   }
 
   pub(crate) fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
-    let mut nodes = self.nodes.borrow_mut();
-    let node = nodes.get_mut(parent.0 as usize).unwrap();
+    let nodes = self.nodes.borrow();
+    let node = &nodes[parent.0 as usize];
+
+    let mut node = node.borrow_mut();
     node.add_child_to_node(child);
   }
 
