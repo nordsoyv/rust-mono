@@ -1,20 +1,11 @@
 use anyhow::Result;
-use serde::Serialize;
-use std::rc::Rc;
 
+use ast::{AstColorNode, AstNode, Node, NodeRef};
 use lexer::TokenKind;
 
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::parser::Parser;
 
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstColorNode {
-  pub color: Rc<str>,
-}
+use super::Parsable;
 
 impl Parsable for AstColorNode {
   fn can_parse(parser: &Parser) -> bool {

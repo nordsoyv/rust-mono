@@ -1,20 +1,11 @@
 use anyhow::{anyhow, Result};
-use serde::Serialize;
-use std::rc::Rc;
 
+use ast::{AstNode, AstTitleNode, Node, NodeRef};
 use lexer::TokenKind;
 
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::parser::Parser;
 
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstTitleNode {
-  pub title: Rc<str>,
-}
+use super::Parsable;
 
 impl Parsable for AstTitleNode {
   fn can_parse(parser: &Parser) -> bool {

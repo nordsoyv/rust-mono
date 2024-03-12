@@ -1,21 +1,10 @@
 use anyhow::Result;
-use serde::Serialize;
-use std::rc::Rc;
-
+use ast::{AstNode, AstReferenceNode, Node, NodeRef};
 use lexer::TokenKind;
 
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::parser::Parser;
 
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstReferenceNode {
-  pub ident: Rc<str>,
-  pub resolved_node: NodeRef,
-}
+use super::Parsable;
 
 impl Parsable for AstReferenceNode {
   fn can_parse(parser: &Parser) -> bool {

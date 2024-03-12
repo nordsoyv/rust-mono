@@ -1,46 +1,10 @@
 use std::{cell::RefCell, ops::Range};
 
+use ast::{AstNode, AstScriptNode, NodeRef};
 use lexer::{get_location_from_position, Token, TokenKind};
-use serde::Serialize;
 
-use crate::{
-  ast_nodes::{
-    ast_boolean::AstBooleanNode, ast_function::AstFunctionNode, AstColorNode, AstEntityNode,
-    AstFormulaNode, AstIdentifierNode, AstNode, AstNumberNode, AstOperatorNode, AstPropertyNode,
-    AstReferenceNode, AstScriptNode, AstStringNode, AstTableAliasNode, AstTitleNode, AstVPathNode,
-    Parsable,
-  }, parser_logger::ParserLogger, token_stream::TokenStream, types::NodeRef
-};
+use crate::{ast_nodes::Parsable, parser_logger::ParserLogger, token_stream::TokenStream};
 use anyhow::{Context, Result};
-
-#[derive(Debug, Serialize, Clone)]
-pub enum Node {
-  Title(AstTitleNode),
-  Entity(AstEntityNode),
-  Property(AstPropertyNode),
-  Identifier(AstIdentifierNode),
-  Script(AstScriptNode),
-  String(AstStringNode),
-  Number(AstNumberNode),
-  Boolean(AstBooleanNode),
-  VPath(AstVPathNode),
-  Color(AstColorNode),
-  Reference(AstReferenceNode),
-  Function(AstFunctionNode),
-  Operator(AstOperatorNode),
-  TableAlias(AstTableAliasNode),
-  Formula(AstFormulaNode),
-}
-
-impl Node {
-  pub fn is_reference(&self) -> bool {
-    match self {
-      Node::Reference(_) => true,
-      _ => false,
-    }
-  }
-}
-
 
 #[derive(Debug)]
 pub struct Parser {
@@ -48,18 +12,19 @@ pub struct Parser {
   tokens: TokenStream,
   pub nodes: RefCell<Vec<RefCell<AstNode>>>,
   pub locations: RefCell<Vec<Range<usize>>>,
-  logger: Box<dyn ParserLogger>
+  logger: Box<dyn ParserLogger>,
 }
 
 impl Parser {
-  
   pub fn start_group(&self, text: &str) {
     self.logger.start_group(text);
   }
-  pub fn trace(&self, text: &str){
+
+  #[allow(dead_code)]
+  pub fn trace(&self, text: &str) {
     self.logger.trace(text);
   }
-  pub fn end_group(&self, text: &str){
+  pub fn end_group(&self, text: &str) {
     self.logger.end_group(text)
   }
 
@@ -69,7 +34,7 @@ impl Parser {
       tokens,
       text: text.to_string(),
       locations: RefCell::new(Vec::new()),
-      logger
+      logger,
     }
   }
   pub fn parse(&mut self) -> Result<NodeRef> {

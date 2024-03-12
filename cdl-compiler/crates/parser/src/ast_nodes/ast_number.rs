@@ -1,19 +1,8 @@
 use anyhow::{anyhow, Result};
-
+use ast::{AstNode, AstNumberNode, Node, NodeRef};
 use lexer::TokenKind;
-use serde::Serialize;
-
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
-
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstNumberNode {
-  pub value: f64,
-}
+use crate::parser::Parser;
+use super::Parsable;
 
 impl Parsable for AstNumberNode {
   fn can_parse(parser: &Parser) -> bool {

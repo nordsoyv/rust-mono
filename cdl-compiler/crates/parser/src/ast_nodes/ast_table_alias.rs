@@ -1,20 +1,11 @@
 use anyhow::Result;
+use ast::{AstNode, AstTableAliasNode, Node, NodeRef};
 use lexer::TokenKind;
-use serde::Serialize;
-use std::rc::Rc;
 
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::parser::Parser;
 
-use super::{AstNode, Parsable};
+use super::Parsable;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct AstTableAliasNode {
-  pub table: Rc<str>,
-  pub alias: Rc<str>,
-}
 
 impl Parsable for AstTableAliasNode {
   fn can_parse(parser: &Parser) -> bool {

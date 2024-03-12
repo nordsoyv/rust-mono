@@ -1,14 +1,7 @@
+use ast::{AstFormulaNode, AstNode, Node, NodeRef};
 use lexer::TokenKind;
-use serde::Serialize;
 
-use crate::{parser::Node, types::NodeRef};
-
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstFormulaNode {
-  pub children: Vec<NodeRef>,
-}
+use super::Parsable;
 
 impl Parsable for AstFormulaNode {
   fn can_parse(parser: &crate::parser::Parser) -> bool {

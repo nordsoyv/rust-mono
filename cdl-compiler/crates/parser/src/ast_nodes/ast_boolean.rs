@@ -1,19 +1,11 @@
 use anyhow::{anyhow, Result};
 
+use ast::{AstBooleanNode, AstNode, Node, NodeRef};
 use lexer::TokenKind;
-use serde::Serialize;
 
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::parser::Parser;
 
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstBooleanNode {
-  pub value: bool,
-}
+use super::Parsable;
 
 impl Parsable for AstBooleanNode {
   fn can_parse(parser: &Parser) -> bool {

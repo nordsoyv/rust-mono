@@ -1,24 +1,10 @@
 use anyhow::{Context, Result};
-use serde::Serialize;
-use std::rc::Rc;
-
+use ast::{AstFunctionNode, AstNode, Node, NodeRef};
 use lexer::TokenKind;
 
-use crate::{
-  parse_expr::{parse_arg_list, parse_bracket_arg_list},
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::{parse_expr::{parse_arg_list, parse_bracket_arg_list}, parser::Parser};
 
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstFunctionNode {
-  pub name: Rc<str>,
-  pub children: Vec<NodeRef>,
-}
-
-impl AstFunctionNode {}
+use super::Parsable;
 
 impl Parsable for AstFunctionNode {
   fn can_parse(parser: &Parser) -> bool {

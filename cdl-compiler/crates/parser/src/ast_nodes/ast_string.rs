@@ -1,26 +1,12 @@
 use anyhow::Result;
-use serde::Serialize;
-use std::rc::Rc;
 
+use ast::{AstNode, AstStringNode, Node, NodeRef, QuoteKind};
 use lexer::TokenKind;
 
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::parser::Parser;
 
-use super::{AstNode, Parsable};
-#[derive(Debug, Serialize, Clone)]
-pub enum QuoteKind {
-  SingleQuote,
-  DoubleQuote,
-}
+use super::Parsable;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct AstStringNode {
-  pub text: Rc<str>,
-  pub quote_kind: QuoteKind,
-}
 
 impl Parsable for AstStringNode {
   fn can_parse(parser: &Parser) -> bool {

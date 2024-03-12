@@ -1,16 +1,10 @@
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
-use anyhow::{bail, Result};
-use serde::Serialize;
+use anyhow::bail;
+use anyhow::Result;
+use ast::{AstEntityNode, AstNode, AstScriptNode, AstTitleNode, Node, NodeRef};
 
-use super::{AstEntityNode, AstNode, AstTitleNode, Parsable};
+use crate::parser::Parser;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct AstScriptNode {
-  pub children: Vec<NodeRef>,
-}
+use super::Parsable;
 
 impl Parsable for AstScriptNode {
   fn can_parse(_: &Parser) -> bool {

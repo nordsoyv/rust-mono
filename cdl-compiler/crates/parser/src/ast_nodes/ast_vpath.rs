@@ -1,23 +1,10 @@
 use anyhow::{anyhow, Result};
-use serde::Serialize;
-use std::rc::Rc;
-
+use ast::{AstNode, AstVPathNode, Node, NodeRef};
 use lexer::TokenKind;
 
-use crate::{
-  parser::{Node, Parser},
-  types::NodeRef,
-};
+use crate::parser::Parser;
 
-use super::{AstNode, Parsable};
-
-#[derive(Debug, Serialize, Clone)]
-pub struct AstVPathNode {
-  pub table: Option<Rc<str>>,
-  pub variable: Option<Rc<str>>,
-  pub function: Option<Rc<str>>,
-  pub is_hierarchy: bool,
-}
+use super::Parsable;
 
 impl Parsable for AstVPathNode {
   fn can_parse(parser: &Parser) -> bool {
