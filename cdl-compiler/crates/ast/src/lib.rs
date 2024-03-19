@@ -45,10 +45,7 @@ pub enum Node {
 
 impl Node {
   pub fn is_reference(&self) -> bool {
-    match self {
-      Node::Reference(_) => true,
-      _ => false,
-    }
+    matches!(self, Node::Reference(_))
   }
 }
 

@@ -16,6 +16,12 @@ pub struct Ast {
   pub script_entity: NodeRef,
 }
 
+impl Default for Ast {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Ast {
   pub fn new() -> Ast {
     Ast {
@@ -28,11 +34,7 @@ impl Ast {
     if node_ref == NodeRef(0) {
       None
     } else {
-      if let Some(node) = self.get_node(node_ref) {
-        Some((*node).borrow().parent)
-      } else {
-        None
-      }
+      self.get_node(node_ref).map(|node| (*node).borrow().parent)
     }
   }
 
@@ -48,7 +50,7 @@ impl Ast {
     nodes.push(Rc::new(RefCell::new(n)));
     let mut locations = self.locations.borrow_mut();
     locations.push(location);
-    return (nodes.len() - 1).into();
+    (nodes.len() - 1).into()
   }
 
   pub fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
@@ -72,7 +74,7 @@ impl Ast {
   pub fn to_cdl(&self) -> Result<String> {
     let mut cdl = String::new();
     self.print_node(&mut cdl, self.script_entity, 0)?;
-    return Ok(cdl);
+    Ok(cdl)
   }
 
   fn print_node(
@@ -84,21 +86,21 @@ impl Ast {
     let nodes = self.nodes.borrow();
     let node_data = &nodes[node_ref.0 as usize].borrow().node_data;
     match node_data {
-      Node::Title(title) => self.title_to_cdl(cdl, &title, indent)?,
-      Node::Entity(entity) => self.entity_to_cdl(cdl, &entity, indent)?,
-      Node::Property(prop) => self.property_to_cdl(cdl, &prop, indent)?,
-      Node::Identifier(identifier) => self.identifier_to_cdl(cdl, &identifier, indent)?,
-      Node::Script(script) => self.script_to_cdl(cdl, &script, indent)?,
-      Node::String(string) => self.string_to_cdl(cdl, &string, indent)?,
-      Node::Number(number) => self.number_to_cdl(cdl, &number, indent)?,
-      Node::Boolean(boolean) => self.boolean_to_cdl(cdl, &boolean, indent)?,
-      Node::VPath(vpath) => self.vpath_to_cdl(cdl, &vpath, indent)?,
-      Node::Color(color) => self.color_to_cdl(cdl, &color, indent)?,
-      Node::Reference(r) => self.reference_to_cdl(cdl, &r, indent)?,
-      Node::Function(func) => self.func_to_cdl(cdl, &func, indent)?,
-      Node::Operator(op) => self.op_to_cdl(cdl, &op, indent)?,
-      Node::TableAlias(alias) => self.alias_to_cdl(cdl, &alias, indent)?,
-      Node::Formula(formula) => self.formula_to_cdl(cdl, &formula, indent)?,
+      Node::Title(title) => self.title_to_cdl(cdl, title, indent)?,
+      Node::Entity(entity) => self.entity_to_cdl(cdl, entity, indent)?,
+      Node::Property(prop) => self.property_to_cdl(cdl, prop, indent)?,
+      Node::Identifier(identifier) => self.identifier_to_cdl(cdl, identifier, indent)?,
+      Node::Script(script) => self.script_to_cdl(cdl, script, indent)?,
+      Node::String(string) => self.string_to_cdl(cdl, string, indent)?,
+      Node::Number(number) => self.number_to_cdl(cdl, number, indent)?,
+      Node::Boolean(boolean) => self.boolean_to_cdl(cdl, boolean, indent)?,
+      Node::VPath(vpath) => self.vpath_to_cdl(cdl, vpath, indent)?,
+      Node::Color(color) => self.color_to_cdl(cdl, color, indent)?,
+      Node::Reference(r) => self.reference_to_cdl(cdl, r, indent)?,
+      Node::Function(func) => self.func_to_cdl(cdl, func, indent)?,
+      Node::Operator(op) => self.op_to_cdl(cdl, op, indent)?,
+      Node::TableAlias(alias) => self.alias_to_cdl(cdl, alias, indent)?,
+      Node::Formula(formula) => self.formula_to_cdl(cdl, formula, indent)?,
     }
     Ok(())
   }
@@ -121,7 +123,7 @@ impl Ast {
     title: &AstTitleNode,
     _indent: usize,
   ) -> Result<()> {
-    write!(cdl, "title: {}\n", title.title)?;
+    writeln!(cdl, "title: {}", title.title)?;
     Ok(())
   }
 
@@ -145,11 +147,11 @@ impl Ast {
     if let Some(num) = &entity.entity_number {
       write!(cdl, " {}", num)?;
     }
-    write!(cdl, " {{\n")?;
+    writeln!(cdl, " {{")?;
     for child in &entity.children {
       self.print_node(cdl, *child, indent + 1)?;
     }
-    write!(cdl, "{}}}\n", indent_str)?;
+    writeln!(cdl, "{}}}", indent_str)?;
     Ok(())
   }
 
@@ -162,7 +164,7 @@ impl Ast {
     let indent_str = create_indent(indent);
     write!(cdl, "{}{}: ", indent_str, prop.name)?;
     self.print_node(cdl, *prop.child.first().unwrap(), indent)?;
-    write!(cdl, "\n")?;
+    writeln!(cdl)?;
     Ok(())
   }
 
@@ -192,7 +194,7 @@ impl Ast {
     number: &AstNumberNode,
     _indent: usize,
   ) -> Result<()> {
-    write!(cdl, "{}", number.value.to_string())?;
+    write!(cdl, "{}", number.value)?;
     Ok(())
   }
 
@@ -202,7 +204,7 @@ impl Ast {
     boolean: &AstBooleanNode,
     _indent: usize,
   ) -> Result<()> {
-    write!(cdl, "{}", boolean.value.to_string())?;
+    write!(cdl, "{}", boolean.value)?;
     Ok(())
   }
 
@@ -280,9 +282,9 @@ impl Ast {
     indent: usize,
   ) -> Result<()> {
     let indent_str = create_indent(indent);
-    write!(
+    writeln!(
       cdl,
-      "{}table {} = {}\n",
+      "{}table {} = {}",
       indent_str, alias.alias, alias.table
     )?;
     Ok(())
