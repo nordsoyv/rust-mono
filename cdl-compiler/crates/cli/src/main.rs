@@ -19,7 +19,7 @@ fn compare_rc_str_to_filters(needle: &Rc<str>, filters: &Vec<&str>) -> bool {
       return true;
     }
   }
-  return false;
+  false
 }
 
 fn find_filters(ast: &Ast, filters: &Vec<&str>) -> Vec<NodeRef> {
@@ -38,7 +38,7 @@ fn find_filters(ast: &Ast, filters: &Vec<&str>) -> Vec<NodeRef> {
     }
   }
 
-  return result;
+  result
 }
 
 fn main() {

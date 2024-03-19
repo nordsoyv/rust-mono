@@ -37,7 +37,7 @@ impl RefKey {
   fn add_name(&mut self, name: &Rc<str>) {
     self.path.push(name.clone())
   }
-  
+
   #[allow(dead_code)]
   fn is_empty(&self) -> bool {
     self.path.is_empty()
@@ -74,7 +74,7 @@ impl NodeProcessor {
   ) -> ProcessingStatus {
     let node = self.get_node(node_ref).unwrap();
     let node_data = (*node).borrow();
-    let status = match &node_data.node_data {
+    match &node_data.node_data {
       Node::Title(_) => ProcessingStatus::Complete,
       Node::Entity(_) => self.process_entity(node.clone(), processing_context.create_for_child()),
       Node::Property(_) => ProcessingStatus::Complete,
@@ -90,8 +90,7 @@ impl NodeProcessor {
       Node::Operator(_) => ProcessingStatus::Complete,
       Node::TableAlias(_) => ProcessingStatus::Complete,
       Node::Formula(_) => ProcessingStatus::Complete,
-    };
-    return status;
+    }
   }
 
   // fn resolve_refs(&mut self) -> Result<()> {

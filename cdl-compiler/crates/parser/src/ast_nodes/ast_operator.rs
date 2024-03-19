@@ -11,19 +11,19 @@ pub fn can_parse_term(parser: &mut Parser) -> bool {
     return false;
   }
   let curr_token = curr_token.unwrap();
-  match curr_token.kind {
+  matches!(
+    curr_token.kind,
     TokenKind::Div
-    | TokenKind::Mul
-    | TokenKind::Equal
-    | TokenKind::NotEqual
-    | TokenKind::LessThan
-    | TokenKind::LessThanOrEqual
-    | TokenKind::MoreThan
-    | TokenKind::MoreThanOrEqual
-    | TokenKind::And
-    | TokenKind::Or => true,
-    _ => false,
-  }
+      | TokenKind::Mul
+      | TokenKind::Equal
+      | TokenKind::NotEqual
+      | TokenKind::LessThan
+      | TokenKind::LessThanOrEqual
+      | TokenKind::MoreThan
+      | TokenKind::MoreThanOrEqual
+      | TokenKind::And
+      | TokenKind::Or
+  )
 }
 
 pub fn can_parse_factor(parser: &mut Parser) -> bool {
@@ -32,10 +32,7 @@ pub fn can_parse_factor(parser: &mut Parser) -> bool {
     return false;
   }
   let curr_token = curr_token.unwrap();
-  match curr_token.kind {
-    TokenKind::Plus | TokenKind::Minus => true,
-    _ => false,
-  }
+  matches!(curr_token.kind, TokenKind::Plus | TokenKind::Minus)
 }
 
 pub fn parse_operator_term(parser: &mut Parser, parent: NodeRef, left: NodeRef) -> Result<NodeRef> {
