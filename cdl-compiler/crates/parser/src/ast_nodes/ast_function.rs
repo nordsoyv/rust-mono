@@ -23,7 +23,7 @@ impl Parsable for AstFunctionNode {
         return true;
       }
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
@@ -49,11 +49,7 @@ impl Parsable for AstFunctionNode {
     let is_paren = {
       let token = parser.get_current_token()?;
       parser.eat_token()?;
-      if token.kind == TokenKind::ParenOpen {
-        true
-      } else {
-        false
-      }
+      token.kind == TokenKind::ParenOpen
     };
 
     let args = if is_paren {

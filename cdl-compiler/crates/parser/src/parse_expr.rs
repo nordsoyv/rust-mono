@@ -75,9 +75,9 @@ pub fn parse_expression(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef>
   let term_node_ref = parse_term(parser, parent)?;
   if can_parse_term(parser) {
     let operator_ref = parse_operator_term(parser, parent, term_node_ref)?;
-    return Ok(operator_ref);
+    Ok(operator_ref)
   } else {
-    return Ok(term_node_ref);
+    Ok(term_node_ref)
   }
 }
 
@@ -85,9 +85,9 @@ pub fn parse_term(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   let factor_node_ref = parse_factor(parser, parent)?;
   if can_parse_factor(parser) {
     let operator_ref =parse_operator_factor(parser, parent, factor_node_ref)?;
-    return Ok(operator_ref);
+    Ok(operator_ref)
   } else {
-    return Ok(factor_node_ref);
+    Ok(factor_node_ref)
   }
 }
 
@@ -95,31 +95,31 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   if can_parse_anonymous_entity(parser) {
     return parse_anonymous_entity(parser, parent);
   }
-  if AstVPathNode::can_parse(&parser) {
+  if AstVPathNode::can_parse(parser) {
     return AstVPathNode::parse(parser, parent);
   }
-  if AstFunctionNode::can_parse(&parser) {
+  if AstFunctionNode::can_parse(parser) {
     return AstFunctionNode::parse(parser, parent);
   }
-  if AstFormulaNode::can_parse(&parser) {
+  if AstFormulaNode::can_parse(parser) {
     return AstFormulaNode::parse(parser, parent);
   }
-  if AstIdentifierNode::can_parse(&parser) {
+  if AstIdentifierNode::can_parse(parser) {
     return AstIdentifierNode::parse(parser, parent);
   }
-  if AstStringNode::can_parse(&parser) {
+  if AstStringNode::can_parse(parser) {
     return AstStringNode::parse(parser, parent);
   }
-  if AstNumberNode::can_parse(&parser) {
+  if AstNumberNode::can_parse(parser) {
     return AstNumberNode::parse(parser, parent);
   }
-  if AstReferenceNode::can_parse(&parser) {
+  if AstReferenceNode::can_parse(parser) {
     return AstReferenceNode::parse(parser, parent);
   }
-  if AstColorNode::can_parse(&parser) {
+  if AstColorNode::can_parse(parser) {
     return AstColorNode::parse(parser, parent);
   }
-  if AstBooleanNode::can_parse(&parser) {
+  if AstBooleanNode::can_parse(parser) {
     return AstBooleanNode::parse(parser, parent);
   }
   if AstEntityNode::can_parse(parser) {
@@ -140,8 +140,8 @@ pub fn parse_factor(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   }
   //dbg!(parser.get_current_token());
   let token = parser.get_current_token()?;
-  return Err(anyhow!(
+  Err(anyhow!(
     "Error parsing expression, current token: {:?}",
     token.kind
-  ));
+  ))
 }

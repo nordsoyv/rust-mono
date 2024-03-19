@@ -16,7 +16,7 @@ impl Parsable for AstReferenceNode {
     if curr_token.kind == TokenKind::Reference {
       return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {

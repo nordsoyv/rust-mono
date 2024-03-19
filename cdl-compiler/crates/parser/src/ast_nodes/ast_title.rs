@@ -22,12 +22,10 @@ impl Parsable for AstTitleNode {
     if token_2.unwrap().kind != TokenKind::EOL {
       return false;
     }
-    if curr_token.kind == TokenKind::Identifier && curr_token.text == Some("title".into()) {
-      if token1.kind == TokenKind::String {
-        return true;
-      }
+    if curr_token.kind == TokenKind::Identifier && curr_token.text == Some("title".into()) && token1.kind == TokenKind::String {
+      return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
@@ -43,9 +41,9 @@ impl Parsable for AstTitleNode {
           title_keyword_token.pos.start..title_token.pos.end,
         );
         parser.eat_tokens(3)?;
-        return Ok(node_ref);
+        Ok(node_ref)
       }
-      _ => return Err(anyhow!("Unknown error occurred while parsing Title node")),
+      _ => Err(anyhow!("Unknown error occurred while parsing Title node")),
     }
   }
 }

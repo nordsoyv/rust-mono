@@ -16,7 +16,7 @@ impl Parsable for AstIdentifierNode {
     if curr_token.kind == TokenKind::Identifier {
       return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {

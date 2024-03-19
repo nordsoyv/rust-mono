@@ -32,7 +32,7 @@ impl Parsable for AstEntityNode {
         return true;
       }
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
@@ -56,12 +56,12 @@ impl Parsable for AstEntityNode {
     parser.eat_token_of_type(TokenKind::BraceOpen)?;
     loop {
       parser.eat_eol_and_comments();
-      if AstPropertyNode::can_parse(&parser) {
+      if AstPropertyNode::can_parse(parser) {
         let child_node_ref = AstPropertyNode::parse(parser, current_entity_ref)?;
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
-      if AstTableAliasNode::can_parse(&parser) {
+      if AstTableAliasNode::can_parse(parser) {
         // if !is_config_hub {
         //   return Err(anyhow!("Table Alias not allowed outside config hub"));
         // }
@@ -69,7 +69,7 @@ impl Parsable for AstEntityNode {
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
       }
-      if AstEntityNode::can_parse(&parser) {
+      if AstEntityNode::can_parse(parser) {
         let child_node_ref = AstEntityNode::parse(parser, current_entity_ref)?;
         parser.add_child_to_node(current_entity_ref, child_node_ref);
         continue;
@@ -95,7 +95,7 @@ pub fn can_parse_anonymous_entity(parser: &Parser) -> bool {
       return true;
     }
   }
-  return false;
+  false
 }
 
 pub fn parse_anonymous_entity(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
@@ -124,12 +124,12 @@ pub fn parse_anonymous_entity(parser: &mut Parser, parent: NodeRef) -> Result<No
   parser.eat_token_of_type(TokenKind::BraceOpen)?;
   loop {
     parser.eat_eol_and_comments();
-    if AstPropertyNode::can_parse(&parser) {
+    if AstPropertyNode::can_parse(parser) {
       let child_node_ref = AstPropertyNode::parse(parser, current_entity_ref)?;
       parser.add_child_to_node(current_entity_ref, child_node_ref);
       continue;
     }
-    if AstEntityNode::can_parse(&parser) {
+    if AstEntityNode::can_parse(parser) {
       let child_node_ref = AstEntityNode::parse(parser, current_entity_ref)?;
       parser.add_child_to_node(current_entity_ref, child_node_ref);
       continue;
@@ -149,13 +149,13 @@ fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
   let terms = parser.get_tokens_of_kind(TokenKind::Identifier);
   let start_loc = terms[0].pos.start;
   let terms = terms
-    .into_iter()
+    .iter()
     .map(|t| t.text.as_ref().unwrap().clone())
     .collect::<Vec<Rc<str>>>();
   parser.eat_tokens(terms.len())?;
 
   let label_token = parser.get_tokens_of_kind(TokenKind::String);
-  let label = if label_token.len() > 0 {
+  let label = if !label_token.is_empty() {
     parser.eat_token()?;
     label_token[0].text.clone()
   } else {
@@ -163,7 +163,7 @@ fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
   };
 
   let ref_tokens = parser.get_tokens_of_kind(TokenKind::Reference);
-  let refs = if ref_tokens.len() > 0 {
+  let refs = if !ref_tokens.is_empty() {
     parser.eat_tokens(ref_tokens.len())?;
     ref_tokens.iter().map(|r| r.text.clone().unwrap()).collect()
   } else {
@@ -197,13 +197,13 @@ fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
     }
   };
 
-  return Ok(EntityHeaderInfo {
+  Ok(EntityHeaderInfo {
     terms,
     start_loc,
     label,
     refs,
     ident,
     entity_number,
-  });
+  })
 }
 

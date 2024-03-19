@@ -17,7 +17,7 @@ impl Parsable for AstBooleanNode {
     if let TokenKind::Boolean(_num) = curr_token.kind {
       return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {

@@ -18,7 +18,7 @@ impl Parsable for AstPropertyNode {
     if curr_token.kind == TokenKind::Identifier && token1.kind == TokenKind::Colon {
       return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {

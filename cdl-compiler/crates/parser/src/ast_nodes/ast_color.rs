@@ -17,7 +17,7 @@ impl Parsable for AstColorNode {
     if curr_token.kind == TokenKind::Color {
       return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {

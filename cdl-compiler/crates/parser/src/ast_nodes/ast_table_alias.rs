@@ -16,16 +16,14 @@ impl Parsable for AstTableAliasNode {
       return false;
     }
     let table_token = table_token.unwrap();
-    if table_token.kind == TokenKind::Identifier {
-      if table_token.text != Some("table".into()) {
-        return false;
-      }
+    if table_token.kind == TokenKind::Identifier && table_token.text != Some("table".into()) {
+      return false;
     }
     let equal_token = equal_token.unwrap();
     let alias_token = alias_token.unwrap();
     match (&alias_token.kind, &equal_token.kind) {
-      (TokenKind::Identifier, TokenKind::Equal) => return true,
-      (_, _) => return false,
+      (TokenKind::Identifier, TokenKind::Equal) => true,
+      (_, _) => false,
     }
   }
 

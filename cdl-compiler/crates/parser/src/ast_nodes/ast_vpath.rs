@@ -19,12 +19,10 @@ impl Parsable for AstVPathNode {
       return true;
     }
     let token1 = token_1.unwrap();
-    if curr_token.kind == TokenKind::Identifier {
-      if token1.kind == TokenKind::Colon {
-        return true;
-      }
+    if curr_token.kind == TokenKind::Identifier && token1.kind == TokenKind::Colon {
+      return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
@@ -140,6 +138,6 @@ impl Parsable for AstVPathNode {
       (_, _, _, _) => return Err(anyhow!("Unknown error occurred while parsing VPath node")),
     };
     let node_ref = parser.add_node(AstNode::new(Node::VPath(ast_node), parent), pos);
-    return Ok(node_ref);
+    Ok(node_ref)
   }
 }

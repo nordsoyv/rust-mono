@@ -14,7 +14,7 @@ impl Parsable for AstNumberNode {
     if let TokenKind::Number(_num) = curr_token.kind {
       return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
@@ -26,7 +26,7 @@ impl Parsable for AstNumberNode {
     parser.eat_token()?;
     let maybe_percent_token = parser.get_current_token()?;
     if maybe_percent_token.kind == TokenKind::Percent {
-      value = value / 100.0;
+      value /= 100.0;
       parser.eat_token()?;
     }
     let ast_node = AstNumberNode { value };

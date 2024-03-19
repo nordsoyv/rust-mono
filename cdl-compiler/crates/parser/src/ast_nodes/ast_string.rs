@@ -18,14 +18,14 @@ impl Parsable for AstStringNode {
     if curr_token.kind == TokenKind::String {
       return true;
     }
-    return false;
+    false
   }
 
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let string_token = parser.get_current_token()?;
     let text = string_token.text.clone().unwrap();
     //parser.trace("Parsing String");
-    let quote_kind = if text.starts_with("'") {
+    let quote_kind = if text.starts_with('\'') {
       QuoteKind::SingleQuote
     } else {
       QuoteKind::DoubleQuote
