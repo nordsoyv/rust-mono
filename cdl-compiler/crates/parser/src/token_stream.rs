@@ -29,7 +29,7 @@ impl TokenStream {
   }
 
   pub fn eat_token(&self) -> Result<Range<usize>> {
-    return self.eat_tokens(1);
+    self.eat_tokens(1)
   }
 
   pub fn eat_tokens(&self, num: usize) -> Result<Range<usize>> {
@@ -45,19 +45,17 @@ impl TokenStream {
 
   pub fn eat_token_of_type(&self, kind: TokenKind) -> Result<Range<usize>> {
     let current_token = self.get_current_token();
-    let current_token = if current_token.is_err() {
-      return Err(anyhow!(format!("Expected {:?}, found EOF", kind)));
-    } else {
-      current_token.unwrap()
-    };
-    if current_token.kind != kind {
-      return Err(anyhow!(format!(
-        "Expected {:?}, found {:?}",
-        kind, current_token.kind,
-      )));
+    if let Ok(current_token) = current_token {
+      if current_token.kind != kind {
+        return Err(anyhow!(format!(
+          "Expected {:?}, found {:?}",
+          kind, current_token.kind,
+        )));
+      }
+      self.eat_token()?;
+      return Ok(current_token.pos.clone());    
     }
-    self.eat_token()?;
-    return Ok(current_token.pos.clone());
+    Err(anyhow!("Expected to find a token, but got EOF instead"))  
   }
 
   pub fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {
@@ -78,7 +76,7 @@ impl TokenStream {
       let end_token = curr + num_tokens;
       return &self.tokens[curr..end_token];
     }
-    return &[];
+    &[]
   }
 
   pub fn is_tokens_left(&self) -> bool {
@@ -98,7 +96,7 @@ impl TokenStream {
     if curr_token.kind == kind {
       return true;
     }
-    return false;
+    false
   }
 
   fn is_many_tokens_left(&self, num: usize) -> bool {

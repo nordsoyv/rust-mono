@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum ProcessingStatus {
   Complete = 0,
@@ -16,6 +17,7 @@ impl ProcessingStatus {
   }
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum ProcessingStep {
   Begin,
@@ -27,6 +29,7 @@ pub enum ProcessingStep {
 
 #[derive(Debug)]
 pub struct ProcessingContext {
+  #[allow(dead_code)]
   step: ProcessingStep,
 }
 

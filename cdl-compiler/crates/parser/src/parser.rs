@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Range, rc::Rc};
+use std::ops::Range;
 
 use ast::{Ast, AstNode, AstScriptNode, NodeRef};
 use lexer::{get_location_from_position, Token, TokenKind};
@@ -74,7 +74,7 @@ impl Parser {
   }
 
   pub(crate) fn is_next_token_of_type(&self, kind: TokenKind) -> bool {
-    return self.tokens.is_next_token_of_type(kind);
+    self.tokens.is_next_token_of_type(kind)
   }
 
   pub(crate) fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
@@ -112,6 +112,6 @@ impl Parser {
   }
 
   pub(crate) fn get_pos_for_node(&self, node_ref: NodeRef) -> Range<usize> {
-    return self.ast.get_pos_for_node(node_ref);
+    self.ast.get_pos_for_node(node_ref)
   }
 }

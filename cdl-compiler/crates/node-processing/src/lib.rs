@@ -1,14 +1,8 @@
 mod processing_context;
-use std::{
-  borrow::{Borrow, BorrowMut},
-  cell::RefCell,
-  collections::HashMap,
-  ops::Range,
-  rc::Rc,
-};
+use std::{borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
-use ast::{Ast, AstEntityNode, AstNode, AstScriptNode, Node, NodeRef};
+use ast::{Ast, AstNode, Node, NodeRef};
 use processing_context::{ProcessingContext, ProcessingStatus};
 
 // #[derive(Debug)]
@@ -34,13 +28,17 @@ struct RefKey {
 }
 
 impl RefKey {
+  #[allow(dead_code)]
   fn new() -> RefKey {
     RefKey { path: Vec::new() }
   }
 
+  #[allow(dead_code)]
   fn add_name(&mut self, name: &Rc<str>) {
     self.path.push(name.clone())
   }
+  
+  #[allow(dead_code)]
   fn is_empty(&self) -> bool {
     self.path.is_empty()
   }
@@ -52,18 +50,18 @@ pub struct NodeProcessor {
   //nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
   //locations: Vec<Range<usize>>,
   //script_entity: NodeRef,
-  ref_targets: HashMap<RefKey, NodeRef>,
+  _ref_targets: HashMap<RefKey, NodeRef>,
 }
 
 impl NodeProcessor {
   pub fn new(ast: Ast) -> NodeProcessor {
     NodeProcessor {
       ast,
-      ref_targets: HashMap::new(),
+      _ref_targets: HashMap::new(),
     }
   }
 
-  pub fn process(mut self) -> Result<Ast> {
+  pub fn process(self) -> Result<Ast> {
     //self.resolve_refs()?;
     self.process_node(self.ast.script_entity, ProcessingContext::new());
     Ok(self.ast)
@@ -207,6 +205,7 @@ impl NodeProcessor {
   //   });
   // }
 
+  #[allow(dead_code)]
   fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
     self.ast.get_parent(node_ref)
   }
@@ -220,7 +219,7 @@ impl NodeProcessor {
     script: Rc<RefCell<AstNode>>,
     processing_context: ProcessingContext,
   ) -> ProcessingStatus {
-    let mut processingStatus = ProcessingStatus::Complete;
+    let mut processing_status = ProcessingStatus::Complete;
     let mut node = (*script).borrow_mut();
 
     match &node.borrow().node_data {
@@ -230,23 +229,23 @@ impl NodeProcessor {
           match result {
             ProcessingStatus::Complete => continue,
             ProcessingStatus::CompleteWithWarning => {
-              if processingStatus < ProcessingStatus::CompleteWithWarning {
-                processingStatus = ProcessingStatus::CompleteWithWarning
+              if processing_status < ProcessingStatus::CompleteWithWarning {
+                processing_status = ProcessingStatus::CompleteWithWarning
               }
             }
             ProcessingStatus::Incomplete => {
-              if processingStatus < ProcessingStatus::Incomplete {
-                processingStatus = ProcessingStatus::Incomplete
+              if processing_status < ProcessingStatus::Incomplete {
+                processing_status = ProcessingStatus::Incomplete
               }
             }
             ProcessingStatus::ChildIncomplete => {
-              if processingStatus < ProcessingStatus::ChildIncomplete {
-                processingStatus = ProcessingStatus::ChildIncomplete
+              if processing_status < ProcessingStatus::ChildIncomplete {
+                processing_status = ProcessingStatus::ChildIncomplete
               }
             }
             ProcessingStatus::CompleteAndAbort => {
-              if processingStatus < ProcessingStatus::CompleteAndAbort {
-                processingStatus = ProcessingStatus::CompleteAndAbort
+              if processing_status < ProcessingStatus::CompleteAndAbort {
+                processing_status = ProcessingStatus::CompleteAndAbort
               }
             }
           }
@@ -254,11 +253,11 @@ impl NodeProcessor {
       }
       _ => panic!("Expected script node"),
     }
-    if processingStatus.is_complete() {
+    if processing_status.is_complete() {
       node.processed = true;
     }
 
-    processingStatus
+    processing_status
   }
 
   fn process_entity(
@@ -266,7 +265,7 @@ impl NodeProcessor {
     entity: Rc<RefCell<AstNode>>,
     processing_context: ProcessingContext,
   ) -> ProcessingStatus {
-    let mut processingStatus = ProcessingStatus::Complete;
+    let mut processing_status = ProcessingStatus::Complete;
     let node = (*entity).borrow();
     match &node.borrow().node_data {
       Node::Entity(e) => {
@@ -275,28 +274,28 @@ impl NodeProcessor {
           match result {
             ProcessingStatus::Complete => continue,
             ProcessingStatus::CompleteWithWarning => {
-              if processingStatus < ProcessingStatus::CompleteWithWarning {
-                processingStatus = ProcessingStatus::CompleteWithWarning
+              if processing_status < ProcessingStatus::CompleteWithWarning {
+                processing_status = ProcessingStatus::CompleteWithWarning
               }
             }
             ProcessingStatus::Incomplete => {
-              if processingStatus < ProcessingStatus::Incomplete {
-                processingStatus = ProcessingStatus::Incomplete
+              if processing_status < ProcessingStatus::Incomplete {
+                processing_status = ProcessingStatus::Incomplete
               }
             }
             ProcessingStatus::ChildIncomplete => {
-              if processingStatus < ProcessingStatus::ChildIncomplete {
-                processingStatus = ProcessingStatus::ChildIncomplete
+              if processing_status < ProcessingStatus::ChildIncomplete {
+                processing_status = ProcessingStatus::ChildIncomplete
               }
             }
             ProcessingStatus::CompleteAndAbort => {
-              if processingStatus < ProcessingStatus::CompleteAndAbort {
-                processingStatus = ProcessingStatus::CompleteAndAbort
+              if processing_status < ProcessingStatus::CompleteAndAbort {
+                processing_status = ProcessingStatus::CompleteAndAbort
               }
             }
           }
         }
-        processingStatus
+        processing_status
       }
       _ => panic!("Expected entity node"),
     }

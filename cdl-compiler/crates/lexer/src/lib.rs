@@ -8,13 +8,13 @@ use std::rc::Rc;
 fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
   let slice = lex.slice();
   let rc: Rc<str> = slice.into();
-  return rc;
+  rc
 }
 
 fn to_rcstr_skip1(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
   let slice = &lex.slice()[1..];
   let rc: Rc<str> = slice.into();
-  return rc;
+  rc
 }
 
 #[derive(Logos, Debug, PartialEq)]
@@ -26,7 +26,7 @@ enum TokenLexer {
 
   #[token("\n")]
   #[token("\r\n")]
-  EOL,
+  Eol,
 
   #[token("{")]
   BraceOpen,
@@ -164,8 +164,7 @@ pub fn get_location_from_position(text: &str, position: &Span) -> Location {
   let mut location = Location::default();
   let mut line_number = 1;
   let mut line_pos = 1;
-  let mut curr_pos = 0;
-  for char in text.chars() {
+  for (curr_pos, char )in text.chars().enumerate() {
     if curr_pos == position.start {
       location.start_line = line_number;
       location.start_pos = line_pos;
@@ -178,7 +177,6 @@ pub fn get_location_from_position(text: &str, position: &Span) -> Location {
       line_number += 1;
       line_pos = 0;
     }
-    curr_pos += 1;
     line_pos += 1;
   }
   location
@@ -206,7 +204,7 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
         pos: span,
         text: None,
       },
-      TokenLexer::EOL => Token {
+      TokenLexer::Eol => Token {
         kind: TokenKind::EOL,
         pos: span,
         text: None,
@@ -363,7 +361,7 @@ pub fn lex(text: &str) -> Result<Vec<Token>> {
       },
     });
   }
-  return Ok(tokens);
+  Ok(tokens)
 }
 
 #[cfg(test)]

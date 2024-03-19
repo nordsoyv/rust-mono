@@ -12,9 +12,9 @@ use parser_logger::MockLogger;
 use token_stream::TokenStream;
 
 pub fn parse_text(text: &str) -> Result<Ast> {
-  let tokens = lex(&text)?;
+  let tokens = lex(text)?;
   let mut parser = Parser::new(text, TokenStream::new(tokens), Box::new(MockLogger::new()));
-  let root_ref = parser.parse()?;
+  parser.parse()?;
 
   Ok(parser.ast)
 }
@@ -30,6 +30,14 @@ mod tests {
     ($ast:expr, $x:literal) => {{
       let node = $ast.get_node($x.into()).unwrap();
       node.clone().borrow().node_data.clone()
+    }};
+  }
+
+  macro_rules! parse {
+    ($x:literal) => {{
+      let ast = parse_text($x);
+      assert!(ast.is_ok());
+      ast.unwrap()
     }};
   }
 
@@ -71,19 +79,16 @@ mod tests {
 
   #[test]
   fn can_parse_title() {
-    let ast = parse_text("title \"dashboard title\"\n");
-    assert!(ast.is_ok());
+    parse!("title \"dashboard title\"\n");
   }
   #[test]
   fn can_parse_entity() {
-    let ast = parse_text(
+    let ast = parse!(
       r"maintype {
 
     }   
-    ",
+    "
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
@@ -91,15 +96,12 @@ mod tests {
   }
   #[test]
   fn can_parse_entity_header() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype subtype "label" @ref1 @ref2 #id 3245{
 
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-
-    let ast = ast.unwrap();
     if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
@@ -113,31 +115,27 @@ mod tests {
 
   #[test]
   fn can_parse_entity_no_body() {
-    let ast = parse_text(
+    parse!(
       r#"maintype subtype  
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
   }
   #[test]
   fn can_parse_entity_single_line() {
-    let ast = parse_text(
+    parse!(
       r#"maintype subtype { prop: ident }
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
   }
 
   #[test]
   fn can_parse_property_identifier() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: identifier
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Identifier(node) = node_data!(ast, 3) {
       assert_eq!("identifier", node.identifier.to_string());
     }
@@ -145,14 +143,12 @@ mod tests {
 
   #[test]
   fn can_parse_property_string() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: "string"
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::String(node) = node_data!(ast, 3) {
       assert_eq!("\"string\"", node.text.to_string());
     }
@@ -160,43 +156,36 @@ mod tests {
 
   #[test]
   fn can_parse_property_number() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: 1234
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Number(node) = node_data!(ast, 3) {
       assert_eq!("1234", node.value.to_string());
     }
   }
   #[test]
   fn can_parse_property_color() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: #00aabb
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Color(node) = node_data!(ast, 3) {
       assert_eq!("00aabb", node.color.to_string());
     }
   }
   #[test]
   fn can_parse_property_reference() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: @identifier
     }   
-    "#,
+    "#
     );
-
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Reference(node) = node_data!(ast, 3) {
       assert_eq!("identifier", node.ident.to_string());
     }
@@ -204,14 +193,12 @@ mod tests {
 
   #[test]
   fn can_parse_property_vpath() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: table:variable
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable", node.variable.as_ref().unwrap().to_string());
@@ -220,14 +207,12 @@ mod tests {
 
   #[test]
   fn can_parse_property_vpath_table_only() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: table:
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!(None, node.variable);
@@ -235,14 +220,12 @@ mod tests {
   }
   #[test]
   fn can_parse_property_vpath_variable_only() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: :q1
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!(None, node.table);
       assert_eq!("q1", node.variable.as_ref().unwrap().to_string());
@@ -251,14 +234,12 @@ mod tests {
 
   #[test]
   fn can_parse_property_vpath_colon_only() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: :
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!(None, node.table);
       assert_eq!(None, node.variable);
@@ -267,14 +248,12 @@ mod tests {
 
   #[test]
   fn can_parse_property_vpath_full() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: p1234.table:variable.4
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!("p1234.table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable.4", node.variable.as_ref().unwrap().to_string());
@@ -283,16 +262,14 @@ mod tests {
 
   #[test]
   fn can_parse_nested_entity() {
-    let ast = parse_text(
+    let ast = parse!(
       r"maintype {
       otherMaintype {
 
       }
     }   
-    ",
+    "
     );
-    assert!(&ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(NodeRef(2), node.children[0]);
@@ -305,7 +282,7 @@ mod tests {
 
   #[test]
   fn can_parse_list_of_entities() {
-    let ast = parse_text(
+    parse!(
       r#"select #OpenEnd_selector {
         label: "Select Question"
         options: item {
@@ -315,21 +292,18 @@ mod tests {
           label: "Lodging Comments"
         }
       }
-    "#,
+    "#
     );
-    assert!(&ast.is_ok());
   }
 
   #[test]
   fn can_parse_function() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: func(12,12,"asdf")
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Function(node) = node_data!(ast, 3) {
       assert_eq!("func", node.name.to_string());
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children);
@@ -338,28 +312,24 @@ mod tests {
 
   #[test]
   fn can_parse_lists() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: 12,12,"asdf"
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Property(node) = node_data!(ast, 3) {
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.child);
     }
   }
   #[test]
   fn can_parse_expressions() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: 1 + 1
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Property(node) = node_data!(ast, 2) {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
@@ -367,14 +337,12 @@ mod tests {
 
   #[test]
   fn can_parse_expressions_parents() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"maintype {
         prop: 1 + (2 - 3)
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::Property(node) = node_data!(ast, 2) {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
@@ -386,25 +354,22 @@ mod tests {
 
   #[test]
   fn can_parse_expressions_formula() {
-    let ast = parse_text(
+    parse!(
       r#"maintype {
         value: (coefficient[] - min[]) / (max[] - min[]) * 100
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
   }
 
   #[test]
   fn can_parse_table_alias() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"config hub {
         table alias = dataset.table
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::TableAlias(node) = node_data!(ast, 2) {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
@@ -412,14 +377,12 @@ mod tests {
   }
   #[test]
   fn can_parse_table_alias_vpath() {
-    let ast = parse_text(
+    let ast = parse!(
       r#"config hub {
         table alias = dataset.table:
     }   
-    "#,
+    "#
     );
-    assert!(ast.is_ok());
-    let ast = ast.unwrap();
     if let Node::TableAlias(node) = node_data!(ast, 2) {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
@@ -436,12 +399,11 @@ mod tests {
 
   #[test]
   fn can_parse_large_expr() {
-    let ast = parse_text(
+    parse!(
       r#"option checkbox #a {
         item bar { question: survey:s50 }
       }
-  "#,
+  "#
     );
-    assert!(ast.is_ok());
   }
 }
