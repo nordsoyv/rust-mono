@@ -17,7 +17,7 @@ pub mod ast_vpath;
 use anyhow::Result;
 use ast::NodeRef;
 
-use crate::{parser::Parser};
+use crate::parser::Parser;
 
 pub trait Parsable {
   fn can_parse(parser: &Parser) -> bool;

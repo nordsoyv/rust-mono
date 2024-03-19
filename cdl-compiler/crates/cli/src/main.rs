@@ -1,7 +1,9 @@
 use std::{fs, rc::Rc, time::Instant};
 
-use parser::{parse_text, Ast, Node, NodeRef};
+use ast::{Ast, Node, NodeRef};
 use clap::Parser;
+use node_processing::NodeProcessor;
+use parser::parse_text;
 use simple_logger::SimpleLogger;
 
 #[derive(Parser)]
@@ -124,5 +126,12 @@ fn main() {
 
     let elapsed = now.elapsed();
     println!("time taken to find {} nodes: {:.2?}", found.len(), elapsed);
+
+    let now = Instant::now();
+    let np = NodeProcessor::new(ast);
+    let _processed_ast = np.process().unwrap();
+
+    let elapsed = now.elapsed();
+    println!("time taken to process ast: {:.2?}", elapsed);
   }
 }

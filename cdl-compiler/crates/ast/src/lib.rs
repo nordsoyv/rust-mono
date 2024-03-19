@@ -1,5 +1,5 @@
-mod ast_nodes;
 mod ast;
+mod ast_nodes;
 
 use serde::Serialize;
 use std::fmt::Debug;
@@ -12,15 +12,15 @@ pub use ast_nodes::AstFunctionNode;
 pub use ast_nodes::AstIdentifierNode;
 pub use ast_nodes::AstNumberNode;
 pub use ast_nodes::AstOperatorNode;
-pub use ast_nodes::Operator;
 pub use ast_nodes::AstPropertyNode;
 pub use ast_nodes::AstReferenceNode;
 pub use ast_nodes::AstScriptNode;
 pub use ast_nodes::AstStringNode;
-pub use ast_nodes::QuoteKind;
 pub use ast_nodes::AstTableAliasNode;
 pub use ast_nodes::AstTitleNode;
 pub use ast_nodes::AstVPathNode;
+pub use ast_nodes::Operator;
+pub use ast_nodes::QuoteKind;
 
 pub use ast::Ast;
 
@@ -71,6 +71,7 @@ impl Debug for NodeRef {
 pub struct AstNode {
   pub parent: NodeRef,
   pub node_data: Node,
+  pub processed: bool,
 }
 
 impl AstNode {
@@ -78,6 +79,7 @@ impl AstNode {
     AstNode {
       node_data: node,
       parent,
+      processed: false
     }
   }
 

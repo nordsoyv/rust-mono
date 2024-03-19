@@ -72,6 +72,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 
 [[package]]
+name = "ast"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lexer",
+ "serde",
+]
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -210,7 +219,9 @@ checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 name = "cli"
 version = "0.1.0"
 dependencies = [
+ "ast",
  "clap 4.5.1",
+ "node-processing",
  "parser",
  "serde",
  "serde_json",
@@ -463,6 +474,7 @@ name = "node-processing"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ast",
  "parser",
 ]
 
@@ -513,6 +525,7 @@ name = "parser"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ast",
  "criterion",
  "lexer",
  "log",

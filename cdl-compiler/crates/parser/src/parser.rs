@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Range};
+use std::{cell::RefCell, ops::Range, rc::Rc};
 
 use ast::{AstNode, AstScriptNode, NodeRef};
 use lexer::{get_location_from_position, Token, TokenKind};
@@ -10,7 +10,7 @@ use anyhow::{Context, Result};
 pub struct Parser {
   text: String,
   tokens: TokenStream,
-  pub nodes: RefCell<Vec<RefCell<AstNode>>>,
+  pub nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
   pub locations: RefCell<Vec<Range<usize>>>,
   logger: Box<dyn ParserLogger>,
 }
@@ -81,7 +81,7 @@ impl Parser {
 
   pub(crate) fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
-    nodes.push(RefCell::new(n));
+    nodes.push(Rc::new(RefCell::new(n)));
     let mut locations = self.locations.borrow_mut();
     locations.push(location);
     return (nodes.len() - 1).into();

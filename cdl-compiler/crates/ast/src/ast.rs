@@ -1,22 +1,38 @@
-use std::{cell::RefCell, fmt::Write, ops::Range};
 use anyhow::Result;
 use serde::Serialize;
+use std::{cell::RefCell, fmt::Write, ops::Range, rc::Rc};
 
 use crate::{
   ast_nodes::Operator, AstBooleanNode, AstColorNode, AstEntityNode, AstFormulaNode,
   AstFunctionNode, AstIdentifierNode, AstNode, AstNumberNode, AstOperatorNode, AstPropertyNode,
   AstReferenceNode, AstScriptNode, AstStringNode, AstTableAliasNode, AstTitleNode, AstVPathNode,
-  Node, NodeRef
+  Node, NodeRef,
 };
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Ast {
-  pub nodes: Vec<RefCell<AstNode>>,
+  pub nodes: Vec<Rc<RefCell<AstNode>>>,
   pub locations: Vec<Range<usize>>,
   pub script_entity: NodeRef,
 }
 
 impl Ast {
+  pub fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
+    if node_ref == NodeRef(0) {
+      None
+    } else {
+      if let Some(node) = self.get_node(node_ref) {
+        Some((*node).borrow().parent)
+      } else {
+        None
+      }
+    }
+  }
+
+  pub fn get_node(&self, node_ref: NodeRef) -> Option<Rc<RefCell<AstNode>>> {
+    self.nodes.get(node_ref.0 as usize).cloned()
+  }
+
   pub fn to_cdl(&self) -> Result<String> {
     let mut cdl = String::new();
     self.print_node(&mut cdl, self.script_entity, 0)?;
