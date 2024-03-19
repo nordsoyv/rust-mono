@@ -11,12 +11,19 @@ use crate::{
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Ast {
-  pub nodes: Vec<Rc<RefCell<AstNode>>>,
-  pub locations: Vec<Range<usize>>,
+  pub nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
+  pub locations: RefCell<Vec<Range<usize>>>,
   pub script_entity: NodeRef,
 }
 
 impl Ast {
+  pub fn new() -> Ast {
+    Ast {
+      nodes: RefCell::new(Vec::new()),
+      locations: RefCell::new(Vec::new()),
+      script_entity: NodeRef(0),
+    }
+  }
   pub fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
     if node_ref == NodeRef(0) {
       None
@@ -30,7 +37,36 @@ impl Ast {
   }
 
   pub fn get_node(&self, node_ref: NodeRef) -> Option<Rc<RefCell<AstNode>>> {
-    self.nodes.get(node_ref.0 as usize).cloned()
+    let nodes = self.nodes.borrow();
+    let node = nodes.get(node_ref.0 as usize);
+    node.cloned()
+  }
+
+
+  pub fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
+    let mut nodes = self.nodes.borrow_mut();
+    nodes.push(Rc::new(RefCell::new(n)));
+    let mut locations = self.locations.borrow_mut();
+    locations.push(location);
+    return (nodes.len() - 1).into();
+  }
+
+  pub fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
+    let nodes = self.nodes.borrow();
+    let node = &nodes[parent.0 as usize];
+
+    let mut node = node.borrow_mut();
+    node.add_child_to_node(child);
+  }
+
+  pub fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {
+    let mut locations = self.locations.borrow_mut();
+    locations[node_ref.0 as usize] = start..end;
+  }
+
+  pub fn get_pos_for_node(&self, node_ref: NodeRef) -> Range<usize> {
+    let locations = self.locations.borrow();
+    locations[node_ref.0 as usize].clone()
   }
 
   pub fn to_cdl(&self) -> Result<String> {
@@ -45,7 +81,8 @@ impl Ast {
     node_ref: NodeRef,
     indent: usize,
   ) -> Result<()> {
-    let node_data = &self.nodes[node_ref.0 as usize].borrow().node_data;
+    let nodes = self.nodes.borrow();
+    let node_data = &nodes[node_ref.0 as usize].borrow().node_data;
     match node_data {
       Node::Title(title) => self.title_to_cdl(cdl, &title, indent)?,
       Node::Entity(entity) => self.entity_to_cdl(cdl, &entity, indent)?,

@@ -24,7 +24,7 @@ fn compare_rc_str_to_filters(needle: &Rc<str>, filters: &Vec<&str>) -> bool {
 
 fn find_filters(ast: &Ast, filters: &Vec<&str>) -> Vec<NodeRef> {
   let mut result = vec![];
-  for (index, node) in ast.nodes.iter().enumerate() {
+  for (index, node) in ast.nodes.borrow().iter().enumerate() {
     let n = node.borrow();
     match &n.node_data {
       Node::Entity(ent) => {
@@ -53,14 +53,14 @@ fn main() {
 
     let ast = parse_text(&file_content).unwrap();
     let elapsed = now.elapsed();
-    total_nodes += ast.nodes.len();
+    total_nodes += ast.nodes.borrow().len();
     println!("Done");
     println!("num nodes: {}", total_nodes);
     println!("time taken: {:.2?}", elapsed);
 
     let now = Instant::now();
     let clone = ast.clone();
-    println!("num nodes: {}", clone.nodes.len());
+    println!("num nodes: {}", clone.nodes.borrow().len());
     let elapsed = now.elapsed();
     println!("time taken for cloning: {:.2?}", elapsed);
 

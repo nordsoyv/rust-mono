@@ -16,11 +16,7 @@ pub fn parse_text(text: &str) -> Result<Ast> {
   let mut parser = Parser::new(text, TokenStream::new(tokens), Box::new(MockLogger::new()));
   let root_ref = parser.parse()?;
 
-  Ok(Ast {
-    nodes: parser.nodes.take(),
-    locations: parser.locations.take(),
-    script_entity: root_ref,
-  })
+  Ok(parser.ast)
 }
 
 #[cfg(test)]
@@ -29,6 +25,13 @@ mod tests {
   use ast::{Node, NodeRef};
 
   use super::*;
+
+  macro_rules! node_data {
+    ($ast:expr, $x:literal) => {{
+      let node = $ast.get_node($x.into()).unwrap();
+      node.clone().borrow().node_data.clone()
+    }};
+  }
 
   #[test]
   fn can_call_to_cdl() {
@@ -81,8 +84,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let data = &ast.nodes[1].borrow().node_data;
-    if let Node::Entity(node) = data {
+    if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
     }
@@ -98,8 +100,7 @@ mod tests {
     assert!(ast.is_ok());
 
     let ast = ast.unwrap();
-    let data = &ast.nodes[1].borrow().node_data;
-    if let Node::Entity(node) = data {
+    if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
       assert_eq!("\"label\"", node.label.as_ref().unwrap().to_string());
@@ -137,8 +138,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::Identifier(node) = node {
+    if let Node::Identifier(node) = node_data!(ast, 3) {
       assert_eq!("identifier", node.identifier.to_string());
     }
   }
@@ -153,8 +153,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::String(node) = node {
+    if let Node::String(node) = node_data!(ast, 3) {
       assert_eq!("\"string\"", node.text.to_string());
     }
   }
@@ -169,8 +168,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::Number(node) = node {
+    if let Node::Number(node) = node_data!(ast, 3) {
       assert_eq!("1234", node.value.to_string());
     }
   }
@@ -184,8 +182,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::Color(node) = node {
+    if let Node::Color(node) = node_data!(ast, 3) {
       assert_eq!("00aabb", node.color.to_string());
     }
   }
@@ -200,8 +197,7 @@ mod tests {
 
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::Reference(node) = node {
+    if let Node::Reference(node) = node_data!(ast, 3) {
       assert_eq!("identifier", node.ident.to_string());
     }
   }
@@ -216,8 +212,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::VPath(node) = node {
+    if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable", node.variable.as_ref().unwrap().to_string());
     }
@@ -233,8 +228,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::VPath(node) = node {
+    if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!("table", node.table.as_ref().unwrap().to_string());
       assert_eq!(None, node.variable);
     }
@@ -249,8 +243,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::VPath(node) = node {
+    if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!(None, node.table);
       assert_eq!("q1", node.variable.as_ref().unwrap().to_string());
     }
@@ -266,8 +259,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::VPath(node) = node {
+    if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!(None, node.table);
       assert_eq!(None, node.variable);
     }
@@ -283,8 +275,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::VPath(node) = node {
+    if let Node::VPath(node) = node_data!(ast, 3) {
       assert_eq!("p1234.table", node.table.as_ref().unwrap().to_string());
       assert_eq!("variable.4", node.variable.as_ref().unwrap().to_string());
     }
@@ -302,13 +293,11 @@ mod tests {
     );
     assert!(&ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[1].borrow().node_data;
-    if let Node::Entity(node) = node {
+    if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
       assert_eq!(NodeRef(2), node.children[0]);
     }
-    let node = &ast.nodes[2].borrow().node_data;
-    if let Node::Entity(node) = node {
+    if let Node::Entity(node) = node_data!(ast, 2) {
       assert_eq!("otherMaintype", node.terms[0].to_string());
       assert_eq!(0, node.children.len());
     }
@@ -341,8 +330,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::Function(node) = node {
+    if let Node::Function(node) = node_data!(ast, 3) {
       assert_eq!("func", node.name.to_string());
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children);
     }
@@ -358,8 +346,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[3].borrow().node_data;
-    if let Node::Property(node) = node {
+    if let Node::Property(node) = node_data!(ast, 3) {
       assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.child);
     }
   }
@@ -373,8 +360,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[2].borrow().node_data;
-    if let Node::Property(node) = node {
+    if let Node::Property(node) = node_data!(ast, 2) {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
   }
@@ -389,12 +375,10 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[2].borrow().node_data;
-    if let Node::Property(node) = node {
+    if let Node::Property(node) = node_data!(ast, 2) {
       assert_eq!(vec![NodeRef(4)], node.child);
     }
-    let node = &ast.nodes[6].borrow().node_data;
-    if let Node::Operator(node) = node {
+    if let Node::Operator(node) = node_data!(ast, 6) {
       assert_eq!(NodeRef(5), node.left);
       assert_eq!(NodeRef(7), node.right);
     }
@@ -421,8 +405,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[2].borrow().node_data;
-    if let Node::TableAlias(node) = node {
+    if let Node::TableAlias(node) = node_data!(ast, 2) {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
     }
@@ -437,8 +420,7 @@ mod tests {
     );
     assert!(ast.is_ok());
     let ast = ast.unwrap();
-    let node = &ast.nodes[2].borrow().node_data;
-    if let Node::TableAlias(node) = node {
+    if let Node::TableAlias(node) = node_data!(ast, 2) {
       assert_eq!("alias", node.alias.to_string());
       assert_eq!("dataset.table", node.table.to_string());
     }

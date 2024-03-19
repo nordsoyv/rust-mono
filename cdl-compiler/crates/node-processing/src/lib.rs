@@ -48,30 +48,25 @@ impl RefKey {
 
 #[derive(Debug)]
 pub struct NodeProcessor {
-  nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
-  locations: Vec<Range<usize>>,
-  script_entity: NodeRef,
+  ast: Ast,
+  //nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
+  //locations: Vec<Range<usize>>,
+  //script_entity: NodeRef,
   ref_targets: HashMap<RefKey, NodeRef>,
 }
 
 impl NodeProcessor {
   pub fn new(ast: Ast) -> NodeProcessor {
     NodeProcessor {
+      ast,
       ref_targets: HashMap::new(),
-      nodes: RefCell::from(ast.nodes),
-      locations: ast.locations,
-      script_entity: ast.script_entity,
     }
   }
 
   pub fn process(mut self) -> Result<Ast> {
     //self.resolve_refs()?;
-    self.process_node(self.script_entity, ProcessingContext::new());
-    Ok(Ast {
-      nodes: self.nodes.take(),
-      locations: self.locations,
-      script_entity: self.script_entity,
-    })
+    self.process_node(self.ast.script_entity, ProcessingContext::new());
+    Ok(self.ast)
   }
 
   fn process_node(
@@ -213,19 +208,11 @@ impl NodeProcessor {
   // }
 
   fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
-    if node_ref == NodeRef(0) {
-      None
-    } else {
-      if let Some(node) = self.get_node(node_ref) {
-        Some((*node).borrow().parent)
-      } else {
-        None
-      }
-    }
+    self.ast.get_parent(node_ref)
   }
 
   fn get_node(&self, node_ref: NodeRef) -> Option<Rc<RefCell<AstNode>>> {
-    self.nodes.borrow().get(node_ref.0 as usize).cloned()
+    self.ast.get_node(node_ref)
   }
 
   fn process_script(

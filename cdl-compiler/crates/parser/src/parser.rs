@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Range, rc::Rc};
 
-use ast::{AstNode, AstScriptNode, NodeRef};
+use ast::{Ast, AstNode, AstScriptNode, NodeRef};
 use lexer::{get_location_from_position, Token, TokenKind};
 
 use crate::{ast_nodes::Parsable, parser_logger::ParserLogger, token_stream::TokenStream};
@@ -10,8 +10,7 @@ use anyhow::{Context, Result};
 pub struct Parser {
   text: String,
   tokens: TokenStream,
-  pub nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
-  pub locations: RefCell<Vec<Range<usize>>>,
+  pub ast: Ast,
   logger: Box<dyn ParserLogger>,
 }
 
@@ -30,11 +29,10 @@ impl Parser {
 
   pub fn new(text: &str, tokens: TokenStream, logger: Box<dyn ParserLogger>) -> Parser {
     Parser {
-      nodes: RefCell::new(Vec::new()),
       tokens,
       text: text.to_string(),
-      locations: RefCell::new(Vec::new()),
       logger,
+      ast: Ast::new(),
     }
   }
   pub fn parse(&mut self) -> Result<NodeRef> {
@@ -80,11 +78,7 @@ impl Parser {
   }
 
   pub(crate) fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
-    let mut nodes = self.nodes.borrow_mut();
-    nodes.push(Rc::new(RefCell::new(n)));
-    let mut locations = self.locations.borrow_mut();
-    locations.push(location);
-    return (nodes.len() - 1).into();
+    self.ast.add_node(n, location)
   }
 
   pub(crate) fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {
@@ -92,11 +86,7 @@ impl Parser {
   }
 
   pub(crate) fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
-    let nodes = self.nodes.borrow();
-    let node = &nodes[parent.0 as usize];
-
-    let mut node = node.borrow_mut();
-    node.add_child_to_node(child);
+    self.ast.add_child_to_node(parent, child);
   }
 
   pub(crate) fn is_tokens_left(&self) -> bool {
@@ -118,12 +108,10 @@ impl Parser {
   }
 
   pub(crate) fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {
-    let mut locations = self.locations.borrow_mut();
-    locations[node_ref.0 as usize] = start..end;
+    self.ast.update_location_on_node(node_ref, start, end);
   }
 
   pub(crate) fn get_pos_for_node(&self, node_ref: NodeRef) -> Range<usize> {
-    let locations = self.locations.borrow();
-    locations[node_ref.0 as usize].clone()
+    return self.ast.get_pos_for_node(node_ref);
   }
 }
