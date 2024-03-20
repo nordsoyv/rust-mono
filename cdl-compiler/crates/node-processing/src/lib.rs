@@ -283,8 +283,7 @@ mod tests {
     let np = NodeProcessor::new(ast);
     let processed_ast = np.process().unwrap();
     //print!("{}", processed_ast.to_cdl().unwrap());
-    let node_data = node_data!(processed_ast, 11);
-    if let Node::Reference(node) = node_data {
+    if let Node::Reference(node) = node_data!(processed_ast, 11) {
       assert_eq!(NodeRef(6), node.resolved_node.get());
     }
   }
