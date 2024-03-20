@@ -11,6 +11,7 @@ use parser::Parser;
 use parser_logger::MockLogger;
 use token_stream::TokenStream;
 
+#[tracing::instrument(name = "parsing")]
 pub fn parse_text(text: &str) -> Result<Ast> {
   let tokens = lex(text)?;
   let mut parser = Parser::new(text, TokenStream::new(tokens), Box::new(MockLogger::new()));

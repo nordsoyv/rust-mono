@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 logos = "0.13.0"
+tracing = { workspace = true }
 
 [dev-dependencies]
 criterion = { version = "0.4" }

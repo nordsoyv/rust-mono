@@ -9,3 +9,4 @@ edition = "2021"
 parser = { path = "../parser" }
 ast = { path = "../ast" }
 anyhow = "1.0.75"
+tracing = { workspace = true }

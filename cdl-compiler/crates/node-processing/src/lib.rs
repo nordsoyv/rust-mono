@@ -1,9 +1,10 @@
 mod processing_context;
-use std::{ cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
 use ast::{Ast, AstNode, Node, NodeRef};
 use processing_context::{ProcessingContext, ProcessingStatus};
+use tracing::trace;
 
 #[derive(Debug, PartialEq, Hash, Eq, Clone)]
 struct RefKey {
@@ -47,11 +48,17 @@ impl NodeProcessor {
     Ok(self.ast)
   }
 
+  #[tracing::instrument(
+    name = "node-processing",
+    skip(self, processing_context),
+    level = "debug"
+  )]
   fn process_node(
     &self,
     node_ref: NodeRef,
     processing_context: ProcessingContext,
   ) -> ProcessingStatus {
+    trace!("processing node: {:?}", node_ref);
     let node = self.get_node(node_ref).unwrap();
     let node_data = (*node).borrow();
     let status = match &node_data.node_data {
@@ -76,7 +83,7 @@ impl NodeProcessor {
     }
     status
   }
-  
+
   #[allow(dead_code)]
   fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
     self.ast.get_parent(node_ref)
@@ -182,6 +189,7 @@ impl NodeProcessor {
     processing_status
   }
 
+  #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
   fn add_property_reference_target(&self, property: NodeRef, name: Rc<str>) {
     let mut ref_key = RefKey::new();
     ref_key.add_name(&name);
@@ -231,12 +239,13 @@ impl NodeProcessor {
     };
     let target = self.get_reference_target(refernce_str);
     match &(*node).borrow().node_data {
-      Node::Reference( ref_data) => ref_data.set_reference(target),
+      Node::Reference(ref_data) => ref_data.set_reference(target),
       _ => panic!("Expected reference node"),
     };
     ProcessingStatus::Complete
   }
 
+  #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
   fn get_reference_target(&self, refernce_str: Rc<str>) -> NodeRef {
     let parts: Vec<_> = refernce_str.split('.').collect();
     let mut ref_key = RefKey::new();

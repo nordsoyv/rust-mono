@@ -2,3 +2,6 @@
 resolver = "2"
 members = ["crates/*"]
 default-members=["crates/cli"]
+
+[workspace.dependencies]
+tracing = "0.1.40"

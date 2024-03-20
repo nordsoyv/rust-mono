@@ -182,6 +182,7 @@ pub fn get_location_from_position(text: &str, position: &Span) -> Location {
   location
 }
 
+#[tracing::instrument(name = "lexer")]
 pub fn lex(text: &str) -> Result<Vec<Token>> {
   let mut lexer = TokenLexer::lexer(text);
   let mut tokens: Vec<Token> = vec![];
