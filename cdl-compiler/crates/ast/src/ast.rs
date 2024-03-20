@@ -14,12 +14,13 @@ pub struct Ast {
   pub nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
   pub locations: RefCell<Vec<Range<usize>>>,
   pub script_entity: NodeRef,
+  processed: RefCell<Vec<bool>>,
 }
 
 impl Default for Ast {
-    fn default() -> Self {
-        Self::new()
-    }
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl Ast {
@@ -28,6 +29,7 @@ impl Ast {
       nodes: RefCell::new(Vec::new()),
       locations: RefCell::new(Vec::new()),
       script_entity: NodeRef(0),
+      processed: RefCell::new(Vec::new()),
     }
   }
   pub fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
@@ -44,19 +46,19 @@ impl Ast {
     node.cloned()
   }
 
-
   pub fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
     nodes.push(Rc::new(RefCell::new(n)));
     let mut locations = self.locations.borrow_mut();
     locations.push(location);
+    let mut processed = self.processed.borrow_mut();
+    processed.push(false);
     (nodes.len() - 1).into()
   }
 
   pub fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
     let nodes = self.nodes.borrow();
     let node = &nodes[parent.0 as usize];
-
     let mut node = node.borrow_mut();
     node.add_child_to_node(child);
   }
@@ -64,6 +66,10 @@ impl Ast {
   pub fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {
     let mut locations = self.locations.borrow_mut();
     locations[node_ref.0 as usize] = start..end;
+  }
+
+  pub fn set_node_processed(&self, node_ref: NodeRef) {
+    self.processed.borrow_mut()[node_ref.0 as usize] = true;
   }
 
   pub fn get_pos_for_node(&self, node_ref: NodeRef) -> Range<usize> {
@@ -219,10 +225,10 @@ impl Ast {
     r: &AstReferenceNode,
     indent: usize,
   ) -> Result<()> {
-    if r.resolved_node == NodeRef(-1) {
+    if r.resolved_node.get() == NodeRef(-1) {
       write!(cdl, "@{}", r.ident)?;
     } else {
-      self.print_node(cdl, r.resolved_node, indent)?;
+      self.print_node(cdl, r.resolved_node.get(), indent)?;
     }
     Ok(())
   }
@@ -282,11 +288,7 @@ impl Ast {
     indent: usize,
   ) -> Result<()> {
     let indent_str = create_indent(indent);
-    writeln!(
-      cdl,
-      "{}table {} = {}",
-      indent_str, alias.alias, alias.table
-    )?;
+    writeln!(cdl, "{}table {} = {}", indent_str, alias.alias, alias.table)?;
     Ok(())
   }
 

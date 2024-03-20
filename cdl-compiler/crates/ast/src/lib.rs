@@ -68,7 +68,6 @@ impl Debug for NodeRef {
 pub struct AstNode {
   pub parent: NodeRef,
   pub node_data: Node,
-  pub processed: bool,
 }
 
 impl AstNode {
@@ -76,7 +75,6 @@ impl AstNode {
     AstNode {
       node_data: node,
       parent,
-      processed: false
     }
   }
 

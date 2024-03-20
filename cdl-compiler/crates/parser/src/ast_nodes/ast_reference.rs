@@ -23,7 +23,7 @@ impl Parsable for AstReferenceNode {
     let ref_token = parser.get_current_token()?;
     let ast_node = AstReferenceNode {
       ident: ref_token.text.as_ref().unwrap().clone(),
-      resolved_node: NodeRef(-1),
+      resolved_node: NodeRef(-1).into(),
     };
     let node_ref = parser.add_node(
       AstNode::new(Node::Reference(ast_node), parent),

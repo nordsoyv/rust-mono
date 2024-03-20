@@ -80,23 +80,16 @@ fn simulate_round(strategy: Strategy) {
   }
 
   println!(
-    "Strategy {:?} : \n\tTotal score {} over {} rounds, Avg: {}. Number of busts {}",
+    "Strategy {:?} : \n\tTotal score {} over {} rounds, Avg: {}. Busts % {}",
     strategy,
     total_score,
     num_rounds,
     total_score / num_rounds,
-    num_busts
+    num_busts * 100 / num_rounds
   );
 }
 
 fn main() {
-  // check_throw_value(1);
-  // check_throw_value(2);
-  // check_throw_value(3);
-  // check_throw_value(4);
-  // check_throw_value(5);
-  // check_throw_value(6);
-  // simulate_round(Strategy::StopOn1);
   simulate_round(Strategy::StopOn1);
   simulate_round(Strategy::ThrowUntilScoreAndLessDice(250, 1));
   simulate_round(Strategy::ThrowUntilScoreAndLessDice(250, 2));
@@ -115,8 +108,4 @@ fn main() {
   simulate_round(Strategy::ThrowUntilScoreAndLessDice(450, 3));
   simulate_round(Strategy::ThrowUntilScoreAndLessDice(450, 4));
   simulate_round(Strategy::ThrowUntilScoreAndLessDice(450, 5));
-  // simulate_round(Strategy::StopOn2);
-  // simulate_round(Strategy::StopOn3);
-  // simulate_round(Strategy::StopOn4);
-  // simulate_round(Strategy::StopOn5);
 }
