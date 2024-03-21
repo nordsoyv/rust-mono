@@ -7,7 +7,6 @@ use crate::parser::Parser;
 
 use super::Parsable;
 
-
 impl Parsable for AstStringNode {
   fn can_parse(parser: &Parser) -> bool {
     let curr_token = parser.get_current_token();

@@ -1,5 +1,5 @@
+use lexer::LexedStr;
 use serde::Serialize;
-use std::rc::Rc;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum QuoteKind {
@@ -9,8 +9,6 @@ pub enum QuoteKind {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstStringNode {
-  pub text: Rc<str>,
+  pub text: LexedStr,
   pub quote_kind: QuoteKind,
 }
-
-

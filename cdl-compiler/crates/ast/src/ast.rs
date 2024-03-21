@@ -210,12 +210,12 @@ impl Ast {
     boolean: &AstBooleanNode,
     _indent: usize,
   ) -> Result<()> {
-    write!(cdl, "{}", boolean.value)?;
+    write!(cdl, "{}", boolean.get())?;
     Ok(())
   }
 
   fn color_to_cdl(&self, cdl: &mut dyn Write, color: &AstColorNode, _indent: usize) -> Result<()> {
-    write!(cdl, "#{}", color.color)?;
+    write!(cdl, "#{}", color.get_color())?;
     Ok(())
   }
 

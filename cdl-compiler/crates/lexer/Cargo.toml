@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.75"
 logos = "0.13.0"
 tracing = { workspace = true }
+serde = { version = "1.0.197" , features =["derive","rc"] }
 
 [dev-dependencies]
 criterion = { version = "0.4" }

@@ -3,7 +3,7 @@ use std::ops::Range;
 use ast::{Ast, AstNode, AstScriptNode, NodeRef};
 use lexer::{get_location_from_position, Token, TokenKind};
 
-use crate::{ast_nodes::Parsable, parser_logger::ParserLogger, token_stream::TokenStream};
+use crate::{ast_nodes::Parsable, token_stream::TokenStream};
 use anyhow::{Context, Result};
 
 #[derive(Debug)]
@@ -11,27 +11,13 @@ pub struct Parser {
   text: String,
   tokens: TokenStream,
   pub ast: Ast,
-  logger: Box<dyn ParserLogger>,
 }
 
 impl Parser {
-  pub fn start_group(&self, text: &str) {
-    self.logger.start_group(text);
-  }
-
-  #[allow(dead_code)]
-  pub fn trace(&self, text: &str) {
-    self.logger.trace(text);
-  }
-  pub fn end_group(&self, text: &str) {
-    self.logger.end_group(text)
-  }
-
-  pub fn new(text: &str, tokens: TokenStream, logger: Box<dyn ParserLogger>) -> Parser {
+  pub fn new(text: &str, tokens: TokenStream) -> Parser {
     Parser {
       tokens,
       text: text.to_string(),
-      logger,
       ast: Ast::new(),
     }
   }

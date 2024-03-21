@@ -6,7 +6,6 @@ use crate::parser::Parser;
 
 use super::Parsable;
 
-
 impl Parsable for AstTableAliasNode {
   fn can_parse(parser: &Parser) -> bool {
     let table_token = parser.get_current_token();

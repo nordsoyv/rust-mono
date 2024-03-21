@@ -3,12 +3,13 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::Result;
 use ast::{Ast, AstNode, Node, NodeRef};
+use lexer::LexedStr;
 use processing_context::{ProcessingContext, ProcessingStatus};
 use tracing::trace;
 
 #[derive(Debug, PartialEq, Hash, Eq, Clone)]
 struct RefKey {
-  path: Vec<Rc<str>>,
+  path: Vec<LexedStr>,
 }
 
 impl RefKey {
@@ -18,7 +19,7 @@ impl RefKey {
   }
 
   #[allow(dead_code)]
-  fn add_name(&mut self, name: &Rc<str>) {
+  fn add_name(&mut self, name: &LexedStr) {
     self.path.push(name.clone())
   }
 
@@ -190,7 +191,7 @@ impl NodeProcessor {
   }
 
   #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
-  fn add_property_reference_target(&self, property: NodeRef, name: Rc<str>) {
+  fn add_property_reference_target(&self, property: NodeRef, name: LexedStr) {
     let mut ref_key = RefKey::new();
     ref_key.add_name(&name);
     self
@@ -246,11 +247,11 @@ impl NodeProcessor {
   }
 
   #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
-  fn get_reference_target(&self, refernce_str: Rc<str>) -> NodeRef {
+  fn get_reference_target(&self, refernce_str: LexedStr) -> NodeRef {
     let parts: Vec<_> = refernce_str.split('.').collect();
     let mut ref_key = RefKey::new();
     for part in parts.iter().rev() {
-      let rc: Rc<str> = (*part).into();
+      let rc: LexedStr = (*part).into();
       ref_key.add_name(&rc);
     }
     if let Some(target_node) = self.ref_targets.borrow().get(&ref_key) {

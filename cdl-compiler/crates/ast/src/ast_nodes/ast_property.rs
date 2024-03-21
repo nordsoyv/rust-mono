@@ -1,13 +1,9 @@
-use serde::Serialize;
-use std::rc::Rc;
-
 use crate::NodeRef;
-
+use lexer::LexedStr;
+use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstPropertyNode {
-  pub name: Rc<str>,
+  pub name: LexedStr,
   pub child: Vec<NodeRef>,
 }
-
-

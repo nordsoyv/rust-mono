@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::parser::Parser;
 
 use super::Parsable;
@@ -11,15 +9,17 @@ use ast::AstPropertyNode;
 use ast::AstTableAliasNode;
 use ast::Node;
 use ast::NodeRef;
+use lexer::LexedStr;
 use lexer::TokenKind;
+use log::trace;
 
 #[derive(Debug)]
 struct EntityHeaderInfo {
-  terms: Vec<Rc<str>>,
+  terms: Vec<LexedStr>,
   start_loc: usize,
-  label: Option<Rc<str>>,
-  refs: Vec<Rc<str>>,
-  ident: Option<Rc<str>>,
+  label: Option<LexedStr>,
+  refs: Vec<LexedStr>,
+  ident: Option<LexedStr>,
   entity_number: Option<f64>,
 }
 
@@ -35,6 +35,7 @@ impl Parsable for AstEntityNode {
     false
   }
 
+  #[tracing::instrument(name = "parse_entity", skip(parser, parent))]
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let header = parse_entity_header(parser)?;
     let entity = AstEntityNode {
@@ -45,10 +46,9 @@ impl Parsable for AstEntityNode {
       ident: header.ident,
       entity_number: header.entity_number,
     };
-    parser.start_group("Parsing entity");
     let ast_node = AstNode::new(Node::Entity(entity), parent);
     let current_entity_ref = parser.add_node(ast_node, header.start_loc..usize::MAX);
-
+    trace!("current_entity_ref {:?}", current_entity_ref);
     let next_token = parser.get_current_token()?;
     if next_token.kind == TokenKind::EOL {
       return Ok(current_entity_ref);
@@ -79,7 +79,6 @@ impl Parsable for AstEntityNode {
       if curr_token.kind == TokenKind::BraceClose {
         parser.eat_token()?;
         parser.update_location_on_node(current_entity_ref, header.start_loc, curr_token.pos.end);
-        parser.end_group("Done parsing entity ");
         return Ok(current_entity_ref);
       }
       return Err(anyhow!("Unexpected error while parsing entity"));
@@ -151,7 +150,7 @@ fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
   let terms = terms
     .iter()
     .map(|t| t.text.as_ref().unwrap().clone())
-    .collect::<Vec<Rc<str>>>();
+    .collect::<Vec<LexedStr>>();
   parser.eat_tokens(terms.len())?;
 
   let label_token = parser.get_tokens_of_kind(TokenKind::String);
@@ -206,4 +205,3 @@ fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
     entity_number,
   })
 }
-

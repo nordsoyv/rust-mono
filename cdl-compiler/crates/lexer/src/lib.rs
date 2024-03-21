@@ -5,15 +5,17 @@ use logos::Logos;
 use logos::Span;
 use std::rc::Rc;
 
-fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
+pub type LexedStr = Rc<str>;
+
+fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> LexedStr {
   let slice = lex.slice();
-  let rc: Rc<str> = slice.into();
+  let rc: LexedStr = slice.into();
   rc
 }
 
-fn to_rcstr_skip1(lex: &mut Lexer<TokenLexer>) -> Rc<str> {
+fn to_rcstr_skip1(lex: &mut Lexer<TokenLexer>) -> LexedStr {
   let slice = &lex.slice()[1..];
-  let rc: Rc<str> = slice.into();
+  let rc: LexedStr = slice.into();
   rc
 }
 
@@ -87,26 +89,25 @@ enum TokenLexer {
 
   #[regex(r#""(?:[^"]|\\")*""#, to_rcstr)]
   #[regex(r#"'(?:[^']|\\')*'"#, to_rcstr)]
-  String(Rc<str>),
+  String(LexedStr),
 
   #[regex("_?[$a-zA-Z0-9_\\-\\.]*", to_rcstr)]
-  Identifier(Rc<str>),
+  Identifier(LexedStr),
 
-  
   #[regex("@[a-zA-Z0-9_\\-\\.]*", to_rcstr_skip1)]
-  Reference(Rc<str>),
+  Reference(LexedStr),
 
   #[regex("\\^[a-zA-Z0-9_\\-\\.]*", to_rcstr_skip1)]
-  HierarchyReference(Rc<str>),
+  HierarchyReference(LexedStr),
 
   #[regex("#[0-9a-fA-F]{6}", to_rcstr_skip1)]
-  Color(Rc<str>),
+  Color(LexedStr),
 
   #[regex("//[^\n]*", to_rcstr)]
-  LineComment(Rc<str>),
+  LineComment(LexedStr),
 
   #[regex(r#"/\*(?:[^*]|\*[^/])*\*/"#, to_rcstr)]
-  MultiLineComment(Rc<str>),
+  MultiLineComment(LexedStr),
 }
 
 #[derive(Debug, PartialEq)]
@@ -149,7 +150,7 @@ pub enum TokenKind {
 pub struct Token {
   pub kind: TokenKind,
   pub pos: Span,
-  pub text: Option<Rc<str>>,
+  pub text: Option<LexedStr>,
 }
 
 #[derive(Debug, Default)]
@@ -164,7 +165,7 @@ pub fn get_location_from_position(text: &str, position: &Span) -> Location {
   let mut location = Location::default();
   let mut line_number = 1;
   let mut line_pos = 1;
-  for (curr_pos, char )in text.chars().enumerate() {
+  for (curr_pos, char) in text.chars().enumerate() {
     if curr_pos == position.start {
       location.start_line = line_number;
       location.start_pos = line_pos;
@@ -526,7 +527,7 @@ mod tests {
       }
     );
   }
-  
+
   #[test]
   fn can_parse_line_comments() {
     let tokens = lex("// hello comment");

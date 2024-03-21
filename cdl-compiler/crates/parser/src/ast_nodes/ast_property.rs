@@ -29,7 +29,7 @@ impl Parsable for AstPropertyNode {
         name: name_token.text.as_ref().unwrap().clone(),
         child: vec![],
       };
- //     parser.start_group("Property {:?}");
+      //     parser.start_group("Property {:?}");
       let node_ref = parser.add_node(
         AstNode::new(Node::Property(ast_node), parent),
         name_token.pos.start..usize::MAX,
@@ -56,7 +56,7 @@ impl Parsable for AstPropertyNode {
       .iter()
       .for_each(|c| parser.add_child_to_node(node_ref, *c));
     //parser.add_child_to_node(node_ref, children);
-  //  parser.end_group("Done property");
+    //  parser.end_group("Done property");
     Ok(node_ref)
   }
 }

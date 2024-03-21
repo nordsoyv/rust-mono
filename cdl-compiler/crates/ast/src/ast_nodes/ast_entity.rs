@@ -1,14 +1,14 @@
+use lexer::LexedStr;
 use serde::Serialize;
-use std::rc::Rc;
 
 use crate::NodeRef;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstEntityNode {
   pub children: Vec<NodeRef>,
-  pub terms: Vec<Rc<str>>,
-  pub label: Option<Rc<str>>,
-  pub refs: Vec<Rc<str>>,
-  pub ident: Option<Rc<str>>,
+  pub terms: Vec<LexedStr>,
+  pub label: Option<LexedStr>,
+  pub refs: Vec<LexedStr>,
+  pub ident: Option<LexedStr>,
   pub entity_number: Option<f64>,
 }

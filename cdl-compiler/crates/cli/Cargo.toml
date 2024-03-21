@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 parser = { path = "../parser" }
 ast = { path = "../ast" }
+lexer = { path = "../lexer" }
 node-processing = { path = "../node-processing" }
 clap = {version="4.5.1", features = ["derive"]}
 serde = { version = "1.0.197" , features =["derive","rc"] }

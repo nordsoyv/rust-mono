@@ -22,7 +22,10 @@ impl Parsable for AstTitleNode {
     if token_2.unwrap().kind != TokenKind::EOL {
       return false;
     }
-    if curr_token.kind == TokenKind::Identifier && curr_token.text == Some("title".into()) && token1.kind == TokenKind::String {
+    if curr_token.kind == TokenKind::Identifier
+      && curr_token.text == Some("title".into())
+      && token1.kind == TokenKind::String
+    {
       return true;
     }
     false

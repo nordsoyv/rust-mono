@@ -3,16 +3,16 @@ use std::{
   fs::{self, File},
   io::{BufReader, BufWriter},
   path::{Path, PathBuf},
-  rc::Rc,
   time::Instant,
 };
 
 use ast::{Ast, Node, NodeRef};
 use clap::Parser;
+use lexer::LexedStr;
 use node_processing::NodeProcessor;
 use parser::parse_text;
 use tempfile::TempDir;
-use tracing::info;
+use tracing::{info, Level};
 use tracing_flame::FlameLayer;
 use tracing_subscriber::{prelude::*, registry::Registry};
 
@@ -26,7 +26,7 @@ struct Cli {
   graph: bool,
 }
 
-fn compare_rc_str_to_filters(needle: &Rc<str>, filters: &Vec<&str>) -> bool {
+fn compare_rc_str_to_filters(needle: &LexedStr, filters: &Vec<&str>) -> bool {
   let n: String = needle.to_string();
   for filter in filters {
     if &n == filter {
@@ -98,7 +98,7 @@ fn main() {
       .expect("failed to create temporary directory");
     (Some(setup_global_subscriber(tmp_dir.path())), out, tmp_dir)
   } else {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
     (None, PathBuf::new(), TempDir::new().unwrap())
   };
 
@@ -197,5 +197,4 @@ fn main() {
     drop(guard.unwrap());
     make_flamegraph(tmp_dir.path(), out.as_ref());
   }
-  
 }

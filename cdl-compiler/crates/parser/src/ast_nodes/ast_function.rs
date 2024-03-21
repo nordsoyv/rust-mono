@@ -2,7 +2,10 @@ use anyhow::{Context, Result};
 use ast::{AstFunctionNode, AstNode, Node, NodeRef};
 use lexer::TokenKind;
 
-use crate::{parse_expr::{parse_arg_list, parse_bracket_arg_list}, parser::Parser};
+use crate::{
+  parse_expr::{parse_arg_list, parse_bracket_arg_list},
+  parser::Parser,
+};
 
 use super::Parsable;
 

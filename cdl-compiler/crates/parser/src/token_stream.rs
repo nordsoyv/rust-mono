@@ -53,9 +53,9 @@ impl TokenStream {
         )));
       }
       self.eat_token()?;
-      return Ok(current_token.pos.clone());    
+      return Ok(current_token.pos.clone());
     }
-    Err(anyhow!("Expected to find a token, but got EOF instead"))  
+    Err(anyhow!("Expected to find a token, but got EOF instead"))
   }
 
   pub fn get_tokens_of_kind(&self, kind: TokenKind) -> &[Token] {

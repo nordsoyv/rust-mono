@@ -1,8 +1,8 @@
+use super::Parsable;
+use crate::parser::Parser;
 use anyhow::{anyhow, Result};
 use ast::{AstNode, AstNumberNode, Node, NodeRef};
 use lexer::TokenKind;
-use crate::parser::Parser;
-use super::Parsable;
 
 impl Parsable for AstNumberNode {
   fn can_parse(parser: &Parser) -> bool {

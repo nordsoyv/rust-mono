@@ -6,5 +6,3 @@ use crate::NodeRef;
 pub struct AstScriptNode {
   pub children: Vec<NodeRef>,
 }
-
-

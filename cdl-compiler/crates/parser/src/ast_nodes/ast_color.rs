@@ -23,9 +23,9 @@ impl Parsable for AstColorNode {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let color_token = parser.get_current_token()?;
     let ast_node = AstNode::new(
-      Node::Color(AstColorNode {
-        color: color_token.text.as_ref().unwrap().clone(),
-      }),
+      Node::Color(AstColorNode::new(
+        color_token.text.as_ref().unwrap().clone(),
+      )),
       parent,
     );
     let node_ref = parser.add_node(ast_node, color_token.pos.clone());

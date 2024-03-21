@@ -14,10 +14,11 @@ mod ast_table_alias;
 mod ast_title;
 mod ast_vpath;
 
-
+pub use ast_boolean::AstBooleanNode;
 pub use ast_color::AstColorNode;
 pub use ast_entity::AstEntityNode;
 pub use ast_formula::AstFormulaNode;
+pub use ast_function::AstFunctionNode;
 pub use ast_identifier::AstIdentifierNode;
 pub use ast_number::AstNumberNode;
 pub use ast_operator::AstOperatorNode;
@@ -30,5 +31,3 @@ pub use ast_string::QuoteKind;
 pub use ast_table_alias::AstTableAliasNode;
 pub use ast_title::AstTitleNode;
 pub use ast_vpath::AstVPathNode;
-pub use ast_boolean::AstBooleanNode;
-pub use ast_function::AstFunctionNode;

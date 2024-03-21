@@ -4,5 +4,3 @@ use serde::Serialize;
 pub struct AstNumberNode {
   pub value: f64,
 }
-
-

@@ -1,8 +1,16 @@
 use crate::{
-  ast_nodes::{ast_entity::{can_parse_anonymous_entity, parse_anonymous_entity}, ast_operator::{can_parse_factor, can_parse_term, parse_operator_factor, parse_operator_term}, Parsable}, parser::Parser
+  ast_nodes::{
+    ast_entity::{can_parse_anonymous_entity, parse_anonymous_entity},
+    ast_operator::{can_parse_factor, can_parse_term, parse_operator_factor, parse_operator_term},
+    Parsable,
+  },
+  parser::Parser,
 };
 use anyhow::{anyhow, Result};
-use ast::{AstBooleanNode, AstColorNode, AstEntityNode, AstFormulaNode, AstFunctionNode, AstIdentifierNode, AstNumberNode, AstReferenceNode, AstStringNode, AstVPathNode, NodeRef};
+use ast::{
+  AstBooleanNode, AstColorNode, AstEntityNode, AstFormulaNode, AstFunctionNode, AstIdentifierNode,
+  AstNumberNode, AstReferenceNode, AstStringNode, AstVPathNode, NodeRef,
+};
 use lexer::TokenKind;
 
 pub fn parse_arg_list(parser: &mut Parser, parent: NodeRef) -> Result<Vec<NodeRef>> {
@@ -84,7 +92,7 @@ pub fn parse_expression(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef>
 pub fn parse_term(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
   let factor_node_ref = parse_factor(parser, parent)?;
   if can_parse_factor(parser) {
-    let operator_ref =parse_operator_factor(parser, parent, factor_node_ref)?;
+    let operator_ref = parse_operator_factor(parser, parent, factor_node_ref)?;
     Ok(operator_ref)
   } else {
     Ok(factor_node_ref)

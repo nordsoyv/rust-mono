@@ -1,20 +1,18 @@
 mod ast_nodes;
 mod parse_expr;
 mod parser;
-mod parser_logger;
 mod token_stream;
 
 use anyhow::Result;
 use ast::Ast;
 use lexer::lex;
 use parser::Parser;
-use parser_logger::MockLogger;
 use token_stream::TokenStream;
 
-#[tracing::instrument(name = "parsing")]
+#[tracing::instrument(name = "parsing", skip(text))]
 pub fn parse_text(text: &str) -> Result<Ast> {
   let tokens = lex(text)?;
-  let mut parser = Parser::new(text, TokenStream::new(tokens), Box::new(MockLogger::new()));
+  let mut parser = Parser::new(text, TokenStream::new(tokens));
   parser.parse()?;
 
   Ok(parser.ast)
@@ -176,7 +174,7 @@ mod tests {
     "#
     );
     if let Node::Color(node) = node_data!(ast, 3) {
-      assert_eq!("00aabb", node.color.to_string());
+      assert_eq!("00aabb", node.get_color().to_string());
     }
   }
   #[test]
