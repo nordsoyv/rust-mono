@@ -241,7 +241,6 @@ impl NodeProcessor {
       }
     };
     let target = self.get_reference_target(refernce_str);
-    println!("found target {:?}", target);
     match &node.node_data {
       Node::Reference(ref_data) => ref_data.set_reference(target),
       _ => panic!("Expected reference node"),
