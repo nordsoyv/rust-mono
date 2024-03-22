@@ -358,4 +358,23 @@ mod tests {
       assert_eq!(NodeRef(11), node.resolved_node.get());
     }
   }
+
+  #[test]
+  fn should_resolve_references_which_points_on_same_target_with_different_paths(){
+let text = r#"
+custom properties #cp {
+   item: {
+     value: 1
+   }
+   first: @value
+   second: @item.value
+   third: @cp.item.value
+}
+"#;
+    let ast = parser::parse_text(text).unwrap();
+    let np = NodeProcessor::new(ast);
+    let processed_ast = np.process().unwrap();
+    print!("{}", processed_ast.to_cdl().unwrap());
+
+  }
 }
