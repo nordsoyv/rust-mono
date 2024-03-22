@@ -39,8 +39,8 @@ fn compare_rc_str_to_filters(needle: &LexedStr, filters: &Vec<&str>) -> bool {
 fn find_filters(ast: &Ast, filters: &Vec<&str>) -> Vec<NodeRef> {
   let mut result = vec![];
   for (index, node) in ast.nodes.borrow().iter().enumerate() {
-    let n = node.borrow();
-    match &n.node_data {
+    
+    match &node.node_data {
       Node::Entity(ent) => {
         if let Some(id) = &ent.ident {
           if compare_rc_str_to_filters(id, filters) {

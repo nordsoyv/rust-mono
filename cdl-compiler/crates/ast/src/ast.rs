@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Ast {
-  pub nodes: RefCell<Vec<Rc<RefCell<AstNode>>>>,
+  pub nodes: RefCell<Vec<Rc<AstNode>>>,
   pub locations: RefCell<Vec<Range<usize>>>,
   pub script_entity: NodeRef,
   processed: RefCell<Vec<bool>>,
@@ -36,11 +36,11 @@ impl Ast {
     if node_ref == NodeRef(0) {
       None
     } else {
-      self.get_node(node_ref).map(|node| (*node).borrow().parent)
+      self.get_node(node_ref).map(|node| node.parent)
     }
   }
 
-  pub fn get_node(&self, node_ref: NodeRef) -> Option<Rc<RefCell<AstNode>>> {
+  pub fn get_node(&self, node_ref: NodeRef) -> Option<Rc<AstNode>> {
     let nodes = self.nodes.borrow();
     let node = nodes.get(node_ref.0 as usize);
     node.cloned()
@@ -48,7 +48,7 @@ impl Ast {
 
   pub fn add_node(&self, n: AstNode, location: Range<usize>) -> NodeRef {
     let mut nodes = self.nodes.borrow_mut();
-    nodes.push(Rc::new(RefCell::new(n)));
+    nodes.push(n.into());
     let mut locations = self.locations.borrow_mut();
     locations.push(location);
     let mut processed = self.processed.borrow_mut();
@@ -59,7 +59,6 @@ impl Ast {
   pub fn add_child_to_node(&self, parent: NodeRef, child: NodeRef) {
     let nodes = self.nodes.borrow();
     let node = &nodes[parent.0 as usize];
-    let mut node = node.borrow_mut();
     node.add_child_to_node(child);
   }
 
@@ -90,7 +89,7 @@ impl Ast {
     indent: usize,
   ) -> Result<()> {
     let nodes = self.nodes.borrow();
-    let node_data = &nodes[node_ref.0 as usize].borrow().node_data;
+    let node_data = &nodes[node_ref.0 as usize].node_data;
     match node_data {
       Node::Title(title) => self.title_to_cdl(cdl, title, indent)?,
       Node::Entity(entity) => self.entity_to_cdl(cdl, entity, indent)?,
@@ -117,7 +116,7 @@ impl Ast {
     s: &AstScriptNode,
     indent: usize,
   ) -> Result<()> {
-    for child in &s.children {
+    for child in s.children.borrow().iter() {
       self.print_node(cdl, *child, indent)?;
     }
     Ok(())
@@ -129,7 +128,7 @@ impl Ast {
     title: &AstTitleNode,
     _indent: usize,
   ) -> Result<()> {
-    writeln!(cdl, "title: {}", title.title)?;
+    writeln!(cdl, "title: {}", title.title.as_str())?;
     Ok(())
   }
 
@@ -140,7 +139,17 @@ impl Ast {
     indent: usize,
   ) -> Result<()> {
     let indent_str = create_indent(indent);
-    write!(cdl, "{}{}", indent_str, entity.terms.join(" "))?;
+    write!(
+      cdl,
+      "{}{}",
+      indent_str,
+      entity
+        .terms
+        .iter()
+        .map(|t| t.0.clone())
+        .collect::<Vec<Rc<str>>>()
+        .join(" ")
+    )?;
     if let Some(label) = &entity.label {
       write!(cdl, " {}", label)?;
     }
@@ -154,7 +163,7 @@ impl Ast {
       write!(cdl, " {}", num)?;
     }
     writeln!(cdl, " {{")?;
-    for child in &entity.children {
+    for child in entity.children.borrow().iter() {
       self.print_node(cdl, *child, indent + 1)?;
     }
     writeln!(cdl, "{}}}", indent_str)?;
@@ -169,7 +178,9 @@ impl Ast {
   ) -> Result<()> {
     let indent_str = create_indent(indent);
     write!(cdl, "{}{}: ", indent_str, prop.name)?;
-    self.print_node(cdl, *prop.child.first().unwrap(), indent)?;
+    for child in prop.children.borrow().iter() {
+      self.print_node(cdl, *child, indent)?;
+    }
     writeln!(cdl)?;
     Ok(())
   }
@@ -215,7 +226,7 @@ impl Ast {
   }
 
   fn color_to_cdl(&self, cdl: &mut dyn Write, color: &AstColorNode, _indent: usize) -> Result<()> {
-    write!(cdl, "#{}", color.get_color())?;
+    write!(cdl, "#{}", color.color)?;
     Ok(())
   }
 
@@ -226,7 +237,7 @@ impl Ast {
     indent: usize,
   ) -> Result<()> {
     if r.resolved_node.get() == NodeRef(-1) {
-      write!(cdl, "@{}", r.ident)?;
+      write!(cdl, "@{}", r.ident.as_str())?;
     } else {
       self.print_node(cdl, r.resolved_node.get(), indent)?;
     }
@@ -253,7 +264,7 @@ impl Ast {
 
   fn func_to_cdl(&self, cdl: &mut dyn Write, func: &AstFunctionNode, indent: usize) -> Result<()> {
     write!(cdl, "{}(", func.name)?;
-    for child in &func.children {
+    for child in func.children.borrow().iter() {
       self.print_node(cdl, *child, indent)?;
       write!(cdl, ", ")?;
     }
@@ -262,7 +273,7 @@ impl Ast {
   }
 
   fn op_to_cdl(&self, cdl: &mut dyn Write, op: &AstOperatorNode, indent: usize) -> Result<()> {
-    self.print_node(cdl, op.left, indent)?;
+    self.print_node(cdl, op.left.get(), indent)?;
     match op.operator {
       Operator::Plus => write!(cdl, " + ")?,
       Operator::Minus => write!(cdl, " - ")?,
@@ -277,7 +288,7 @@ impl Ast {
       Operator::MoreThan => write!(cdl, " > ")?,
       Operator::MoreThanOrEqual => write!(cdl, " >= ")?,
     }
-    self.print_node(cdl, op.right, indent)?;
+    self.print_node(cdl, op.right.get(), indent)?;
     Ok(())
   }
 

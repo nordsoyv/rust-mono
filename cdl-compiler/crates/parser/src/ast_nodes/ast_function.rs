@@ -36,7 +36,7 @@ impl Parsable for AstFunctionNode {
         .context("Error while parsing Function")?;
 
       let ast_node = AstFunctionNode {
-        children: vec![],
+        children: vec![].into(),
         name: func_name_token.text.as_ref().unwrap().clone(),
       };
       (ast_node, func_name_token.pos.start)

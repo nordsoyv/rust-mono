@@ -25,11 +25,7 @@ impl Parsable for AstPropertyNode {
     let (node_ref, start_pos) = {
       let name_token = parser.get_current_token()?;
 
-      let ast_node = AstPropertyNode {
-        name: name_token.text.as_ref().unwrap().clone(),
-        child: vec![],
-      };
-      //     parser.start_group("Property {:?}");
+      let ast_node = AstPropertyNode::new(name_token.text.as_ref().unwrap().clone());
       let node_ref = parser.add_node(
         AstNode::new(Node::Property(ast_node), parent),
         name_token.pos.start..usize::MAX,

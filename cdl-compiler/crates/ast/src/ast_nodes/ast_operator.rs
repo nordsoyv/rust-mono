@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use serde::Serialize;
 
 use crate::NodeRef;
@@ -21,6 +23,18 @@ pub enum Operator {
 #[derive(Debug, Serialize, Clone)]
 pub struct AstOperatorNode {
   pub operator: Operator,
-  pub left: NodeRef,
-  pub right: NodeRef,
+  pub left: Cell<NodeRef>,
+  pub right: Cell<NodeRef>,
+}
+impl AstOperatorNode {
+  pub(crate) fn add_right(&self, child: NodeRef) {
+    self.right.set(child);
+  }
+  pub fn new(operator: Operator, left: NodeRef, right: NodeRef) -> Self {
+    AstOperatorNode {
+      operator,
+      left: Cell::new(left),
+      right: Cell::new(right),
+    }
+  }
 }

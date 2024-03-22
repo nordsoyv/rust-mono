@@ -39,7 +39,7 @@ impl Parsable for AstEntityNode {
   fn parse(parser: &mut Parser, parent: NodeRef) -> Result<NodeRef> {
     let header = parse_entity_header(parser)?;
     let entity = AstEntityNode {
-      children: vec![],
+      children: vec![].into(),
       terms: header.terms,
       label: header.label,
       refs: header.refs,
@@ -103,7 +103,7 @@ pub fn parse_anonymous_entity(parser: &mut Parser, parent: NodeRef) -> Result<No
     open_brace_token.pos.start
   };
   let entity = AstEntityNode {
-    children: vec![],
+    children: vec![].into(),
     terms: vec![],
     label: None,
     refs: vec![],

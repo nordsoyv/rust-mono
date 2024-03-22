@@ -12,7 +12,7 @@ impl Parsable for AstScriptNode {
   }
 
   fn parse(parser: &mut Parser, _: NodeRef) -> Result<NodeRef> {
-    let root_node = AstScriptNode { children: vec![] };
+    let root_node = AstScriptNode { children: vec![].into() };
     let root_node_ref = parser.add_node(
       AstNode::new(Node::Script(root_node), NodeRef(-1)),
       0..usize::MAX,

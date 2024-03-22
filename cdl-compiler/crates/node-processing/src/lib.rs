@@ -61,8 +61,8 @@ impl NodeProcessor {
   ) -> ProcessingStatus {
     trace!("processing node: {:?}", node_ref);
     let node = self.get_node(node_ref).unwrap();
-    let node_data = (*node).borrow();
-    let status = match &node_data.node_data {
+    let node_data = &(*node).node_data;
+    let status = match node_data {
       Node::Title(_) => ProcessingStatus::Complete,
       Node::Entity(_) => self.process_entity(node_ref, processing_context.create_for_child()),
       Node::Property(_) => self.process_property(node_ref, processing_context.create_for_child()),
@@ -85,12 +85,11 @@ impl NodeProcessor {
     status
   }
 
-  #[allow(dead_code)]
   fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
     self.ast.get_parent(node_ref)
   }
 
-  fn get_node(&self, node_ref: NodeRef) -> Option<Rc<RefCell<AstNode>>> {
+  fn get_node(&self, node_ref: NodeRef) -> Option<Rc<AstNode>> {
     self.ast.get_node(node_ref)
   }
 
@@ -107,8 +106,8 @@ impl NodeProcessor {
       .get_node(node_ref)
       .expect("Tried to get an script node, got None");
     let children = {
-      match &(*node).borrow().node_data {
-        Node::Script(script_data) => script_data.children.clone(),
+      match &(*node).node_data {
+        Node::Script(script_data) => script_data.children.borrow().clone(),
         _ => panic!("Expected script node"),
       }
     };
@@ -124,8 +123,8 @@ impl NodeProcessor {
       .get_node(node_ref)
       .expect("Tried to get an entity node, got None");
     let children = {
-      match &(*node).borrow().node_data {
-        Node::Entity(entity_data) => entity_data.children.clone(),
+      match &node.node_data {
+        Node::Entity(entity_data) => entity_data.children.borrow().clone(),
         _ => panic!("Expected entity node"),
       }
     };
@@ -140,8 +139,11 @@ impl NodeProcessor {
       .get_node(node_ref)
       .expect("Tried to get an property node, got None");
     let (children, name) = {
-      match &(*node).borrow().node_data {
-        Node::Property(property_data) => (property_data.child.clone(), property_data.name.clone()),
+      match &node.node_data {
+        Node::Property(property_data) => (
+          property_data.children.borrow().clone(),
+          property_data.name.clone(),
+        ),
         _ => panic!("Expected property node"),
       }
     };
@@ -203,7 +205,7 @@ impl NodeProcessor {
       //        let mut next_key = ref_key;
       //      dbg!(&parent);
       let parent_name_option = {
-        match &self.get_node(parent).unwrap().borrow().node_data {
+        match &self.get_node(parent).unwrap().node_data {
           Node::Entity(prop) => prop.ident.clone(),
           Node::Script(_) => return,
           Node::Property(_) => {
@@ -233,13 +235,14 @@ impl NodeProcessor {
       .get_node(node_ref)
       .expect("Tried to get a node, got None");
     let refernce_str = {
-      match &(*node).borrow().node_data {
+      match &node.node_data {
         Node::Reference(ref_data) => ref_data.ident.clone(),
         _ => panic!("Expected reference node"),
       }
     };
     let target = self.get_reference_target(refernce_str);
-    match &(*node).borrow().node_data {
+    println!("found target {:?}", target);
+    match &node.node_data {
       Node::Reference(ref_data) => ref_data.set_reference(target),
       _ => panic!("Expected reference node"),
     };
@@ -248,7 +251,7 @@ impl NodeProcessor {
 
   #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
   fn get_reference_target(&self, refernce_str: LexedStr) -> NodeRef {
-    let parts: Vec<_> = refernce_str.split('.').collect();
+    let parts: Vec<_> = refernce_str.0.split('.').collect();
     let mut ref_key = RefKey::new();
     for part in parts.iter().rev() {
       let rc: LexedStr = (*part).into();
@@ -268,7 +271,7 @@ mod tests {
   macro_rules! node_data {
     ($ast:expr, $x:literal) => {{
       let node = $ast.get_node($x.into()).unwrap();
-      node.clone().borrow().node_data.clone()
+      &(*node.clone()).node_data
     }};
   }
 

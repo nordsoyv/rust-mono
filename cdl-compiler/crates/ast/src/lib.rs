@@ -78,14 +78,14 @@ impl AstNode {
     }
   }
 
-  pub fn add_child_to_node(&mut self, child: NodeRef) {
-    let node_data = &mut self.node_data;
+  pub fn add_child_to_node(&self, child: NodeRef) {
+    let node_data = &self.node_data;
     match node_data {
-      Node::Entity(ref mut ent) => ent.children.push(child),
-      Node::Script(ref mut script) => script.children.push(child),
-      Node::Property(ref mut prop) => prop.child.push(child),
-      Node::Function(ref mut func) => func.children.push(child),
-      Node::Operator(ref mut op) => op.right = child,
+      Node::Entity(ent) => ent.add_child(child),
+      Node::Script(script) => script.add_child(child),
+      Node::Property(prop) => prop.add_property(child),
+      Node::Function( func) => func.add_argument(child),
+      Node::Operator(op) => op.add_right(  child),
       _ => panic!("Unknown type to set as parent {:?}", node_data),
     };
   }

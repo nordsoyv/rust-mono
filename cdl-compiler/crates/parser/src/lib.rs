@@ -28,7 +28,7 @@ mod tests {
   macro_rules! node_data {
     ($ast:expr, $x:literal) => {{
       let node = $ast.get_node($x.into()).unwrap();
-      node.clone().borrow().node_data.clone()
+      &(*node.clone()).node_data
     }};
   }
 
@@ -90,7 +90,7 @@ mod tests {
     );
     if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
-      assert_eq!(0, node.children.len());
+      assert_eq!(0, node.get_number_of_children());
     }
   }
   #[test]
@@ -103,7 +103,7 @@ mod tests {
     );
     if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
-      assert_eq!(0, node.children.len());
+      assert_eq!(0, node.get_number_of_children());
       assert_eq!("\"label\"", node.label.as_ref().unwrap().to_string());
       assert_eq!("ref1", node.refs[0].to_string());
       assert_eq!("ref2", node.refs[1].to_string());
@@ -174,7 +174,7 @@ mod tests {
     "#
     );
     if let Node::Color(node) = node_data!(ast, 3) {
-      assert_eq!("00aabb", node.get_color().to_string());
+      assert_eq!("00aabb", node.color.to_string());
     }
   }
   #[test]
@@ -271,11 +271,11 @@ mod tests {
     );
     if let Node::Entity(node) = node_data!(ast, 1) {
       assert_eq!("maintype", node.terms[0].to_string());
-      assert_eq!(NodeRef(2), node.children[0]);
+      assert_eq!(NodeRef(2), node.children.borrow()[0]);
     }
     if let Node::Entity(node) = node_data!(ast, 2) {
       assert_eq!("otherMaintype", node.terms[0].to_string());
-      assert_eq!(0, node.children.len());
+      assert_eq!(0, node.get_number_of_children());
     }
   }
 
@@ -305,7 +305,7 @@ mod tests {
     );
     if let Node::Function(node) = node_data!(ast, 3) {
       assert_eq!("func", node.name.to_string());
-      assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children);
+      assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children.borrow().clone());
     }
   }
 
@@ -318,7 +318,7 @@ mod tests {
     "#
     );
     if let Node::Property(node) = node_data!(ast, 3) {
-      assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.child);
+      assert_eq!(vec![NodeRef(4), NodeRef(5), NodeRef(6)], node.children.borrow().clone());
     }
   }
   #[test]
@@ -330,7 +330,7 @@ mod tests {
     "#
     );
     if let Node::Property(node) = node_data!(ast, 2) {
-      assert_eq!(vec![NodeRef(4)], node.child);
+      assert_eq!(vec![NodeRef(4)], node.children.borrow().clone());
     }
   }
 
@@ -343,11 +343,11 @@ mod tests {
     "#
     );
     if let Node::Property(node) = node_data!(ast, 2) {
-      assert_eq!(vec![NodeRef(4)], node.child);
+      assert_eq!(vec![NodeRef(4)], node.children.borrow().clone());
     }
     if let Node::Operator(node) = node_data!(ast, 6) {
-      assert_eq!(NodeRef(5), node.left);
-      assert_eq!(NodeRef(7), node.right);
+      assert_eq!(NodeRef(5), node.left.get());
+      assert_eq!(NodeRef(7), node.right.get());
     }
   }
 

@@ -24,7 +24,7 @@ impl Parsable for AstStringNode {
     let string_token = parser.get_current_token()?;
     let text = string_token.text.clone().unwrap();
     //parser.trace("Parsing String");
-    let quote_kind = if text.starts_with('\'') {
+    let quote_kind = if text.0.starts_with('\'') {
       QuoteKind::SingleQuote
     } else {
       QuoteKind::DoubleQuote

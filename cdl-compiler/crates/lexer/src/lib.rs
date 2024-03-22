@@ -3,20 +3,39 @@ use anyhow::Result;
 use logos::Lexer;
 use logos::Logos;
 use logos::Span;
+use serde::Serialize;
+use std::fmt::Display;
 use std::rc::Rc;
 
-pub type LexedStr = Rc<str>;
+#[derive(Debug,Clone,Serialize,PartialEq,Eq,Hash)]
+pub struct LexedStr(pub Rc<str>);
+
+impl From<&str> for LexedStr {
+  fn from(value: &str) -> Self {
+    LexedStr(value.into())
+  }
+}
+
+impl Display for LexedStr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f,"{}", self.0)
+    }
+}
+
+impl LexedStr {
+  pub fn as_str(&self) -> &str {
+    &self.0
+  }
+}
 
 fn to_rcstr(lex: &mut Lexer<TokenLexer>) -> LexedStr {
   let slice = lex.slice();
-  let rc: LexedStr = slice.into();
-  rc
+  slice.into()
 }
 
 fn to_rcstr_skip1(lex: &mut Lexer<TokenLexer>) -> LexedStr {
   let slice = &lex.slice()[1..];
-  let rc: LexedStr = slice.into();
-  rc
+  slice.into()
 }
 
 #[derive(Logos, Debug, PartialEq)]

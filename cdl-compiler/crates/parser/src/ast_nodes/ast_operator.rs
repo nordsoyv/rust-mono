@@ -51,11 +51,7 @@ pub fn parse_operator_term(parser: &mut Parser, parent: NodeRef, left: NodeRef) 
     TokenKind::Or => Operator::Or,
     _ => return Err(anyhow!("Unknown token when parsing operator")),
   };
-  let operator_node = AstOperatorNode {
-    left,
-    right: NodeRef(0),
-    operator,
-  };
+  let operator_node = AstOperatorNode::new(operator, left, NodeRef(0));
   let operator_node_ref = parser.add_node(
     AstNode::new(Node::Operator(operator_node), parent),
     operator_token.pos.start..usize::MAX,
@@ -80,11 +76,7 @@ pub fn parse_operator_factor(
     TokenKind::Minus => Operator::Minus,
     _ => return Err(anyhow!("Unknown token when parsing operator")),
   };
-  let operator_node = AstOperatorNode {
-    left,
-    right: NodeRef(0),
-    operator,
-  };
+  let operator_node = AstOperatorNode::new(operator, left, NodeRef(0));
   let operator_node_ref = parser.add_node(
     AstNode::new(Node::Operator(operator_node), parent),
     operator_token.pos.start..usize::MAX,
