@@ -96,7 +96,7 @@ impl NodeProcessor {
       Node::Boolean(_) => ProcessingStatus::Complete,
       Node::VPath(_) => ProcessingStatus::Complete,
       Node::Color(_) => ProcessingStatus::Complete,
-      Node::Reference(_) => self.process_reference(node_ref, processing_context.create_for_child()),
+      Node::Reference(_) => self.process_reference(node_ref),
       Node::Function(_) => ProcessingStatus::Complete,
       Node::Operator(_) => ProcessingStatus::Complete,
       Node::TableAlias(_) => ProcessingStatus::Complete,
@@ -249,11 +249,7 @@ impl NodeProcessor {
     }
   }
 
-  fn process_reference(
-    &self,
-    node_ref: NodeRef,
-    processing_context: ProcessingContext,
-  ) -> ProcessingStatus {
+  fn process_reference(&self, node_ref: NodeRef) -> ProcessingStatus {
     let node = self
       .get_node(node_ref)
       .expect("Tried to get a node, got None");
@@ -298,6 +294,8 @@ impl NodeProcessor {
 
 #[cfg(test)]
 mod tests {
+  use ast::select_property_value;
+
   use super::*;
 
   macro_rules! node_data {
@@ -354,8 +352,10 @@ mod tests {
     let np = NodeProcessor::new(ast);
     let processed_ast = np.process().unwrap();
     print!("{}", processed_ast.to_cdl().unwrap());
-    // if let Node::Reference(node) = node_data!(processed_ast, 11) {
-    //   assert_eq!(NodeRef(6), node.resolved_node.get());
-    // }
+    let selected = select_property_value(&processed_ast, "value");
+    let s = processed_ast.get_node(selected[0]).unwrap();
+    if let Node::Reference(node) = &(*s).node_data {
+      assert_eq!(NodeRef(11), node.resolved_node.get());
+    }
   }
 }

@@ -1,5 +1,6 @@
 mod ast;
 mod ast_nodes;
+mod select;
 
 use serde::Serialize;
 use std::fmt::Debug;
@@ -23,6 +24,7 @@ pub use ast_nodes::Operator;
 pub use ast_nodes::QuoteKind;
 
 pub use ast::Ast;
+pub use select::*;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Node {
