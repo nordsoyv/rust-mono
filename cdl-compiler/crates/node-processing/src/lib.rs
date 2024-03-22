@@ -30,9 +30,25 @@ impl RefKey {
 }
 
 #[derive(Debug)]
+struct Task {
+  node_ref: NodeRef,
+  processing_context: ProcessingContext,
+}
+
+impl Task {
+  fn new(node_ref: NodeRef, processing_context: ProcessingContext) -> Task {
+    Task {
+      node_ref,
+      processing_context,
+    }
+  }
+}
+
+#[derive(Debug)]
 pub struct NodeProcessor {
   ast: Ast,
   ref_targets: RefCell<HashMap<RefKey, NodeRef>>,
+  tasks: RefCell<Vec<Task>>,
 }
 
 impl NodeProcessor {
@@ -40,12 +56,19 @@ impl NodeProcessor {
     NodeProcessor {
       ast,
       ref_targets: RefCell::new(HashMap::new()),
+      tasks: RefCell::new(Vec::new()),
     }
   }
 
   pub fn process(self) -> Result<Ast> {
-    self.process_node(self.ast.script_entity, ProcessingContext::new());
-    //dbg!(&self.ref_targets.borrow());
+    let status = self.process_node(self.ast.script_entity, ProcessingContext::new());
+    println!("processing status: {:?}", status);
+    if self.tasks.borrow().len() > 0 {
+      let tasks = self.tasks.take();
+      for task in tasks {
+        self.process_node(task.node_ref, task.processing_context);
+      }
+    }
     Ok(self.ast)
   }
 
@@ -79,8 +102,11 @@ impl NodeProcessor {
       Node::TableAlias(_) => ProcessingStatus::Complete,
       Node::Formula(_) => ProcessingStatus::Complete,
     };
+    // dbg!("processing status", &status);
     if status.is_complete() {
       self.set_node_processed(node_ref);
+    } else {
+      self.create_task(node_ref, processing_context);
     }
     status
   }
@@ -111,7 +137,7 @@ impl NodeProcessor {
         _ => panic!("Expected script node"),
       }
     };
-    self.process_children(children, processing_context)
+    self.process_children(children, processing_context.create_for_child())
   }
 
   fn process_entity(
@@ -128,7 +154,7 @@ impl NodeProcessor {
         _ => panic!("Expected entity node"),
       }
     };
-    self.process_children(children, processing_context)
+    self.process_children(children, processing_context.create_for_child())
   }
   fn process_property(
     &self,
@@ -148,9 +174,8 @@ impl NodeProcessor {
       }
     };
     let child = children[0];
-    let status = self.process_children(children, processing_context);
+    let status = self.process_children(children, processing_context.create_for_child());
     if !status.is_complete() {
-      // add task here
       return status;
     }
     self.add_property_reference_target(child, name);
@@ -202,8 +227,6 @@ impl NodeProcessor {
       .insert(ref_key.clone(), property);
     let mut current_node = property;
     while let Some(parent) = self.get_parent(current_node) {
-      //        let mut next_key = ref_key;
-      //      dbg!(&parent);
       let parent_name_option = {
         match &self.get_node(parent).unwrap().node_data {
           Node::Entity(prop) => prop.ident.clone(),
@@ -229,7 +252,7 @@ impl NodeProcessor {
   fn process_reference(
     &self,
     node_ref: NodeRef,
-    _processing_context: ProcessingContext,
+    processing_context: ProcessingContext,
   ) -> ProcessingStatus {
     let node = self
       .get_node(node_ref)
@@ -241,6 +264,9 @@ impl NodeProcessor {
       }
     };
     let target = self.get_reference_target(refernce_str);
+    if target == NodeRef(-1) {
+      return ProcessingStatus::Incomplete;
+    }
     match &node.node_data {
       Node::Reference(ref_data) => ref_data.set_reference(target),
       _ => panic!("Expected reference node"),
@@ -260,6 +286,13 @@ impl NodeProcessor {
       return *target_node;
     }
     NodeRef(-1)
+  }
+
+  fn create_task(&self, node_ref: NodeRef, processing_context: ProcessingContext) {
+    self
+      .tasks
+      .borrow_mut()
+      .push(Task::new(node_ref, processing_context));
   }
 }
 
@@ -294,9 +327,35 @@ mod tests {
     let ast = parser::parse_text(text).unwrap();
     let np = NodeProcessor::new(ast);
     let processed_ast = np.process().unwrap();
-    //print!("{}", processed_ast.to_cdl().unwrap());
+    //  print!("{}", processed_ast.to_cdl().unwrap());
     if let Node::Reference(node) = node_data!(processed_ast, 11) {
       assert_eq!(NodeRef(6), node.resolved_node.get());
     }
+  }
+
+  #[test]
+  fn should_resolve_value_refs_declared_after_use() {
+    let text = r#"config hub {
+      hub : 4
+    }
+    
+    page #page1 {
+      widget kpi #foo {
+        tile kpi {
+          value : @cr.foo
+        }
+      }
+    }
+    
+    custom properties #cr {
+      foo : "hello"
+    }"#;
+    let ast = parser::parse_text(text).unwrap();
+    let np = NodeProcessor::new(ast);
+    let processed_ast = np.process().unwrap();
+    print!("{}", processed_ast.to_cdl().unwrap());
+    // if let Node::Reference(node) = node_data!(processed_ast, 11) {
+    //   assert_eq!(NodeRef(6), node.resolved_node.get());
+    // }
   }
 }
