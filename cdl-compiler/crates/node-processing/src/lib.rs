@@ -220,26 +220,26 @@ impl NodeProcessor {
   #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
   fn add_property_reference_target(&self, property: NodeRef, name: LexedStr) {
     let mut ref_key = RefKey::new();
-    ref_key.add_name(&name);
-    self
-      .ref_targets
-      .borrow_mut()
-      .insert(ref_key.clone(), property);
     let mut current_node = property;
+    trace!("Starting looking for parents with names for node {}", &name);
     while let Some(parent) = self.get_parent(current_node) {
       let parent_name_option = {
         match &self.get_node(parent).unwrap().node_data {
-          Node::Entity(prop) => prop.ident.clone(),
+          Node::Entity(entity) => {
+            trace!("Found entity as parent {:?}",&entity.ident);
+            entity.ident.clone()}
+            ,
           Node::Script(_) => return,
-          Node::Property(_) => {
-            current_node = parent;
-            continue;
+          Node::Property(prop) => {
+            trace!("Found property as parent {:?}",&prop.name);
+            Some(prop.name.clone())
           }
           _ => panic!("did not find entity as parent during ref target"),
         }
       };
       if let Some(parent_name) = parent_name_option {
         ref_key.add_name(&parent_name);
+        trace!("Adding keys {:?}", &ref_key);
         self
           .ref_targets
           .borrow_mut()
@@ -295,6 +295,7 @@ impl NodeProcessor {
 #[cfg(test)]
 mod tests {
   use ast::select_property_value;
+use tracing::Level;
 
   use super::*;
 
@@ -361,6 +362,8 @@ mod tests {
 
   #[test]
   fn should_resolve_references_which_points_on_same_target_with_different_paths(){
+   // tracing_subscriber::fmt().with_max_level(Level::TRACE).init();
+   
 let text = r#"
 custom properties #cp {
    item: {
@@ -374,7 +377,22 @@ custom properties #cp {
     let ast = parser::parse_text(text).unwrap();
     let np = NodeProcessor::new(ast);
     let processed_ast = np.process().unwrap();
-    print!("{}", processed_ast.to_cdl().unwrap());
-
+    //print!("{}", processed_ast.to_cdl().unwrap());
+    let value = select_property_value(&processed_ast, "value")[0];
+    let first = select_property_value(&processed_ast, "first");
+    let s = processed_ast.get_node(first[0]).unwrap();
+    if let Node::Reference(node) = &(*s).node_data {
+      assert_eq!(value, node.resolved_node.get());
+    }
+    let second = select_property_value(&processed_ast, "first");
+    let s = processed_ast.get_node(second[0]).unwrap();
+    if let Node::Reference(node) = &(*s).node_data {
+      assert_eq!(value, node.resolved_node.get());
+    }
+    let third = select_property_value(&processed_ast, "first");
+    let s = processed_ast.get_node(third[0]).unwrap();
+    if let Node::Reference(node) = &(*s).node_data {
+      assert_eq!(value, node.resolved_node.get());
+    }
   }
 }

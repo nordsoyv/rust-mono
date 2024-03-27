@@ -650,6 +650,7 @@ dependencies = [
  "lexer",
  "parser",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

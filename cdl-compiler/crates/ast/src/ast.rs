@@ -92,7 +92,7 @@ impl Ast {
     let node_data = &nodes[node_ref.0 as usize].node_data;
     match node_data {
       Node::Title(title) => self.title_to_cdl(cdl, title, indent)?,
-      Node::Entity(entity) => self.entity_to_cdl(cdl, entity, indent)?,
+      Node::Entity(entity) => self.entity_to_cdl(cdl, entity, node_ref, indent)?,
       Node::Property(prop) => self.property_to_cdl(cdl, prop, indent)?,
       Node::Identifier(identifier) => self.identifier_to_cdl(cdl, identifier, indent)?,
       Node::Script(script) => self.script_to_cdl(cdl, script, indent)?,
@@ -136,9 +136,16 @@ impl Ast {
     &self,
     cdl: &mut dyn std::fmt::Write,
     entity: &AstEntityNode,
+    node_ref: NodeRef,
     indent: usize,
   ) -> Result<()> {
-    let indent_str = create_indent(indent);
+    let parent_ref = self.get_parent(node_ref).unwrap();
+    let parent_node = self.get_node(parent_ref).unwrap();
+    let indent_str = if let Node::Property(_) = parent_node.node_data {
+      "".to_string()
+    } else {
+      create_indent(indent)
+    };
     write!(
       cdl,
       "{}{}",
@@ -321,4 +328,67 @@ impl Ast {
 
 fn create_indent(indent_size: usize) -> String {
   "  ".repeat(indent_size)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn can_print_entity_as_prop() {
+    let text = r#"entity {
+  prop: {
+    inner: 10
+  }
+}"#;
+    let ast = Ast::new();
+    let script = AstNode::new(
+      Node::Script(AstScriptNode {
+        children: vec![].into(),
+      }),
+      NodeRef(-1),
+    );
+    let script_ref = ast.add_node(script, 0..1);
+    let entity = AstNode::new(
+      Node::Entity(AstEntityNode {
+        children: vec![].into(),
+        terms: vec!["entity".into()].into(),
+        label: None,
+        refs: vec![],
+        ident: None,
+        entity_number: None,
+      }),
+      script_ref,
+    );
+    let entity_ref = ast.add_node(entity, 0..1);
+    ast.add_child_to_node(script_ref, entity_ref);
+    let prop = AstNode::new(
+      Node::Property(AstPropertyNode {
+        children: vec![].into(),
+        name: "prop".into(),
+      }),
+      entity_ref,
+    );
+    let prop_ref = ast.add_node(prop, 0..1);
+    ast.add_child_to_node(entity_ref, prop_ref);
+    let entity_anon = AstNode::new(
+      Node::Entity(AstEntityNode {
+        children: vec![].into(),
+        terms: vec![].into(),
+        label: None,
+        refs: vec![],
+        ident: None,
+        entity_number: None,
+      }),
+      prop_ref,
+    );
+    let entity_anon_ref = ast.add_node(entity_anon, 0..1);
+    ast.add_child_to_node(prop_ref, entity_anon_ref);
+
+    let number = AstNode::new(Node::Number(AstNumberNode { value: 10.0 }), entity_anon_ref);
+    let number_ref = ast.add_node(number, 0..1);
+    ast.add_child_to_node(entity_anon_ref, number_ref);
+    let cdl = ast.to_cdl().unwrap();
+    println!("{}", cdl);
+  }
 }

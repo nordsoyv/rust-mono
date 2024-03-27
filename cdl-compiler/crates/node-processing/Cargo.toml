@@ -11,3 +11,4 @@ ast = { path = "../ast" }
 lexer = { path = "../lexer" }
 anyhow = "1.0.75"
 tracing = { workspace = true }
+tracing-subscriber = "0.3.18"
