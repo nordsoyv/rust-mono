@@ -226,12 +226,12 @@ impl NodeProcessor {
       let parent_name_option = {
         match &self.get_node(parent).unwrap().node_data {
           Node::Entity(entity) => {
-            trace!("Found entity as parent {:?}",&entity.ident);
-            entity.ident.clone()}
-            ,
+            trace!("Found entity as parent {:?}", &entity.ident);
+            entity.ident.clone()
+          }
           Node::Script(_) => return,
           Node::Property(prop) => {
-            trace!("Found property as parent {:?}",&prop.name);
+            trace!("Found property as parent {:?}", &prop.name);
             Some(prop.name.clone())
           }
           _ => panic!("did not find entity as parent during ref target"),
@@ -295,7 +295,7 @@ impl NodeProcessor {
 #[cfg(test)]
 mod tests {
   use ast::select_property_value;
-use tracing::Level;
+  use tracing::Level;
 
   use super::*;
 
@@ -361,10 +361,10 @@ use tracing::Level;
   }
 
   #[test]
-  fn should_resolve_references_which_points_on_same_target_with_different_paths(){
-   // tracing_subscriber::fmt().with_max_level(Level::TRACE).init();
-   
-let text = r#"
+  fn should_resolve_references_which_points_on_same_target_with_different_paths() {
+    // tracing_subscriber::fmt().with_max_level(Level::TRACE).init();
+
+    let text = r#"
 custom properties #cp {
    item: {
      value: 1
@@ -384,15 +384,33 @@ custom properties #cp {
     if let Node::Reference(node) = &(*s).node_data {
       assert_eq!(value, node.resolved_node.get());
     }
-    let second = select_property_value(&processed_ast, "first");
+    let second = select_property_value(&processed_ast, "second");
     let s = processed_ast.get_node(second[0]).unwrap();
     if let Node::Reference(node) = &(*s).node_data {
       assert_eq!(value, node.resolved_node.get());
     }
-    let third = select_property_value(&processed_ast, "first");
+    let third = select_property_value(&processed_ast, "third");
     let s = processed_ast.get_node(third[0]).unwrap();
     if let Node::Reference(node) = &(*s).node_data {
       assert_eq!(value, node.resolved_node.get());
     }
+  }
+
+  #[test]
+  fn should_resolve_references_which_depends_on_result_of_other_references() {
+    let cdl = r#"
+    custom properties #first @second {
+    }
+    custom properties #second {
+      value: 1
+    }
+    custom properties #third {
+      value: @first.value
+    }
+    "#;
+    let ast = parser::parse_text(cdl).unwrap();
+    let np = NodeProcessor::new(ast);
+    let processed_ast = np.process().unwrap();
+    print!("{}", processed_ast.to_cdl().unwrap());
   }
 }

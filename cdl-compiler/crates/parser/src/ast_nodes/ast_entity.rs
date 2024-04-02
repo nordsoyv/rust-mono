@@ -161,26 +161,28 @@ fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
     None
   };
 
-  let ref_tokens = parser.get_tokens_of_kind(TokenKind::Reference);
-  let refs = if !ref_tokens.is_empty() {
-    parser.eat_tokens(ref_tokens.len())?;
-    ref_tokens.iter().map(|r| r.text.clone().unwrap()).collect()
-  } else {
-    vec![]
-  };
-
-  let ident = if parser.is_next_token_of_type(TokenKind::Hash) {
-    let ident_token = parser.get_next_token(1);
-    if ident_token.is_ok() {
-      parser.eat_tokens(2)?;
-      ident_token.unwrap().text.clone()
-    } else {
-      None
+  let mut ref_tokens = vec![];
+  let mut ident = None;
+  loop {
+    if parser.is_next_token_of_type(TokenKind::Reference) {
+      let ref_token = parser.get_current_token()?;
+      ref_tokens.push(ref_token.text.clone().unwrap());
+      let _ = parser.eat_token();
+      continue;
     }
-  } else {
-    None
-  };
-
+    if parser.is_next_token_of_type(TokenKind::Hash) {
+      let ident_token = parser.get_next_token(1);
+      if ident_token.is_ok() {
+        parser.eat_tokens(2)?;
+        ident = ident_token.unwrap().text.clone()
+      } else {
+        ident = None
+      }
+        continue;
+    }
+    break;
+  }
+  
   let entity_number = {
     let next_token = parser.get_current_token();
     if next_token.is_ok() {
@@ -200,7 +202,7 @@ fn parse_entity_header(parser: &mut Parser) -> Result<EntityHeaderInfo> {
     terms,
     start_loc,
     label,
-    refs,
+    refs : ref_tokens,
     ident,
     entity_number,
   })
