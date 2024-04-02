@@ -61,8 +61,7 @@ impl NodeProcessor {
   }
 
   pub fn process(self) -> Result<Ast> {
-    let status = self.process_node(self.ast.script_entity, ProcessingContext::new());
-    println!("processing status: {:?}", status);
+    let _ = self.process_node(self.ast.script_entity, ProcessingContext::new());
     if self.tasks.borrow().len() > 0 {
       let tasks = self.tasks.take();
       for task in tasks {
@@ -82,7 +81,6 @@ impl NodeProcessor {
     node_ref: NodeRef,
     processing_context: ProcessingContext,
   ) -> ProcessingStatus {
-    trace!("processing node: {:?}", node_ref);
     let node = self.get_node(node_ref).unwrap();
     let node_data = &(*node).node_data;
     let status = match node_data {
@@ -102,7 +100,6 @@ impl NodeProcessor {
       Node::TableAlias(_) => ProcessingStatus::Complete,
       Node::Formula(_) => ProcessingStatus::Complete,
     };
-    // dbg!("processing status", &status);
     if status.is_complete() {
       self.set_node_processed(node_ref);
     } else {
@@ -111,7 +108,7 @@ impl NodeProcessor {
     status
   }
 
-  fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
+  fn get_parents(&self, node_ref: NodeRef) -> Vec<NodeRef> {
     self.ast.get_parent(node_ref)
   }
 
@@ -140,6 +137,11 @@ impl NodeProcessor {
     self.process_children(children, processing_context.create_for_child())
   }
 
+  #[tracing::instrument(
+    name = "entity-processing",
+    skip(self, processing_context),
+    level = "debug"
+  )]
   fn process_entity(
     &self,
     node_ref: NodeRef,
@@ -148,14 +150,53 @@ impl NodeProcessor {
     let node = self
       .get_node(node_ref)
       .expect("Tried to get an entity node, got None");
-    let children = {
-      match &node.node_data {
-        Node::Entity(entity_data) => entity_data.children.borrow().clone(),
-        _ => panic!("Expected entity node"),
+    match &node.node_data {
+      Node::Entity(entity_data) => {
+        trace!("Processing entity with name {:?}", &entity_data.ident);
+        if !entity_data.refs.is_empty() {
+          trace!("Found entity with refs {:?}", &entity_data.refs);
+          for entity_ref in entity_data.refs.iter() {
+            if let Some(target) = self.get_reference_target(entity_ref.clone()) {
+              trace!("Found reference target for entity {:?}", target);
+              if let Some(target_node) = self.get_node(target) {
+                match &target_node.node_data {
+                  Node::Entity(target_entity_data) => {
+                    trace!("Adding children to entity {:?}", &entity_data.ident);
+                    self.ast.add_new_children_to_node(
+                      node_ref,
+                      target_entity_data.children.borrow().clone(),
+                    );
+                  }
+                  _ => panic!("Expected entity node while resolving entity reference"),
+                }
+              }
+            }
+          }
+        }
+
+        let children = entity_data.children.borrow().clone();
+        let status = self.process_children(children, processing_context.create_for_child());
+        if matches!(
+          status,
+          ProcessingStatus::Complete | ProcessingStatus::CompleteWithWarning
+        ) {
+          trace!(
+            "Adding entity reference target {:?}",
+            entity_data.ident.as_ref().unwrap()
+          );
+          self.add_entity_reference_target(node_ref, entity_data.ident.clone());
+        }
+        status
       }
-    };
-    self.process_children(children, processing_context.create_for_child())
+      _ => panic!("Expected entity node"),
+    }
   }
+
+  #[tracing::instrument(
+    name = "property-processing",
+    skip(self, processing_context),
+    level = "debug"
+  )]
   fn process_property(
     &self,
     node_ref: NodeRef,
@@ -173,6 +214,7 @@ impl NodeProcessor {
         _ => panic!("Expected property node"),
       }
     };
+    trace!("Processing property with name {:?}", &name);
     let child = children[0];
     let status = self.process_children(children, processing_context.create_for_child());
     if !status.is_complete() {
@@ -217,35 +259,59 @@ impl NodeProcessor {
     processing_status
   }
 
-  #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
+  #[tracing::instrument(name = "ref-adding", skip(self), level = "debug")]
   fn add_property_reference_target(&self, property: NodeRef, name: LexedStr) {
-    let mut ref_key = RefKey::new();
-    let mut current_node = property;
     trace!("Starting looking for parents with names for node {}", &name);
-    while let Some(parent) = self.get_parent(current_node) {
-      let parent_name_option = {
-        match &self.get_node(parent).unwrap().node_data {
-          Node::Entity(entity) => {
-            trace!("Found entity as parent {:?}", &entity.ident);
-            entity.ident.clone()
-          }
-          Node::Script(_) => return,
-          Node::Property(prop) => {
-            trace!("Found property as parent {:?}", &prop.name);
-            Some(prop.name.clone())
-          }
-          _ => panic!("did not find entity as parent during ref target"),
+    let parents = self.get_parents(property);
+    for parent in parents {
+      self.add_ref_target(property, RefKey::new(), parent);
+    }
+  }
+
+  fn add_ref_target(&self, target_ref: NodeRef, mut ref_key: RefKey, parent: NodeRef) {
+    let parent_name_option = {
+      match &self.get_node(parent).unwrap().node_data {
+        Node::Entity(entity) => {
+          trace!("Found entity as parent {:?}", &entity.ident);
+          entity.ident.clone()
         }
-      };
-      if let Some(parent_name) = parent_name_option {
-        ref_key.add_name(&parent_name);
-        trace!("Adding keys {:?}", &ref_key);
-        self
-          .ref_targets
-          .borrow_mut()
-          .insert(ref_key.clone(), property);
+        Node::Script(_) => return,
+        Node::Property(prop) => {
+          trace!("Found property as parent {:?}", &prop.name);
+          Some(prop.name.clone())
+        }
+        _ => panic!("did not find expected node type as parent during ref target creation"),
       }
-      current_node = parent;
+    };
+    if let Some(parent_name) = parent_name_option {
+      ref_key.add_name(&parent_name);
+      trace!("Adding Reference keys {:?}", &ref_key);
+      self
+        .ref_targets
+        .borrow_mut()
+        .insert(ref_key.clone(), target_ref);
+    }
+    let grand_parents = self.get_parents(parent);
+    for grand_parent in grand_parents {
+      self.add_ref_target(target_ref, ref_key.clone(), grand_parent);
+    }
+  }
+
+  #[tracing::instrument(name = "ref-adding", skip(self), level = "debug")]
+  fn add_entity_reference_target(&self, entity_ref: NodeRef, name: Option<LexedStr>) {
+    let mut ref_key = RefKey::new();
+    if name.is_some() {
+      ref_key.add_name(name.as_ref().unwrap());
+    }
+    
+    self
+      .ref_targets
+      .borrow_mut()
+      .insert(ref_key.clone(), entity_ref);
+    // trace!("Starting looking for parents with names for node {}", &name);
+    let parents = self.get_parents(entity_ref);
+    for parent in parents {
+      self.add_ref_target(entity_ref, ref_key.clone(), parent);
     }
   }
 
@@ -259,29 +325,29 @@ impl NodeProcessor {
         _ => panic!("Expected reference node"),
       }
     };
-    let target = self.get_reference_target(refernce_str);
-    if target == NodeRef(-1) {
+    trace!("Processing reference with name {:?}", &refernce_str);
+    if let Some(target) = self.get_reference_target(refernce_str) {
+      match &node.node_data {
+        Node::Reference(ref_data) => ref_data.set_reference(target),
+        _ => panic!("Expected reference node"),
+      };
+      return ProcessingStatus::Complete;
+    } else {
       return ProcessingStatus::Incomplete;
     }
-    match &node.node_data {
-      Node::Reference(ref_data) => ref_data.set_reference(target),
-      _ => panic!("Expected reference node"),
-    };
-    ProcessingStatus::Complete
   }
 
   #[tracing::instrument(name = "ref-resolving", skip(self), level = "debug")]
-  fn get_reference_target(&self, refernce_str: LexedStr) -> NodeRef {
+  fn get_reference_target(&self, refernce_str: LexedStr) -> Option<NodeRef> {
     let parts: Vec<_> = refernce_str.0.split('.').collect();
     let mut ref_key = RefKey::new();
     for part in parts.iter().rev() {
       let rc: LexedStr = (*part).into();
       ref_key.add_name(&rc);
     }
-    if let Some(target_node) = self.ref_targets.borrow().get(&ref_key) {
-      return *target_node;
-    }
-    NodeRef(-1)
+    trace!("Looking for {:?}", &ref_key);
+    // dbg!(&self.ref_targets);
+    self.ref_targets.borrow().get(&ref_key).copied()
   }
 
   fn create_task(&self, node_ref: NodeRef, processing_context: ProcessingContext) {
@@ -398,11 +464,14 @@ custom properties #cp {
 
   #[test]
   fn should_resolve_references_which_depends_on_result_of_other_references() {
+    // tracing_subscriber::fmt()
+    //   .with_max_level(Level::TRACE)
+    //   .init();
     let cdl = r#"
-    custom properties #first @second {
-    }
     custom properties #second {
       value: 1
+    }
+    custom properties #first @second {
     }
     custom properties #third {
       value: @first.value
@@ -411,6 +480,36 @@ custom properties #cp {
     let ast = parser::parse_text(cdl).unwrap();
     let np = NodeProcessor::new(ast);
     let processed_ast = np.process().unwrap();
+    //print!("{}", processed_ast.to_cdl().unwrap());
+    let value = select_property_value(&processed_ast, "value");
+    let resolved = processed_ast.get_node(value[1]).unwrap();
+    if let Node::Reference(node) = &(*resolved).node_data {
+      assert_eq!(value[0], node.resolved_node.get());
+    }
+  }
+  #[test]
+  fn should_resolve_references_which_depends_on_result_of_other_references_later_in_cdl() {
+    // tracing_subscriber::fmt()
+    //   .with_max_level(Level::TRACE)
+    //   .init();
+    let cdl = r#"
+    custom properties #third {
+      value: @first.value
+    }
+    custom properties #first @second {
+    }
+    custom properties #second {
+      value: 1
+    }
+    "#;
+    let ast = parser::parse_text(cdl).unwrap();
+    let np = NodeProcessor::new(ast);
+    let processed_ast = np.process().unwrap();
     print!("{}", processed_ast.to_cdl().unwrap());
+    let value = select_property_value(&processed_ast, "value");
+    let resolved = processed_ast.get_node(value[0]).unwrap();
+    if let Node::Reference(node) = &(*resolved).node_data {
+      assert_eq!(value[1], node.resolved_node.get());
+    }
   }
 }

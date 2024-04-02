@@ -3,6 +3,7 @@ mod ast_nodes;
 mod select;
 
 use serde::Serialize;
+use std::cell::RefCell;
 use std::fmt::Debug;
 
 pub use ast_nodes::AstBooleanNode;
@@ -68,7 +69,7 @@ impl Debug for NodeRef {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AstNode {
-  pub parent: NodeRef,
+  parent: RefCell<Vec<NodeRef>>,
   pub node_data: Node,
 }
 
@@ -76,7 +77,7 @@ impl AstNode {
   pub fn new(node: Node, parent: NodeRef) -> AstNode {
     AstNode {
       node_data: node,
-      parent,
+      parent: RefCell::new(vec![parent]),
     }
   }
 
@@ -86,8 +87,8 @@ impl AstNode {
       Node::Entity(ent) => ent.add_child(child),
       Node::Script(script) => script.add_child(child),
       Node::Property(prop) => prop.add_property(child),
-      Node::Function( func) => func.add_argument(child),
-      Node::Operator(op) => op.add_right(  child),
+      Node::Function(func) => func.add_argument(child),
+      Node::Operator(op) => op.add_right(child),
       _ => panic!("Unknown type to set as parent {:?}", node_data),
     };
   }

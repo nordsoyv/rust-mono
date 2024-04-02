@@ -14,6 +14,7 @@ pub fn select_property(ast: &Ast, name: &str) -> Vec<NodeRef> {
 
   result
 }
+
 pub fn select_property_value(ast: &Ast, name: &str) -> Vec<NodeRef> {
   let mut result = vec![];
 

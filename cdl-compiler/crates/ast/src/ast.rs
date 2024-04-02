@@ -32,11 +32,15 @@ impl Ast {
       processed: RefCell::new(Vec::new()),
     }
   }
-  pub fn get_parent(&self, node_ref: NodeRef) -> Option<NodeRef> {
+  pub fn get_parent(&self, node_ref: NodeRef) -> Vec<NodeRef> {
     if node_ref == NodeRef(0) {
-      None
+      vec![]
     } else {
-      self.get_node(node_ref).map(|node| node.parent)
+      if let Some(node) = self.get_node(node_ref) {
+        node.parent.borrow().clone()
+      } else {
+        vec![]
+      }
     }
   }
 
@@ -61,6 +65,37 @@ impl Ast {
     let node = &nodes[parent.0 as usize];
     node.add_child_to_node(child);
   }
+
+  pub fn add_new_children_to_node(&self, target_node_ref: NodeRef, new_children: Vec<NodeRef>) {
+    if let Some(target_node) = self.get_node(target_node_ref) {
+      match &target_node.node_data {
+        Node::Property(prop) => {
+          let mut property_children = prop.children.borrow_mut();
+          for new_child in new_children {
+            if !property_children.contains(&new_child) {
+              property_children.push(new_child);
+              self.add_parent_to_node(new_child, target_node_ref);
+            }
+          }
+        }
+        Node::Entity(entity) => {
+          let mut entity_children = entity.children.borrow_mut();
+          for new_child in new_children {
+            if !entity_children.contains(&new_child) {
+              entity_children.push(new_child);
+              self.add_parent_to_node(new_child, target_node_ref);
+            }
+          }
+        }
+        _ => {}          
+      }
+    }
+  }
+
+  fn add_parent_to_node(&self, new_child: NodeRef, target_node_ref: NodeRef){
+    let nodes = self.nodes.borrow();
+    nodes[new_child.0 as usize].parent.borrow_mut().push(target_node_ref);
+}
 
   pub fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {
     let mut locations = self.locations.borrow_mut();
@@ -136,10 +171,10 @@ impl Ast {
     &self,
     cdl: &mut dyn std::fmt::Write,
     entity: &AstEntityNode,
-    node_ref: NodeRef,
+    parent_ref: NodeRef,
     indent: usize,
   ) -> Result<()> {
-    let parent_ref = self.get_parent(node_ref).unwrap();
+    // let parent_ref = self.get_parent(node_ref);
     let parent_node = self.get_node(parent_ref).unwrap();
     let indent_str = if let Node::Property(_) = parent_node.node_data {
       "".to_string()
@@ -324,6 +359,8 @@ impl Ast {
     write!(cdl, "]")?;
     Ok(())
   }
+  
+  
 }
 
 fn create_indent(indent_size: usize) -> String {
