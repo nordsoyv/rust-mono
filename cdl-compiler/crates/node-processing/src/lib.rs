@@ -154,14 +154,14 @@ impl NodeProcessor {
       Node::Entity(entity_data) => {
         trace!("Processing entity with name {:?}", &entity_data.ident);
         if !entity_data.refs.is_empty() {
-          trace!("Found entity with refs {:?}", &entity_data.refs);
+          //trace!("Found entity with refs {:?}", &entity_data.refs);
           for entity_ref in entity_data.refs.iter() {
             if let Some(target) = self.get_reference_target(entity_ref.clone()) {
-              trace!("Found reference target for entity {:?}", target);
+              //trace!("Found reference target for entity {:?}", target);
               if let Some(target_node) = self.get_node(target) {
                 match &target_node.node_data {
                   Node::Entity(target_entity_data) => {
-                    trace!("Adding children to entity {:?}", &entity_data.ident);
+                //    trace!("Adding children to entity {:?}", &entity_data.ident);
                     self.ast.add_new_children_to_node(
                       node_ref,
                       target_entity_data.children.borrow().clone(),
@@ -170,6 +170,11 @@ impl NodeProcessor {
                   _ => panic!("Expected entity node while resolving entity reference"),
                 }
               }
+            }else {
+              //trace!("Did not find reference target for entity {:?}", &entity_data.ident);
+              self.create_task(node_ref, processing_context);
+              return ProcessingStatus::Incomplete;
+              // TODO: Add task
             }
           }
         }
@@ -489,9 +494,9 @@ custom properties #cp {
   }
   #[test]
   fn should_resolve_references_which_depends_on_result_of_other_references_later_in_cdl() {
-    // tracing_subscriber::fmt()
-    //   .with_max_level(Level::TRACE)
-    //   .init();
+     tracing_subscriber::fmt()
+       .with_max_level(Level::TRACE)
+       .init();
     let cdl = r#"
     custom properties #third {
       value: @first.value
