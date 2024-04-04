@@ -1,5 +1,5 @@
 mod processing_context;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
 use anyhow::Result;
 use ast::{Ast, AstNode, Node, NodeRef};
@@ -32,15 +32,31 @@ impl RefKey {
 #[derive(Debug)]
 struct Task {
   node_ref: NodeRef,
+  error_msg: String,
   processing_context: ProcessingContext,
 }
 
 impl Task {
-  fn new(node_ref: NodeRef, processing_context: ProcessingContext) -> Task {
+  fn new(node_ref: NodeRef, error_msg: String, processing_context: ProcessingContext) -> Task {
     Task {
       node_ref,
       processing_context,
+      error_msg,
     }
+  }
+}
+
+#[derive(Debug)]
+pub struct ProcessingError {
+  pub error_msgs: Vec<String>,
+}
+
+impl fmt::Display for ProcessingError {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    for error_msg in &self.error_msgs {
+      writeln!(f, "{}", error_msg)?;
+    }
+    Ok(())
   }
 }
 
@@ -60,12 +76,28 @@ impl NodeProcessor {
     }
   }
 
-  pub fn process(self) -> Result<Ast> {
-    let _ = self.process_node(self.ast.script_entity, ProcessingContext::new());
-    if self.tasks.borrow().len() > 0 {
-      let tasks = self.tasks.take();
-      for task in tasks {
-        self.process_node(task.node_ref, task.processing_context);
+  pub fn process(self) -> Result<Ast, ProcessingError> {
+    let status = self.process_node(self.ast.script_entity, ProcessingContext::new());
+    if status.is_complete() {
+      return Ok(self.ast);
+    }
+    loop {
+      let num_tasks_before_loop = self.tasks.borrow().len();
+      if num_tasks_before_loop > 0 {
+        let tasks = self.tasks.take();
+        for task in tasks {
+          self.process_node(task.node_ref, task.processing_context);
+        }
+      } else {
+        break;
+      }
+      let current_tasks_after_loop = self.tasks.borrow().len();
+      if num_tasks_before_loop == current_tasks_after_loop {
+        let tasks = self.tasks.take();
+        let error = ProcessingError {
+          error_msgs: tasks.into_iter().map(|t| t.error_msg).collect(),
+        };
+        return Err(error);
       }
     }
     Ok(self.ast)
@@ -102,8 +134,6 @@ impl NodeProcessor {
     };
     if status.is_complete() {
       self.set_node_processed(node_ref);
-    } else {
-      self.create_task(node_ref, processing_context);
     }
     status
   }
@@ -154,14 +184,11 @@ impl NodeProcessor {
       Node::Entity(entity_data) => {
         trace!("Processing entity with name {:?}", &entity_data.ident);
         if !entity_data.refs.is_empty() {
-          //trace!("Found entity with refs {:?}", &entity_data.refs);
           for entity_ref in entity_data.refs.iter() {
             if let Some(target) = self.get_reference_target(entity_ref.clone()) {
-              //trace!("Found reference target for entity {:?}", target);
               if let Some(target_node) = self.get_node(target) {
                 match &target_node.node_data {
                   Node::Entity(target_entity_data) => {
-                //    trace!("Adding children to entity {:?}", &entity_data.ident);
                     self.ast.add_new_children_to_node(
                       node_ref,
                       target_entity_data.children.borrow().clone(),
@@ -170,21 +197,24 @@ impl NodeProcessor {
                   _ => panic!("Expected entity node while resolving entity reference"),
                 }
               }
-            }else {
-              //trace!("Did not find reference target for entity {:?}", &entity_data.ident);
-              self.create_task(node_ref, processing_context);
+            } else {
+              self.create_task(
+                node_ref,
+                format!(
+                  "Did not find reference @{} target for entity #{}",
+                  entity_ref.0,
+                  entity_data.ident.as_ref().unwrap()
+                ),
+                processing_context,
+              );
               return ProcessingStatus::Incomplete;
-              // TODO: Add task
             }
           }
         }
 
         let children = entity_data.children.borrow().clone();
         let status = self.process_children(children, processing_context.create_for_child());
-        if matches!(
-          status,
-          ProcessingStatus::Complete | ProcessingStatus::CompleteWithWarning
-        ) {
+        if status.is_complete() {
           trace!(
             "Adding entity reference target {:?}",
             entity_data.ident.as_ref().unwrap()
@@ -223,6 +253,11 @@ impl NodeProcessor {
     let child = children[0];
     let status = self.process_children(children, processing_context.create_for_child());
     if !status.is_complete() {
+      self.create_task(
+        node_ref,
+        format!("Could not process property {}", name),
+        processing_context,
+      );
       return status;
     }
     self.add_property_reference_target(child, name);
@@ -308,7 +343,7 @@ impl NodeProcessor {
     if name.is_some() {
       ref_key.add_name(name.as_ref().unwrap());
     }
-    
+
     self
       .ref_targets
       .borrow_mut()
@@ -336,9 +371,9 @@ impl NodeProcessor {
         Node::Reference(ref_data) => ref_data.set_reference(target),
         _ => panic!("Expected reference node"),
       };
-      return ProcessingStatus::Complete;
+      ProcessingStatus::Complete
     } else {
-      return ProcessingStatus::Incomplete;
+      ProcessingStatus::Incomplete
     }
   }
 
@@ -355,11 +390,16 @@ impl NodeProcessor {
     self.ref_targets.borrow().get(&ref_key).copied()
   }
 
-  fn create_task(&self, node_ref: NodeRef, processing_context: ProcessingContext) {
+  fn create_task(
+    &self,
+    node_ref: NodeRef,
+    error_msg: String,
+    processing_context: ProcessingContext,
+  ) {
     self
       .tasks
       .borrow_mut()
-      .push(Task::new(node_ref, processing_context));
+      .push(Task::new(node_ref, error_msg, processing_context));
   }
 }
 
@@ -397,10 +437,48 @@ mod tests {
     let ast = parser::parse_text(text).unwrap();
     let np = NodeProcessor::new(ast);
     let processed_ast = np.process().unwrap();
-    //  print!("{}", processed_ast.to_cdl().unwrap());
     if let Node::Reference(node) = node_data!(processed_ast, 11) {
       assert_eq!(NodeRef(6), node.resolved_node.get());
     }
+  }
+  #[test]
+  fn value_refs_without_target_gives_error() {
+    let text = r#"config hub {
+      hub : 4
+    }
+    
+    page #page1 {
+      widget kpi #foo {
+        tile kpi {
+          value : @cr.foo
+        }
+      }
+    }"#;
+    let ast = parser::parse_text(text).unwrap();
+    let np = NodeProcessor::new(ast);
+    let processed_ast = np.process();
+    assert!(processed_ast.is_err());
+    let errors = processed_ast.unwrap_err();
+    assert_eq!("Could not process property value", errors.error_msgs[0]);
+  }
+
+  #[test]
+  fn entity_refs_without_target_gives_error() {
+    let text = r#"config hub {
+      hub : 4
+    }
+    custom properties #first @second {
+    }
+    "#;
+    let ast = parser::parse_text(text).unwrap();
+    let np = NodeProcessor::new(ast);
+    let processed_ast = np.process();
+    assert!(processed_ast.is_err());
+    let errors = processed_ast.unwrap_err();
+    assert_eq!(
+      "Did not find reference @second target for entity #first",
+      errors.error_msgs[0]
+    );
   }
 
   #[test]
@@ -494,9 +572,9 @@ custom properties #cp {
   }
   #[test]
   fn should_resolve_references_which_depends_on_result_of_other_references_later_in_cdl() {
-     tracing_subscriber::fmt()
-       .with_max_level(Level::TRACE)
-       .init();
+    //  tracing_subscriber::fmt()
+    //    .with_max_level(Level::TRACE)
+    //    .init();
     let cdl = r#"
     custom properties #third {
       value: @first.value
@@ -516,5 +594,30 @@ custom properties #cp {
     if let Node::Reference(node) = &(*resolved).node_data {
       assert_eq!(value[1], node.resolved_node.get());
     }
+  }
+
+  #[test]
+  fn should_allow_multiple_with_name_as_long_as_they_are_not_referenced() {
+    let cdl = r#"
+    page #page1 {
+      widget kpi #foo {
+        tile kpi {
+          value : "hello"
+        }
+      }
+    }
+    
+    page #page2 {
+      widget kpi #foo {
+        tile kpi {
+          value : "hello"
+        }
+      }
+    }    
+    "#;
+    let ast = parser::parse_text(cdl).unwrap();
+    let np = NodeProcessor::new(ast);
+    let processed_ast = np.process();
+    assert!(processed_ast.is_ok())
   }
 }

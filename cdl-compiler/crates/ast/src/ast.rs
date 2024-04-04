@@ -35,12 +35,10 @@ impl Ast {
   pub fn get_parent(&self, node_ref: NodeRef) -> Vec<NodeRef> {
     if node_ref == NodeRef(0) {
       vec![]
+    } else if let Some(node) = self.get_node(node_ref) {
+      node.parent.borrow().clone()
     } else {
-      if let Some(node) = self.get_node(node_ref) {
-        node.parent.borrow().clone()
-      } else {
-        vec![]
-      }
+      vec![]
     }
   }
 
@@ -87,15 +85,18 @@ impl Ast {
             }
           }
         }
-        _ => {}          
+        _ => {}
       }
     }
   }
 
-  fn add_parent_to_node(&self, new_child: NodeRef, target_node_ref: NodeRef){
+  fn add_parent_to_node(&self, new_child: NodeRef, target_node_ref: NodeRef) {
     let nodes = self.nodes.borrow();
-    nodes[new_child.0 as usize].parent.borrow_mut().push(target_node_ref);
-}
+    nodes[new_child.0 as usize]
+      .parent
+      .borrow_mut()
+      .push(target_node_ref);
+  }
 
   pub fn update_location_on_node(&self, node_ref: NodeRef, start: usize, end: usize) {
     let mut locations = self.locations.borrow_mut();
@@ -359,8 +360,6 @@ impl Ast {
     write!(cdl, "]")?;
     Ok(())
   }
-  
-  
 }
 
 fn create_indent(indent_size: usize) -> String {
@@ -372,12 +371,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn can_print_entity_as_prop() {
-    let text = r#"entity {
-  prop: {
-    inner: 10
-  }
-}"#;
+  fn can_print_entity_as_prop() {  
     let ast = Ast::new();
     let script = AstNode::new(
       Node::Script(AstScriptNode {
