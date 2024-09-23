@@ -4,11 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.89"
 bytemuck = { version = "1.18", features = ["derive"] }
+cgmath = "0.18.0"
 #egui = "0.28.1"
 #egui-wgpu = "0.28.1"
 #egui-winit = "0.28.1"
 env_logger = "0.11.5"
+image = {version="0.25.2", features = ["png"]} 
 log = "0.4.22"
 pollster = "0.3.0"
 wgpu = "22.1.0"
