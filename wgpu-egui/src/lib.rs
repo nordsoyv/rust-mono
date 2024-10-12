@@ -2,17 +2,18 @@ mod camera;
 mod model;
 mod resource;
 mod texture;
-use std::time::Duration;
+use std::{borrow::Borrow, sync::Arc, time::Duration};
 
 use camera::{Camera, CameraController, Projection};
 use cgmath::prelude::*;
 use model::{DrawModel, Vertex};
-use wgpu::util::DeviceExt;
+use wgpu::{hal::auxil::db, util::DeviceExt, Surface};
 use winit::{
+  application::ApplicationHandler,
   event::*,
-  event_loop::{DeviceEvents, EventLoop},
+  event_loop::{ActiveEventLoop, DeviceEvents, EventLoop},
   keyboard::{KeyCode, PhysicalKey},
-  window::{Window, WindowBuilder},
+  window::{self, Window, WindowId},
 };
 
 // We need this for Rust to store our data correctly for the shaders
@@ -149,7 +150,7 @@ struct State<'a> {
   config: wgpu::SurfaceConfiguration,
   size: winit::dpi::PhysicalSize<u32>,
   render_pipeline: wgpu::RenderPipeline,
-  window: &'a Window,
+  //window: &'a Window,
   diffuse_bind_group: wgpu::BindGroup,
   diffuse_texture: texture::Texture,
   camera: Camera,
@@ -167,11 +168,12 @@ struct State<'a> {
   light_bind_group: wgpu::BindGroup,
   light_render_pipeline: wgpu::RenderPipeline,
   mouse_pressed: bool,
+last_render_time: std::time::Instant,
 }
 
 impl<'a> State<'a> {
   // Creating some of the wgpu types requires async code
-  async fn new(window: &'a Window) -> State<'a> {
+  async fn new(window: Arc<Window>) -> State<'a> {
     let size = window.inner_size();
 
     // The instance is a handle to our GPU
@@ -181,7 +183,7 @@ impl<'a> State<'a> {
       ..Default::default()
     });
 
-    let surface = instance.create_surface(window).unwrap();
+    let surface = instance.create_surface(Arc::clone(&window)).unwrap();
 
     let adapter = instance
       .request_adapter(&wgpu::RequestAdapterOptions {
@@ -421,7 +423,7 @@ impl<'a> State<'a> {
       .unwrap();
 
     Self {
-      window,
+      //  window,
       surface,
       device,
       queue,
@@ -445,14 +447,16 @@ impl<'a> State<'a> {
       light_bind_group,
       light_render_pipeline,
       mouse_pressed: false,
+      last_render_time: std::time::Instant::now(),
     }
   }
 
-  pub fn window(&self) -> &Window {
-    &self.window
-  }
+  // pub fn window(&self) -> &Window {
+  //   &self.window
+  // }
 
   pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    dbg!("resize");
     if new_size.width > 0 && new_size.height > 0 {
       self.size = new_size;
       self.config.width = new_size.width;
@@ -646,80 +650,160 @@ fn create_render_pipeline(
   })
 }
 
+struct App<'a> {
+  window: Option<Arc<Window>>,
+  state: Option<State<'a>>,
+}
+
+impl ApplicationHandler for App<'_> {
+  fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+    if self.window.is_none() {
+      let window = Arc::new(
+        event_loop
+          .create_window(Window::default_attributes())
+          .unwrap(),
+      );
+      self.window = Some(window.clone());
+      let state = pollster::block_on(State::new(window.clone()));
+      self.state = Some(state);
+    }
+  }
+
+  fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+    match event {
+      WindowEvent::CloseRequested => {
+        println!("The close button was pressed; stopping");
+        event_loop.exit();
+      }
+      WindowEvent::Resized(physical_size) => {
+        log::info!("physical_size: {physical_size:?}");
+        // surface_configured = true;
+        self.state.as_mut().unwrap().resize(physical_size);
+      }
+      WindowEvent::RedrawRequested => {
+        // Redraw the application.
+        //
+        // It's preferable for applications that do not render continuously to render in
+        // this event rather than in AboutToWait, since rendering in here allows
+        // the program to gracefully handle redraws requested by the OS.
+
+        // Draw.
+
+        // Queue a RedrawRequested event.
+        //
+        // You only need to call this if you've determined that you need to redraw in
+        // applications which do not always need to. Applications that redraw continuously
+        // can render here instead.
+        self.window.as_ref().unwrap().request_redraw();
+        let state = self.state.as_mut().unwrap();
+        let now = std::time::Instant::now();
+        let dt = now - state.last_render_time;
+        state.last_render_time = now;
+        
+        state.update(dt);
+        match state.render() {
+          Ok(_) => {}
+          // Reconfigure the surface if it's lost or outdated
+          Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => state.resize(state.size),
+          // The system is out of memory, we should probably quit
+          Err(wgpu::SurfaceError::OutOfMemory) => {
+            log::error!("OutOfMemory");
+            event_loop.exit();
+          }
+
+          // This happens when the a frame takes too long to present
+          Err(wgpu::SurfaceError::Timeout) => {
+            log::warn!("Surface timeout")
+          }
+        }
+      }
+      _ => (),
+    }
+  }
+}
+
 pub async fn run() {
   env_logger::init();
+  //let mut app = App::new();
+  //app.init();
   let event_loop = EventLoop::new().unwrap();
-  let window = WindowBuilder::new().build(&event_loop).unwrap();
+  event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
+  let mut app = App {
+    window: None,
+    state: None,
+  };
+  event_loop.run_app(&mut app);
+  //let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-  let mut state = State::new(&window).await;
-  let mut last_render_time = std::time::Instant::now(); // NEW!
-  let mut surface_configured = false;
-  event_loop
-    .run(move |event, control_flow| {
-      match event {
-        Event::WindowEvent {
-          ref event,
-          window_id,
-        } if window_id == state.window().id() && !state.input(event) => {
-          // UPDATED!
-          match event {
-            WindowEvent::CloseRequested
-            | WindowEvent::KeyboardInput {
-              event:
-                KeyEvent {
-                  state: ElementState::Pressed,
-                  physical_key: PhysicalKey::Code(KeyCode::Escape),
-                  ..
-                },
-              ..
-            } => control_flow.exit(),
-            WindowEvent::Resized(physical_size) => {
-              log::info!("physical_size: {physical_size:?}");
-              surface_configured = true;
-              state.resize(*physical_size);
-            }
-            WindowEvent::RedrawRequested => {
-              // This tells winit that we want another frame after this one
-              state.window().request_redraw();
+  // let mut state = State::new(&window).await;
+  // let mut last_render_time = std::time::Instant::now(); // NEW!
+  // let mut surface_configured = false;
+  // event_loop
+  //   .run(move |event, control_flow| {
+  //     match event {
+  //       Event::WindowEvent {
+  //         ref event,
+  //         window_id,
+  //       } if window_id == state.window().id() && !state.input(event) => {
+  //         // UPDATED!
+  //         match event {
+  //           WindowEvent::CloseRequested
+  //           | WindowEvent::KeyboardInput {
+  //             event:
+  //               KeyEvent {
+  //                 state: ElementState::Pressed,
+  //                 physical_key: PhysicalKey::Code(KeyCode::Escape),
+  //                 ..
+  //               },
+  //             ..
+  //           } => control_flow.exit(),
+  //           WindowEvent::Resized(physical_size) => {
+  //             log::info!("physical_size: {physical_size:?}");
+  //             surface_configured = true;
+  //             state.resize(*physical_size);
+  //           }
+  //           WindowEvent::RedrawRequested => {
+  //             // This tells winit that we want another frame after this one
+  //             state.window().request_redraw();
 
-              if !surface_configured {
-                return;
-              }
-              let now = std::time::Instant::now();
-              let dt = now - last_render_time;
-              last_render_time = now;
-              state.update(dt);
-              match state.render() {
-                Ok(_) => {}
-                // Reconfigure the surface if it's lost or outdated
-                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                  state.resize(state.size)
-                }
-                // The system is out of memory, we should probably quit
-                Err(wgpu::SurfaceError::OutOfMemory) => {
-                  log::error!("OutOfMemory");
-                  control_flow.exit();
-                }
+  //             if !surface_configured {
+  //               return;
+  //             }
+  //             let now = std::time::Instant::now();
+  //             let dt = now - last_render_time;
+  //             last_render_time = now;
+  //             state.update(dt);
+  //             match state.render() {
+  //               Ok(_) => {}
+  //               // Reconfigure the surface if it's lost or outdated
+  //               Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+  //                 state.resize(state.size)
+  //               }
+  //               // The system is out of memory, we should probably quit
+  //               Err(wgpu::SurfaceError::OutOfMemory) => {
+  //                 log::error!("OutOfMemory");
+  //                 control_flow.exit();
+  //               }
 
-                // This happens when the a frame takes too long to present
-                Err(wgpu::SurfaceError::Timeout) => {
-                  log::warn!("Surface timeout")
-                }
-              }
-            }
-            _ => {}
-          }
-        }
-        Event::DeviceEvent {
-          event: DeviceEvent::MouseMotion { delta },
-          ..
-        } => {
-          if state.mouse_pressed {
-            state.camera_controller.process_mouse(delta.0, delta.1);
-          }
-        }
-        _ => {}
-      }
-    })
-    .unwrap();
+  //               // This happens when the a frame takes too long to present
+  //               Err(wgpu::SurfaceError::Timeout) => {
+  //                 log::warn!("Surface timeout")
+  //               }
+  //             }
+  //           }
+  //           _ => {}
+  //         }
+  //       }
+  //       Event::DeviceEvent {
+  //         event: DeviceEvent::MouseMotion { delta },
+  //         ..
+  //       } => {
+  //         if state.mouse_pressed {
+  //           state.camera_controller.process_mouse(delta.0, delta.1);
+  //         }
+  //       }
+  //       _ => {}
+  //     }
+  //   })
+  //   .unwrap();
 }
