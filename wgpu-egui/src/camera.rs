@@ -153,8 +153,8 @@ impl CameraController {
     };
   }
 
-  pub fn update_camera(&mut self, camera: &mut Camera, dt: Duration) {
-    let dt = dt.as_secs_f32();
+  pub fn update_camera(&mut self, camera: &mut Camera, dt: f32) {
+    let dt = dt;
 
     // Move forward/backward and left/right
     let (yaw_sin, yaw_cos) = camera.yaw.0.sin_cos();
@@ -192,5 +192,32 @@ impl CameraController {
     } else if camera.pitch > Rad(SAFE_FRAC_PI_2) {
       camera.pitch = Rad(SAFE_FRAC_PI_2);
     }
+  }
+}
+
+
+// We need this for Rust to store our data correctly for the shaders
+#[repr(C)]
+// This is so we can store this in a buffer
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct CameraUniform {
+  pub view_position: [f32; 4],
+  // We can't use cgmath with bytemuck directly, so we'll have
+  // to convert the Matrix4 into a 4x4 f32 array
+  pub   view_proj: [[f32; 4]; 4],
+}
+
+impl CameraUniform {
+  pub fn new() -> Self {
+    use cgmath::SquareMatrix;
+    Self {
+      view_position: [0.0; 4],
+      view_proj: cgmath::Matrix4::identity().into(),
+    }
+  }
+
+  pub fn update_view_proj(&mut self, camera: &Camera, projection: &Projection) {
+    self.view_position = camera.position.to_homogeneous().into();
+    self.view_proj = (projection.calc_matrix() * camera.calc_matrix()).into();
   }
 }
