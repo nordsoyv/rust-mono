@@ -1,13 +1,13 @@
 mod camera;
+mod gpu;
 mod model;
+mod renderer;
 mod resource;
 mod scene;
 mod texture;
-mod renderer;
-mod gpu;
 
 use renderer::Renderer;
-use scene::Scene;
+use scene::create_instances;
 use std::sync::Arc;
 pub use std::time::{Duration, Instant};
 use wgpu::ShaderStages;
@@ -19,6 +19,11 @@ use winit::{
 };
 
 #[derive(Default)]
+struct UiState {
+  space_between: i32,
+}
+
+#[derive(Default)]
 pub struct App {
   window: Option<Arc<Window>>,
   renderer: Option<Renderer<'static>>,
@@ -26,6 +31,7 @@ pub struct App {
   last_render_time: Option<Instant>,
   last_size: (u32, u32),
   panels_visible: bool,
+  ui_state: UiState,
 }
 
 impl ApplicationHandler for App {
@@ -125,40 +131,44 @@ impl ApplicationHandler for App {
         let gui_input = gui_state.take_egui_input(window);
         gui_state.egui_ctx().begin_pass(gui_input);
 
-        let title = "Rust/Wgpu";
-        if self.panels_visible {
-          egui::TopBottomPanel::top("top").show(gui_state.egui_ctx(), |ui| {
-            ui.horizontal(|ui| {
-              ui.label("File");
-              ui.label("Edit");
-            });
-          });
-
-          egui::SidePanel::left("left").show(gui_state.egui_ctx(), |ui| {
-            ui.heading("Scene Explorer");
-            if ui.button("Click me!").clicked() {
-              log::info!("Button clicked!");
-            }
-          });
-
-          egui::SidePanel::right("right").show(gui_state.egui_ctx(), |ui| {
-            ui.heading("Inspector");
-            if ui.button("Click me!").clicked() {
-              log::info!("Button clicked!");
-            }
-          });
-
-          egui::TopBottomPanel::bottom("bottom").show(gui_state.egui_ctx(), |ui| {
-            ui.heading("Assets");
-            if ui.button("Click me!").clicked() {
-              log::info!("Button clicked!");
-            }
-          });
-        }
-
-        egui::Window::new(title).show(gui_state.egui_ctx(), |ui| {
-          ui.checkbox(&mut self.panels_visible, "Show Panels");
+        //let title = "Rust/Wgpu";
+        // if self.panels_visible {
+        // egui::TopBottomPanel::top("top").show(gui_state.egui_ctx(), |ui| {
+        //   ui.horizontal(|ui| {
+        //     ui.label("File");
+        //     ui.label("Edit");
+        //   });
+        // });
+        let old_space_between = self.ui_state.space_between;
+        egui::SidePanel::left("left").show(gui_state.egui_ctx(), |ui| {
+          ui.heading("Scene Explorer");
+          ui.add(egui::Slider::new(&mut self.ui_state.space_between, 0..=100).text("Space between"));
+          if ui.button("Click me!").clicked() {
+            log::info!("Button clicked!");
+          }
         });
+        // if old_space_between != self.ui_state.space_between {
+        //   let (instances, buffer ) = create_instances(num_instances_per_row, space_between);
+        //   self.renderer.un
+        // }
+        // egui::SidePanel::right("right").show(gui_state.egui_ctx(), |ui| {
+        //   ui.heading("Inspector");
+        //   if ui.button("Click me!").clicked() {
+        //     log::info!("Button clicked!");
+        //   }
+        // });
+
+        // egui::TopBottomPanel::bottom("bottom").show(gui_state.egui_ctx(), |ui| {
+        //   ui.heading("Assets");
+        //   if ui.button("Click me!").clicked() {
+        //     log::info!("Button clicked!");
+        //   }
+        // });
+        // }
+
+        // egui::Window::new(title).show(gui_state.egui_ctx(), |ui| {
+        //   ui.checkbox(&mut self.panels_visible, "Show Panels");
+        // });
 
         let egui_winit::egui::FullOutput {
           textures_delta,
@@ -186,59 +196,8 @@ impl ApplicationHandler for App {
   }
 }
 
-
-
-
 #[repr(C)]
 #[derive(Default, Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct UniformBuffer {
   mvp: nalgebra_glm::Mat4,
-}
-
-struct UniformBinding {
-  pub buffer: wgpu::Buffer,
-  pub bind_group: wgpu::BindGroup,
-  pub bind_group_layout: wgpu::BindGroupLayout,
-}
-
-impl UniformBinding {
-  pub fn new(device: &wgpu::Device, visibility: ShaderStages, contents: &[u8]) -> Self {
-    let buffer = wgpu::util::DeviceExt::create_buffer_init(
-      device,
-      &wgpu::util::BufferInitDescriptor {
-        label: Some("Uniform Buffer"),
-        contents,
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-      },
-    );
-
-    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-      entries: &[wgpu::BindGroupLayoutEntry {
-        binding: 0,
-        visibility,
-        ty: wgpu::BindingType::Buffer {
-          ty: wgpu::BufferBindingType::Uniform,
-          has_dynamic_offset: false,
-          min_binding_size: None,
-        },
-        count: None,
-      }],
-      label: Some("uniform_bind_group_layout"),
-    });
-
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-      layout: &bind_group_layout,
-      entries: &[wgpu::BindGroupEntry {
-        binding: 0,
-        resource: buffer.as_entire_binding(),
-      }],
-      label: Some("uniform_bind_group"),
-    });
-
-    Self {
-      buffer,
-      bind_group,
-      bind_group_layout,
-    }
-  }
 }

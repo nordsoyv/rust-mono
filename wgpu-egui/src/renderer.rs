@@ -26,7 +26,7 @@ impl<'window> Renderer<'window> {
       false,
     );
 
-    let scene = Scene::new(&gpu.device, gpu.surface_format, &gpu.queue, width, height).await;
+    let scene = Scene::new(&gpu,  width, height).await;
 
     Self {
       gpu,
