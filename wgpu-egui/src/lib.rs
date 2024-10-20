@@ -7,10 +7,8 @@ mod scene;
 mod texture;
 
 use renderer::Renderer;
-use scene::{create_instances, create_instances_and_buffer, Scene};
 use std::sync::Arc;
 pub use std::time::{Duration, Instant};
-use wgpu::ShaderStages;
 use winit::{
   application::ApplicationHandler,
   dpi::PhysicalSize,
@@ -31,7 +29,6 @@ pub struct App {
   gui_state: Option<egui_winit::State>,
   last_render_time: Option<Instant>,
   last_size: (u32, u32),
-  panels_visible: bool,
   ui_state: UiState,
 }
 
@@ -144,7 +141,6 @@ impl ApplicationHandler for App {
         //     ui.label("Edit");
         //   });
         // });
-        let old_space_between = self.ui_state.space_between;
         egui::SidePanel::left("left").show(gui_state.egui_ctx(), |ui| {
           ui.heading("Scene Explorer");
           ui.add(

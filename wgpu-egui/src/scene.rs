@@ -1,11 +1,10 @@
-use nalgebra_glm::uint_bits_to_float_scalar;
 use wgpu::{util::DeviceExt, ShaderStages};
 
 use crate::{
   camera::Camera,
   gpu::{Gpu, UniformBinding},
-  model::{self, DrawModel, Vertex},
-  resource, texture, UiState,
+  model::{self, DrawModel},
+  resource, UiState,
 };
 use cgmath::prelude::*;
 
@@ -25,7 +24,7 @@ pub struct Scene {
 }
 
 impl<'window> Scene {
-  pub async fn new(gpu: &Gpu<'window>, width: u32, height: u32,ui_state: UiState) -> Self {
+  pub async fn new(gpu: &Gpu<'window>, width: u32, height: u32, ui_state: UiState) -> Self {
     let diffuse_bytes = include_bytes!("happy-tree.png");
     let diffuse_texture = gpu
       .create_texture_from_bytes(diffuse_bytes, "happy_tree.png")
@@ -93,8 +92,11 @@ impl<'window> Scene {
       ShaderStages::VERTEX_FRAGMENT,
       bytemuck::cast_slice(&[light_uniform]),
     );
-    let (instances, instance_buffer) =
-      create_instances_and_buffer(&gpu.device, ui_state.num_instances_per_row, ui_state.space_between);
+    let (instances, instance_buffer) = create_instances_and_buffer(
+      &gpu.device,
+      ui_state.num_instances_per_row,
+      ui_state.space_between,
+    );
 
     let render_pipeline = {
       let render_pipeline_layout = gpu.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -150,7 +152,7 @@ impl<'window> Scene {
       light_uniform_binding,
       light_uniform,
       num_instances_per_row: ui_state.num_instances_per_row,
-      space_between: ui_state.space_between
+      space_between: ui_state.space_between,
     }
   }
 
@@ -189,7 +191,13 @@ impl<'window> Scene {
     );
   }
 
-  pub fn update(&mut self, queue: &wgpu::Queue, aspect_ratio: f32, ui_state: &UiState, delta_time: f32) {
+  pub fn update(
+    &mut self,
+    queue: &wgpu::Queue,
+    aspect_ratio: f32,
+    ui_state: &UiState,
+    delta_time: f32,
+  ) {
     self.camera.update_camera(delta_time);
     queue.write_buffer(
       &self.camera_uniform_binding.buffer,
@@ -198,13 +206,9 @@ impl<'window> Scene {
     );
 
     if self.space_between != ui_state.space_between {
-      let instances = create_instances(
-        ui_state.num_instances_per_row,
-        ui_state.space_between,
-      );
+      let instances = create_instances(ui_state.num_instances_per_row, ui_state.space_between);
       self.update_instaces(queue, &instances);
     }
-
 
     let old_position: cgmath::Vector3<_> = self.light_uniform.position.into();
     self.light_uniform.position =
@@ -218,7 +222,6 @@ impl<'window> Scene {
     );
   }
 }
-
 
 pub(crate) fn create_instances(num_instances_per_row: u32, space_between: f32) -> Vec<Instance> {
   (0..num_instances_per_row)
@@ -343,63 +346,4 @@ impl model::Vertex for InstanceRaw {
       ],
     }
   }
-}
-
-fn create_render_pipeline(
-  device: &wgpu::Device,
-  layout: &wgpu::PipelineLayout,
-  color_format: wgpu::TextureFormat,
-  _depth_format: Option<wgpu::TextureFormat>,
-  _vertex_layouts: &[wgpu::VertexBufferLayout],
-  shader: wgpu::ShaderModuleDescriptor,
-) -> wgpu::RenderPipeline {
-  let shader = device.create_shader_module(shader);
-  device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-    label: Some("Render Pipeline"),
-    layout: Some(&layout),
-    vertex: wgpu::VertexState {
-      module: &shader,
-      entry_point: "vs_main",                                      // 1.
-      buffers: &[model::ModelVertex::desc(), InstanceRaw::desc()], // 2.
-      compilation_options: wgpu::PipelineCompilationOptions::default(),
-    },
-    fragment: Some(wgpu::FragmentState {
-      // 3.
-      module: &shader,
-      entry_point: "fs_main",
-      targets: &[Some(wgpu::ColorTargetState {
-        // 4.
-        format: color_format,
-        blend: Some(wgpu::BlendState::REPLACE),
-        write_mask: wgpu::ColorWrites::ALL,
-      })],
-      compilation_options: wgpu::PipelineCompilationOptions::default(),
-    }),
-    primitive: wgpu::PrimitiveState {
-      topology: wgpu::PrimitiveTopology::TriangleList, // 1.
-      strip_index_format: None,
-      front_face: wgpu::FrontFace::Ccw, // 2.
-      cull_mode: Some(wgpu::Face::Back),
-      // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-      polygon_mode: wgpu::PolygonMode::Fill,
-      // Requires Features::DEPTH_CLIP_CONTROL
-      unclipped_depth: false,
-      // Requires Features::CONSERVATIVE_RASTERIZATION
-      conservative: false,
-    },
-    depth_stencil: Some(wgpu::DepthStencilState {
-      format: texture::Texture::DEPTH_FORMAT,
-      depth_write_enabled: true,
-      depth_compare: wgpu::CompareFunction::Less,
-      stencil: wgpu::StencilState::default(),
-      bias: wgpu::DepthBiasState::default(),
-    }), // 1.
-    multisample: wgpu::MultisampleState {
-      count: 1,                         // 2.
-      mask: !0,                         // 3.
-      alpha_to_coverage_enabled: false, // 4.
-    },
-    multiview: None, // 5.
-    cache: None,     // 6.
-  })
 }

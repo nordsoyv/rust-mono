@@ -1,5 +1,3 @@
-use egui::UiStack;
-
 use crate::{gpu::Gpu, scene::Scene, UiState};
 
 pub struct Renderer<'window> {
