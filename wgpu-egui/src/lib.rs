@@ -65,7 +65,7 @@ impl ApplicationHandler for App {
 
         env_logger::init();
         let ui_state = UiState {
-          num_instances_per_row: 20,
+          num_instances_per_row: 10,
           space_between: 3.0,
         };
 

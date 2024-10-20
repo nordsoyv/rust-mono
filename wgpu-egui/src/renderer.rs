@@ -55,7 +55,7 @@ impl<'window> Renderer<'window> {
 
     self
       .scene
-      .update(&self.gpu.queue, self.gpu.aspect_ratio(), ui_state, delta_time);
+      .update(&self.gpu,  ui_state, delta_time);
 
     for (id, image_delta) in &textures_delta.set {
       self

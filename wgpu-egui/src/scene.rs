@@ -179,35 +179,41 @@ impl<'window> Scene {
     );
   }
 
-  pub fn update_instaces(&mut self, queue: &wgpu::Queue, new_instances: &Vec<Instance>) {
+  pub fn update_instaces(&mut self, gpu: &Gpu, new_instances: &Vec<Instance>) {
     let instance_data = new_instances
       .iter()
       .map(Instance::to_raw)
       .collect::<Vec<_>>();
-    queue.write_buffer(
-      &self.instance_buffer,
-      0,
-      bytemuck::cast_slice(&instance_data),
-    );
+
+    let raw_data = bytemuck::cast_slice(&instance_data);
+    let raw_data_len = raw_data.len();
+    if self.instance_buffer.size() >= raw_data_len.try_into().unwrap() {
+      gpu.queue.write_buffer(&self.instance_buffer, 0, raw_data);
+    } else {
+      let instance_buffer = gpu
+        .device
+        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+          label: Some("Instance Buffer"),
+          contents: bytemuck::cast_slice(&instance_data),
+          usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        });
+      self.instance_buffer = instance_buffer;
+    }
   }
 
-  pub fn update(
-    &mut self,
-    queue: &wgpu::Queue,
-    aspect_ratio: f32,
-    ui_state: &UiState,
-    delta_time: f32,
-  ) {
+  pub fn update(&mut self, gpu: &Gpu, ui_state: &UiState, delta_time: f32) {
     self.camera.update_camera(delta_time);
-    queue.write_buffer(
+    gpu.queue.write_buffer(
       &self.camera_uniform_binding.buffer,
       0,
       bytemuck::cast_slice(&[self.camera.camera_uniform]),
     );
 
-    if self.space_between != ui_state.space_between || self.num_instances_per_row != ui_state.num_instances_per_row{
+    if self.space_between != ui_state.space_between
+      || self.num_instances_per_row != ui_state.num_instances_per_row
+    {
       let instances = create_instances(ui_state.num_instances_per_row, ui_state.space_between);
-      self.update_instaces(queue, &instances);
+      self.update_instaces(gpu, &instances);
     }
 
     let old_position: cgmath::Vector3<_> = self.light_uniform.position.into();
@@ -215,7 +221,7 @@ impl<'window> Scene {
       (cgmath::Quaternion::from_axis_angle((0.0, 1.0, 0.0).into(), cgmath::Deg(60.0 * delta_time))
         * old_position)
         .into();
-    queue.write_buffer(
+    gpu.queue.write_buffer(
       &self.light_uniform_binding.buffer,
       0,
       bytemuck::cast_slice(&[self.light_uniform]),
