@@ -7,7 +7,7 @@ mod scene;
 mod texture;
 
 use renderer::Renderer;
-use scene::create_instances;
+use scene::{create_instances, create_instances_and_buffer, Scene};
 use std::sync::Arc;
 pub use std::time::{Duration, Instant};
 use wgpu::ShaderStages;
@@ -18,9 +18,10 @@ use winit::{
   window::{Theme, Window},
 };
 
-#[derive(Default)]
+#[derive(Default, Copy, Clone)]
 struct UiState {
-  space_between: i32,
+  space_between: f32,
+  num_instances_per_row: u32,
 }
 
 #[derive(Default)]
@@ -66,13 +67,17 @@ impl ApplicationHandler for App {
         );
 
         env_logger::init();
-        let renderer =
-          pollster::block_on(
-            async move { Renderer::new(window_handle.clone(), width, height).await },
-          );
-        self.renderer = Some(renderer);
+        let ui_state = UiState {
+          num_instances_per_row: 10,
+          space_between: 3.0,
+        };
 
+        let renderer = pollster::block_on(async move {
+          Renderer::new(window_handle.clone(), width, height, ui_state).await
+        });
+        self.renderer = Some(renderer);
         self.gui_state = Some(gui_state);
+        self.ui_state = ui_state;
         self.last_render_time = Some(Instant::now());
       }
     }
@@ -142,15 +147,13 @@ impl ApplicationHandler for App {
         let old_space_between = self.ui_state.space_between;
         egui::SidePanel::left("left").show(gui_state.egui_ctx(), |ui| {
           ui.heading("Scene Explorer");
-          ui.add(egui::Slider::new(&mut self.ui_state.space_between, 0..=100).text("Space between"));
+          ui.add(
+            egui::Slider::new(&mut self.ui_state.space_between, 0.0..=10.0).text("Space between").step_by(0.1),
+          );
           if ui.button("Click me!").clicked() {
             log::info!("Button clicked!");
           }
         });
-        // if old_space_between != self.ui_state.space_between {
-        //   let (instances, buffer ) = create_instances(num_instances_per_row, space_between);
-        //   self.renderer.un
-        // }
         // egui::SidePanel::right("right").show(gui_state.egui_ctx(), |ui| {
         //   ui.heading("Inspector");
         //   if ui.button("Click me!").clicked() {
@@ -186,8 +189,13 @@ impl ApplicationHandler for App {
             pixels_per_point: window.scale_factor() as f32,
           }
         };
-
-        renderer.render_frame(screen_descriptor, paint_jobs, textures_delta, delta_time);
+        renderer.render_frame(
+          screen_descriptor,
+          paint_jobs,
+          textures_delta,
+          &self.ui_state,
+          delta_time,
+        );
       }
       _ => (),
     }

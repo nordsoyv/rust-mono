@@ -1,10 +1,11 @@
+use nalgebra_glm::uint_bits_to_float_scalar;
 use wgpu::{util::DeviceExt, ShaderStages};
 
 use crate::{
   camera::Camera,
   gpu::{Gpu, UniformBinding},
   model::{self, DrawModel, Vertex},
-  resource, texture,
+  resource, texture, UiState,
 };
 use cgmath::prelude::*;
 
@@ -19,14 +20,16 @@ pub struct Scene {
   diffuse_bind_group: wgpu::BindGroup,
   light_uniform_binding: UniformBinding,
   light_uniform: LightUniform,
+  space_between: f32,
+  num_instances_per_row: u32,
 }
 
 impl<'window> Scene {
-  pub async fn new(gpu: &Gpu<'window>, width: u32, height: u32) -> Self {
+  pub async fn new(gpu: &Gpu<'window>, width: u32, height: u32,ui_state: UiState) -> Self {
     let diffuse_bytes = include_bytes!("happy-tree.png");
-    let diffuse_texture =
-      texture::Texture::from_bytes(&gpu.device, &gpu.queue, diffuse_bytes, "happy_tree.png")
-        .unwrap();
+    let diffuse_texture = gpu
+      .create_texture_from_bytes(diffuse_bytes, "happy_tree.png")
+      .unwrap();
     let texture_bind_group_layout =
       gpu
         .device
@@ -91,59 +94,39 @@ impl<'window> Scene {
       bytemuck::cast_slice(&[light_uniform]),
     );
     let (instances, instance_buffer) =
-      create_instances(&gpu.device, NUM_INSTANCES_PER_ROW, SPACE_BETWEEN);
-
-    let render_pipeline_layout =
-      gpu
-        .device
-        .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-          label: Some("Render Pipeline Layout"),
-          bind_group_layouts: &[
-            &texture_bind_group_layout,
-            &camera_uniform_binding.bind_group_layout,
-            &light_uniform_binding.bind_group_layout,
-          ],
-          push_constant_ranges: &[],
-        });
+      create_instances_and_buffer(&gpu.device, ui_state.num_instances_per_row, ui_state.space_between);
 
     let render_pipeline = {
+      let render_pipeline_layout = gpu.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render Pipeline Layout"),
+        bind_group_layouts: &[
+          &texture_bind_group_layout,
+          &camera_uniform_binding.bind_group_layout,
+          &light_uniform_binding.bind_group_layout,
+        ],
+        push_constant_ranges: &[],
+      });
       let shader = wgpu::ShaderModuleDescriptor {
         label: Some("Normal Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
       };
-      create_render_pipeline(
-        &gpu.device,
-        &render_pipeline_layout,
-        gpu.surface_format,
-        Some(texture::Texture::DEPTH_FORMAT),
-        &[model::ModelVertex::desc(), InstanceRaw::desc()],
-        shader,
-      )
+      gpu.create_render_pipeline(&render_pipeline_layout, shader, Some("Render pipeline"))
     };
 
     let light_render_pipeline = {
-      let layout = gpu
-        .device
-        .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-          label: Some("Light Pipeline Layout"),
-          bind_group_layouts: &[
-            &camera_uniform_binding.bind_group_layout,
-            &light_uniform_binding.bind_group_layout,
-          ],
-          push_constant_ranges: &[],
-        });
+      let layout = gpu.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Light Pipeline Layout"),
+        bind_group_layouts: &[
+          &camera_uniform_binding.bind_group_layout,
+          &light_uniform_binding.bind_group_layout,
+        ],
+        push_constant_ranges: &[],
+      });
       let shader = wgpu::ShaderModuleDescriptor {
         label: Some("Light Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("light.wgsl").into()),
       };
-      create_render_pipeline(
-        &gpu.device,
-        &layout,
-        gpu.surface_format,
-        Some(texture::Texture::DEPTH_FORMAT),
-        &[model::ModelVertex::desc()],
-        shader,
-      )
+      gpu.create_render_pipeline(&layout, shader, Some("Light pipeline"))
     };
 
     let obj_model = resource::load_model(
@@ -166,6 +149,8 @@ impl<'window> Scene {
       diffuse_bind_group,
       light_uniform_binding,
       light_uniform,
+      num_instances_per_row: ui_state.num_instances_per_row,
+      space_between: ui_state.space_between
     }
   }
 
@@ -174,15 +159,15 @@ impl<'window> Scene {
     render_pass.set_bind_group(1, &self.camera_uniform_binding.bind_group, &[]);
     render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
 
-    use crate::model::DrawLight; // NEW!
-    render_pass.set_pipeline(&self.light_render_pipeline); // NEW!
+    use crate::model::DrawLight;
+    render_pass.set_pipeline(&self.light_render_pipeline);
     render_pass.draw_light_model(
       &self.obj_model,
       &self.camera_uniform_binding.bind_group,
       &self.light_uniform_binding.bind_group,
-    ); // NEW!
+    );
 
-    render_pass.set_pipeline(&self.render_pipeline); // 2.
+    render_pass.set_pipeline(&self.render_pipeline);
 
     render_pass.draw_model_instanced(
       &self.obj_model,
@@ -192,13 +177,34 @@ impl<'window> Scene {
     );
   }
 
-  pub fn update(&mut self, queue: &wgpu::Queue, aspect_ratio: f32, delta_time: f32) {
+  pub fn update_instaces(&mut self, queue: &wgpu::Queue, new_instances: &Vec<Instance>) {
+    let instance_data = new_instances
+      .iter()
+      .map(Instance::to_raw)
+      .collect::<Vec<_>>();
+    queue.write_buffer(
+      &self.instance_buffer,
+      0,
+      bytemuck::cast_slice(&instance_data),
+    );
+  }
+
+  pub fn update(&mut self, queue: &wgpu::Queue, aspect_ratio: f32, ui_state: &UiState, delta_time: f32) {
     self.camera.update_camera(delta_time);
     queue.write_buffer(
       &self.camera_uniform_binding.buffer,
       0,
       bytemuck::cast_slice(&[self.camera.camera_uniform]),
     );
+
+    if self.space_between != ui_state.space_between {
+      let instances = create_instances(
+        ui_state.num_instances_per_row,
+        ui_state.space_between,
+      );
+      self.update_instaces(queue, &instances);
+    }
+
 
     let old_position: cgmath::Vector3<_> = self.light_uniform.position.into();
     self.light_uniform.position =
@@ -213,15 +219,9 @@ impl<'window> Scene {
   }
 }
 
-const NUM_INSTANCES_PER_ROW: u32 = 10;
-const SPACE_BETWEEN: f32 = 3.0;
 
-pub fn create_instances(
-  device: &wgpu::Device,
-  num_instances_per_row: u32,
-  space_between: f32,
-) -> (Vec<Instance>, wgpu::Buffer) {
-  let instances = (0..num_instances_per_row)
+pub(crate) fn create_instances(num_instances_per_row: u32, space_between: f32) -> Vec<Instance> {
+  (0..num_instances_per_row)
     .flat_map(|z| {
       (0..num_instances_per_row).map(move |x| {
         let x = space_between * (x as f32 - num_instances_per_row as f32 / 2.0);
@@ -238,12 +238,20 @@ pub fn create_instances(
         Instance { position, rotation }
       })
     })
-    .collect::<Vec<_>>();
+    .collect::<Vec<_>>()
+}
+
+pub(crate) fn create_instances_and_buffer(
+  device: &wgpu::Device,
+  num_instances_per_row: u32,
+  space_between: f32,
+) -> (Vec<Instance>, wgpu::Buffer) {
+  let instances = create_instances(num_instances_per_row, space_between);
   let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
   let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
     label: Some("Instance Buffer"),
     contents: bytemuck::cast_slice(&instance_data),
-    usage: wgpu::BufferUsages::VERTEX,
+    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
   });
   (instances, instance_buffer)
 }
@@ -259,7 +267,7 @@ struct LightUniform {
   _padding2: u32,
 }
 
-struct Instance {
+pub struct Instance {
   position: cgmath::Vector3<f32>,
   rotation: cgmath::Quaternion<f32>,
 }
@@ -277,7 +285,7 @@ impl Instance {
 }
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct InstanceRaw {
+pub struct InstanceRaw {
   model: [[f32; 4]; 4],
   normal: [[f32; 3]; 3],
 }

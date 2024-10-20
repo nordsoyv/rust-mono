@@ -1,7 +1,9 @@
-use crate::{gpu::Gpu, scene::Scene};
+use egui::UiStack;
+
+use crate::{gpu::Gpu, scene::Scene, UiState};
 
 pub struct Renderer<'window> {
-  gpu: Gpu<'window>,
+  pub gpu: Gpu<'window>,
   depth_texture_view: wgpu::TextureView,
   egui_renderer: egui_wgpu::Renderer,
   scene: Scene,
@@ -14,6 +16,7 @@ impl<'window> Renderer<'window> {
     window: impl Into<wgpu::SurfaceTarget<'window>>,
     width: u32,
     height: u32,
+    ui_state: UiState
   ) -> Self {
     let gpu = Gpu::new_async(window, width, height).await;
     let depth_texture_view = gpu.create_depth_texture(width, height);
@@ -26,7 +29,7 @@ impl<'window> Renderer<'window> {
       false,
     );
 
-    let scene = Scene::new(&gpu,  width, height).await;
+    let scene = Scene::new(&gpu,  width, height, ui_state).await;
 
     Self {
       gpu,
@@ -46,13 +49,14 @@ impl<'window> Renderer<'window> {
     screen_descriptor: egui_wgpu::ScreenDescriptor,
     paint_jobs: Vec<egui::epaint::ClippedPrimitive>,
     textures_delta: egui::TexturesDelta,
+    ui_state: &UiState,
     delta_time: crate::Duration,
   ) {
     let delta_time = delta_time.as_secs_f32();
 
     self
       .scene
-      .update(&self.gpu.queue, self.gpu.aspect_ratio(), delta_time);
+      .update(&self.gpu.queue, self.gpu.aspect_ratio(), ui_state, delta_time);
 
     for (id, image_delta) in &textures_delta.set {
       self
