@@ -40,6 +40,7 @@ impl<'window> Renderer<'window> {
   pub fn resize(&mut self, width: u32, height: u32) {
     self.gpu.resize(width, height);
     self.depth_texture_view = self.gpu.create_depth_texture(width, height);
+    self.scene.camera.resize(width,height);
   }
 
   pub fn render_frame(

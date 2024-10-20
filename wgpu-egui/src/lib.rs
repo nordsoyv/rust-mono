@@ -65,7 +65,7 @@ impl ApplicationHandler for App {
 
         env_logger::init();
         let ui_state = UiState {
-          num_instances_per_row: 10,
+          num_instances_per_row: 20,
           space_between: 3.0,
         };
 
@@ -133,42 +133,19 @@ impl ApplicationHandler for App {
         let gui_input = gui_state.take_egui_input(window);
         gui_state.egui_ctx().begin_pass(gui_input);
 
-        //let title = "Rust/Wgpu";
-        // if self.panels_visible {
-        // egui::TopBottomPanel::top("top").show(gui_state.egui_ctx(), |ui| {
-        //   ui.horizontal(|ui| {
-        //     ui.label("File");
-        //     ui.label("Edit");
-        //   });
-        // });
         egui::SidePanel::left("left").show(gui_state.egui_ctx(), |ui| {
           ui.heading("Scene Explorer");
           ui.add(
             egui::Slider::new(&mut self.ui_state.space_between, 0.0..=10.0).text("Space between").step_by(0.1),
           );
+          ui.add(
+            egui::Slider::new(&mut self.ui_state.num_instances_per_row, 10..=20).text("Num instances"),
+          );
+
           if ui.button("Click me!").clicked() {
             log::info!("Button clicked!");
           }
         });
-        // egui::SidePanel::right("right").show(gui_state.egui_ctx(), |ui| {
-        //   ui.heading("Inspector");
-        //   if ui.button("Click me!").clicked() {
-        //     log::info!("Button clicked!");
-        //   }
-        // });
-
-        // egui::TopBottomPanel::bottom("bottom").show(gui_state.egui_ctx(), |ui| {
-        //   ui.heading("Assets");
-        //   if ui.button("Click me!").clicked() {
-        //     log::info!("Button clicked!");
-        //   }
-        // });
-        // }
-
-        // egui::Window::new(title).show(gui_state.egui_ctx(), |ui| {
-        //   ui.checkbox(&mut self.panels_visible, "Show Panels");
-        // });
-
         let egui_winit::egui::FullOutput {
           textures_delta,
           shapes,

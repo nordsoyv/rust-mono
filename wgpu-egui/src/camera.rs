@@ -1,8 +1,5 @@
 use cgmath::*;
 use std::f32::consts::FRAC_PI_2;
-use winit::dpi::PhysicalPosition;
-use winit::event::*;
-use winit::keyboard::KeyCode;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
@@ -107,6 +104,10 @@ impl Camera {
     self.update_controller(delta_time);
     self.update_view_proj();
   }
+
+  pub(crate) fn resize(&mut self, width: u32, height: u32) {
+    self.projection.resize(width, height);
+  }
 }
 
 fn calc_matrix(position: Point3<f32>, yaw: Rad<f32>, pitch: Rad<f32>) -> Matrix4<f32> {
@@ -179,53 +180,53 @@ impl CameraController {
     }
   }
 
-  pub fn process_keyboard(&mut self, key: KeyCode, state: ElementState) -> bool {
-    let amount = if state == ElementState::Pressed {
-      1.0
-    } else {
-      0.0
-    };
-    match key {
-      KeyCode::KeyW | KeyCode::ArrowUp => {
-        self.amount_forward = amount;
-        true
-      }
-      KeyCode::KeyS | KeyCode::ArrowDown => {
-        self.amount_backward = amount;
-        true
-      }
-      KeyCode::KeyA | KeyCode::ArrowLeft => {
-        self.amount_left = amount;
-        true
-      }
-      KeyCode::KeyD | KeyCode::ArrowRight => {
-        self.amount_right = amount;
-        true
-      }
-      KeyCode::Space => {
-        self.amount_up = amount;
-        true
-      }
-      KeyCode::ShiftLeft => {
-        self.amount_down = amount;
-        true
-      }
-      _ => false,
-    }
-  }
+  // pub fn process_keyboard(&mut self, key: KeyCode, state: ElementState) -> bool {
+  //   let amount = if state == ElementState::Pressed {
+  //     1.0
+  //   } else {
+  //     0.0
+  //   };
+  //   match key {
+  //     KeyCode::KeyW | KeyCode::ArrowUp => {
+  //       self.amount_forward = amount;
+  //       true
+  //     }
+  //     KeyCode::KeyS | KeyCode::ArrowDown => {
+  //       self.amount_backward = amount;
+  //       true
+  //     }
+  //     KeyCode::KeyA | KeyCode::ArrowLeft => {
+  //       self.amount_left = amount;
+  //       true
+  //     }
+  //     KeyCode::KeyD | KeyCode::ArrowRight => {
+  //       self.amount_right = amount;
+  //       true
+  //     }
+  //     KeyCode::Space => {
+  //       self.amount_up = amount;
+  //       true
+  //     }
+  //     KeyCode::ShiftLeft => {
+  //       self.amount_down = amount;
+  //       true
+  //     }
+  //     _ => false,
+  //   }
+  // }
 
-  pub fn process_mouse(&mut self, mouse_dx: f64, mouse_dy: f64) {
-    self.rotate_horizontal = mouse_dx as f32;
-    self.rotate_vertical = mouse_dy as f32;
-  }
+  // pub fn process_mouse(&mut self, mouse_dx: f64, mouse_dy: f64) {
+  //   self.rotate_horizontal = mouse_dx as f32;
+  //   self.rotate_vertical = mouse_dy as f32;
+  // }
 
-  pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
-    self.scroll = -match delta {
-      // I'm assuming a line is about 100 pixels
-      MouseScrollDelta::LineDelta(_, scroll) => scroll * 100.0,
-      MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => *scroll as f32,
-    };
-  }
+  // pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
+  //   self.scroll = -match delta {
+  //     // I'm assuming a line is about 100 pixels
+  //     MouseScrollDelta::LineDelta(_, scroll) => scroll * 100.0,
+  //     MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => *scroll as f32,
+  //   };
+  // }
 }
 
 // We need this for Rust to store our data correctly for the shaders

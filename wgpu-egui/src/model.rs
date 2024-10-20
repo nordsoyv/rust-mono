@@ -13,6 +13,7 @@ pub struct Model {
   pub materials: Vec<Material>,
 }
 
+#[allow(dead_code)]
 pub struct Material {
   pub name: String,
   pub diffuse_texture: texture::Texture,
@@ -20,6 +21,7 @@ pub struct Material {
 }
 
 pub struct Mesh {
+  #[allow(dead_code)]
   pub name: String,
   pub vertex_buffer: wgpu::Buffer,
   pub index_buffer: wgpu::Buffer,
@@ -29,6 +31,7 @@ pub struct Mesh {
 
 // model.rs
 pub trait DrawLight<'a> {
+  #[allow(dead_code)]
   fn draw_light_mesh(
     &mut self,
     mesh: &'a Mesh,
@@ -107,6 +110,7 @@ where
 }
 
 pub trait DrawModel<'a> {
+  #[allow(dead_code)]
   fn draw_mesh(
     &mut self,
     mesh: &'a Mesh,
@@ -122,6 +126,7 @@ pub trait DrawModel<'a> {
     camera_bind_group: &'a wgpu::BindGroup,
     light_bind_group: &'a wgpu::BindGroup,
   );
+  #[allow(dead_code)]
   fn draw_model(
     &mut self,
     model: &'a Model,

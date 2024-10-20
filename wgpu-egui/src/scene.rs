@@ -205,7 +205,7 @@ impl<'window> Scene {
       bytemuck::cast_slice(&[self.camera.camera_uniform]),
     );
 
-    if self.space_between != ui_state.space_between {
+    if self.space_between != ui_state.space_between || self.num_instances_per_row != ui_state.num_instances_per_row{
       let instances = create_instances(ui_state.num_instances_per_row, ui_state.space_between);
       self.update_instaces(queue, &instances);
     }
