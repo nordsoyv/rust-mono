@@ -1,7 +1,7 @@
 use wgpu::{util::DeviceExt, ShaderStages};
 
 use crate::{
-  camera::{Camera, CameraController, CameraUniform, Projection},
+  camera::Camera,
   gpu::{Gpu, UniformBinding},
   model::{self, DrawModel, Vertex},
   resource, texture,
@@ -10,10 +10,7 @@ use cgmath::prelude::*;
 
 pub struct Scene {
   pub camera: Camera,
-  pub projection: Projection,
-  pub camera_controller: CameraController,
   camera_uniform_binding: UniformBinding,
-  camera_uniform: CameraUniform,
   render_pipeline: wgpu::RenderPipeline,
   light_render_pipeline: wgpu::RenderPipeline,
   obj_model: model::Model,
@@ -71,14 +68,16 @@ impl<'window> Scene {
       label: Some("diffuse_bind_group"),
     });
 
-    let camera = Camera::new((0.0, 5.0, 10.0), cgmath::Deg(-90.0), cgmath::Deg(-20.0));
-    let projection = Projection::new(width, height, cgmath::Deg(45.0), 0.1, 100.0);
-    let camera_controller = CameraController::new(4.0, 2.0);
-    let mut camera_uniform = CameraUniform::new();
-    camera_uniform.update_view_proj(&camera, &projection);
+    let camera = Camera::new(
+      (0.0, 5.0, 10.0),
+      cgmath::Deg(-90.0),
+      cgmath::Deg(-20.0),
+      width,
+      height,
+    );
     let camera_uniform_binding = gpu.create_uniform_binding(
       ShaderStages::VERTEX_FRAGMENT,
-      bytemuck::cast_slice(&[camera_uniform]),
+      bytemuck::cast_slice(&[camera.camera_uniform]),
     );
 
     let light_uniform = LightUniform {
@@ -87,7 +86,10 @@ impl<'window> Scene {
       color: [1.0, 1.0, 1.0],
       _padding2: 0,
     };
-    let light_uniform_binding = gpu.create_uniform_binding(ShaderStages::VERTEX_FRAGMENT, bytemuck::cast_slice(&[light_uniform]));
+    let light_uniform_binding = gpu.create_uniform_binding(
+      ShaderStages::VERTEX_FRAGMENT,
+      bytemuck::cast_slice(&[light_uniform]),
+    );
     let (instances, instance_buffer) =
       create_instances(&gpu.device, NUM_INSTANCES_PER_ROW, SPACE_BETWEEN);
 
@@ -154,36 +156,20 @@ impl<'window> Scene {
     .unwrap();
 
     Self {
-      //   model: nalgebra_glm::Mat4::identity(),
-      //   uniform,
       render_pipeline,
       light_render_pipeline,
-      //   vertex_buffer,
-      //   index_buffer,
       camera,
-      projection,
-      camera_controller,
       camera_uniform_binding,
-      camera_uniform,
       obj_model,
       instances,
       instance_buffer,
       diffuse_bind_group,
       light_uniform_binding,
       light_uniform,
-      // diffuse_bind_group
     }
   }
 
   pub fn render<'rpass>(&'rpass self, render_pass: &mut wgpu::RenderPass<'rpass>) {
-    // renderpass.set_pipeline(&self.pipeline);
-    // renderpass.set_bind_group(0, &self.uniform.bind_group, &[]);
-
-    // renderpass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-    // renderpass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-
-    // renderpass.draw_indexed(0..(INDICES.len() as _), 0, 0..1);
-
     render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
     render_pass.set_bind_group(1, &self.camera_uniform_binding.bind_group, &[]);
     render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
@@ -207,16 +193,11 @@ impl<'window> Scene {
   }
 
   pub fn update(&mut self, queue: &wgpu::Queue, aspect_ratio: f32, delta_time: f32) {
-    self
-      .camera_controller
-      .update_camera(&mut self.camera, delta_time);
-    self
-      .camera_uniform
-      .update_view_proj(&self.camera, &self.projection);
+    self.camera.update_camera(delta_time);
     queue.write_buffer(
       &self.camera_uniform_binding.buffer,
       0,
-      bytemuck::cast_slice(&[self.camera_uniform]),
+      bytemuck::cast_slice(&[self.camera.camera_uniform]),
     );
 
     let old_position: cgmath::Vector3<_> = self.light_uniform.position.into();
@@ -235,7 +216,7 @@ impl<'window> Scene {
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 const SPACE_BETWEEN: f32 = 3.0;
 
-pub(crate) fn create_instances(
+pub fn create_instances(
   device: &wgpu::Device,
   num_instances_per_row: u32,
   space_between: f32,
