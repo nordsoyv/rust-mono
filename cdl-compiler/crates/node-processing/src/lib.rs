@@ -60,6 +60,16 @@ impl fmt::Display for ProcessingError {
   }
 }
 
+impl std::error::Error for ProcessingError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+
+    fn cause(&self) -> Option<&dyn std::error::Error> {
+        self.source()
+    }
+}
+
 #[derive(Debug)]
 pub struct NodeProcessor {
   ast: Ast,
