@@ -44,11 +44,11 @@ fn setup(
     PlaneMarker,
   ));
   // cube
-  commands.spawn((
-    Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-    MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-    Transform::from_xyz(0.0, 0.5, 0.0),
-  ));
+  // commands.spawn((
+  //   Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+  //   MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
+  //   Transform::from_xyz(0.0, 0.5, 0.0),
+  // ));
   // light
   commands.spawn((
     PointLight {
