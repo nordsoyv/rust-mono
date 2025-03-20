@@ -1,10 +1,13 @@
 use bevy::{
   color::{self, palettes::css::LIME},
-  pbr::wireframe::{NoWireframe, Wireframe, WireframeColor, WireframeConfig, WireframePlugin},
+  pbr::wireframe::{WireframeColor, WireframePlugin},
   prelude::*,
   render::{
-    mesh::VertexAttributeValues, settings::{WgpuFeatures, WgpuSettings}, RenderPlugin
-  }, ui,
+    RenderPlugin,
+    mesh::VertexAttributeValues,
+    settings::{WgpuFeatures, WgpuSettings},
+  },
+  ui,
 };
 use bevy_egui::{EguiContexts, EguiPlugin, egui};
 use noise::{NoiseFn, SuperSimplex};
@@ -18,10 +21,21 @@ struct PlaneMarker;
 #[derive(Resource)]
 struct UiResource {
   pub seed: u32,
-  exponent : i32,
   generate: bool,
-  scale : f64,
-  octaves : i32,
+  terrain_type: TerrainType,
+  simple_noise_config: SimpleNoiseConfig,
+}
+
+struct SimpleNoiseConfig {
+  exponent: i32,
+  scale: f64,
+  octaves: i32,
+}
+
+#[derive(Debug, PartialEq)]
+enum TerrainType {
+  SimpleNoise,
+  Next,
 }
 
 fn setup(
@@ -46,13 +60,6 @@ fn setup(
     WireframeColor { color: LIME.into() },
     PlaneMarker,
   ));
-  // cube
-  // commands.spawn((
-  //   Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-  //   MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-  //   Transform::from_xyz(0.0, 0.5, 0.0),
-  // ));
-  // light
   commands.spawn((
     PointLight {
       shadows_enabled: true,
@@ -71,10 +78,23 @@ fn setup(
 
 fn ui_example_system(mut contexts: EguiContexts, mut ui_resource: ResMut<UiResource>) {
   egui::Window::new("Hello").show(contexts.ctx_mut(), |ui| {
+    egui::ComboBox::from_label("Terrain type")
+      .selected_text(format!("{:?}", ui_resource.terrain_type))
+      .show_ui(ui, |ui| {
+        ui.selectable_value(
+          &mut ui_resource.terrain_type,
+          TerrainType::SimpleNoise,
+          "Simple",
+        );
+        ui.selectable_value(&mut ui_resource.terrain_type, TerrainType::Next, "Next");
+      });
     ui.add(egui::Slider::new(&mut ui_resource.seed, 0..=100).text("Seed"));
-    ui.add(egui::Slider::new(&mut ui_resource.exponent, 1..=5).text("Exp"));
-    ui.add(egui::Slider::new(&mut ui_resource.scale, 0.0..=1.0).text("Scale"));
-    ui.add(egui::Slider::new(&mut ui_resource.octaves, 1..=10).text("Ocataves"));
+    if ui_resource.terrain_type == TerrainType::SimpleNoise {
+      ui.add(egui::Slider::new(&mut ui_resource.simple_noise_config.exponent, 1..=5).text("Exp"));
+      ui.add(egui::Slider::new(&mut ui_resource.simple_noise_config.scale, 0.0..=1.0).text("Scale"));
+      ui.add(egui::Slider::new(&mut ui_resource.simple_noise_config.octaves, 1..=10).text("Ocataves"));
+    }
+
     if ui.button("Generate").clicked() {
       ui_resource.generate = true;
     }
@@ -93,41 +113,28 @@ fn update_plane(
     let VertexAttributeValues::Float32x3(vertices) = vertices else {
       panic!("Unexpected vertex format, expected Float32x3.");
     };
-    let noise_1 = SuperSimplex::new(ui_resource.seed);
-    // let noise_2 = SuperSimplex::new(ui_resource.seed + 1);
-    // let noise_3 = SuperSimplex::new(ui_resource.seed + 2);
-    // let noise_4 = SuperSimplex::new(ui_resource.seed + 3);
-    // let noise_5 = SuperSimplex::new(ui_resource.seed + 4);
-    let scale = ui_resource.scale;
-    let octaves = ui_resource.octaves;
-    for vertex in vertices.iter_mut() {
-      let v1 = vertex[0] as f64;
-      let v2 = vertex[1] as f64;
-      let mut sum = 0.0;
-      let mut divisor= 0.0;
-      for octave  in 0..=octaves {
-        let o = 2.0_f64.powi(octave);
-        //dbg!(o);
-        let mut n =noise_1.get([v1*o*scale, v2*o*scale]);
-        n = n / o ;
-        sum = sum + n;
-        divisor = divisor + 1.0/o;
+    if ui_resource.terrain_type == TerrainType::SimpleNoise {
+      let noise_1 = SuperSimplex::new(ui_resource.seed);
+      let scale = ui_resource.simple_noise_config.scale;
+      let octaves = ui_resource.simple_noise_config.octaves;
+      for vertex in vertices.iter_mut() {
+        let v1 = vertex[0] as f64;
+        let v2 = vertex[1] as f64;
+        let mut sum = 0.0;
+        let mut divisor = 0.0;
+        for octave in 0..=octaves {
+          let o = 2.0_f64.powi(octave);
+          let mut n = noise_1.get([v1 * o * scale, v2 * o * scale]);
+          n = n / o;
+          sum = sum + n;
+          divisor = divisor + 1.0 / o;
+        }
+        sum = sum / divisor;
+        vertex[2] = sum.powi(ui_resource.simple_noise_config.exponent) as f32;
       }
-      //dbg!(sum);
-      //dbg!(divisor);
-      sum = sum/divisor;
-
-
-      // let n1 = noise_1.get([v1, v2]) as f32;
-      // let n2 = noise_2.get([v1 * 2.0, v2 * 2.0]) as f32;
-      // let n3 = noise_3.get([v1 * 4.0, v2 * 4.0]) as f32;
-      // let n4 = noise_4.get([v1 * 8.0, v2 * 8.0]) as f32;
-      // let n5 = noise_5.get([v1 * 16.0, v2 * 16.0]) as f32;
-      // let mut v = n1 + (n2 * 0.5) + (n3 * 0.25) + (n4 * 0.125) + (n5* 0.0625);
-      // v = v / (1.0 + 0.5 + 0.25 + 0.125 + 0.0625);
-      vertex[2] = sum.powi(ui_resource.exponent) as f32;
+      mesh.compute_normals();
     }
-    mesh.compute_normals();
+
     ui_resource.generate = false;
   }
 }
@@ -147,10 +154,13 @@ fn main() {
     ))
     .insert_resource(UiResource {
       seed: 10,
-      exponent:1,
+      simple_noise_config: SimpleNoiseConfig {
+        exponent: 1,
+        scale: 0.25,
+        octaves: 4,
+      },
       generate: false,
-      octaves:4,
-      scale: 0.25
+      terrain_type: TerrainType::SimpleNoise,
     })
     .add_systems(Startup, setup)
     .add_systems(Update, (ui_example_system, update_plane).chain())
