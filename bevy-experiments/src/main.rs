@@ -91,8 +91,12 @@ fn ui_example_system(mut contexts: EguiContexts, mut ui_resource: ResMut<UiResou
     ui.add(egui::Slider::new(&mut ui_resource.seed, 0..=100).text("Seed"));
     if ui_resource.terrain_type == TerrainType::SimpleNoise {
       ui.add(egui::Slider::new(&mut ui_resource.simple_noise_config.exponent, 1..=5).text("Exp"));
-      ui.add(egui::Slider::new(&mut ui_resource.simple_noise_config.scale, 0.0..=1.0).text("Scale"));
-      ui.add(egui::Slider::new(&mut ui_resource.simple_noise_config.octaves, 1..=10).text("Ocataves"));
+      ui.add(
+        egui::Slider::new(&mut ui_resource.simple_noise_config.scale, 0.0..=1.0).text("Scale"),
+      );
+      ui.add(
+        egui::Slider::new(&mut ui_resource.simple_noise_config.octaves, 1..=10).text("Ocataves"),
+      );
     }
 
     if ui.button("Generate").clicked() {
@@ -114,30 +118,38 @@ fn update_plane(
       panic!("Unexpected vertex format, expected Float32x3.");
     };
     if ui_resource.terrain_type == TerrainType::SimpleNoise {
-      let noise_1 = SuperSimplex::new(ui_resource.seed);
-      let scale = ui_resource.simple_noise_config.scale;
-      let octaves = ui_resource.simple_noise_config.octaves;
-      for vertex in vertices.iter_mut() {
-        let v1 = vertex[0] as f64;
-        let v2 = vertex[1] as f64;
-        let mut sum = 0.0;
-        let mut divisor = 0.0;
-        for octave in 0..=octaves {
-          let o = 2.0_f64.powi(octave);
-          let mut n = noise_1.get([v1 * o * scale, v2 * o * scale]);
-          n = n / o;
-          sum = sum + n;
-          divisor = divisor + 1.0 / o;
-        }
-        sum = sum / divisor;
-        vertex[2] = sum.powi(ui_resource.simple_noise_config.exponent) as f32;
-      }
-      mesh.compute_normals();
+      generate_simplex_terrain(vertices, ui_resource.seed, &ui_resource.simple_noise_config);
     }
-
+    mesh.compute_normals();
     ui_resource.generate = false;
   }
 }
+
+fn generate_simplex_terrain(
+  vertices: &mut [[f32; 3]],
+  seed: u32,
+  config: &SimpleNoiseConfig,
+) {
+  let noise_1 = SuperSimplex::new(seed);
+  let scale = config.scale;
+  let octaves = config.octaves;
+  for vertex in vertices.iter_mut() {
+    let v1 = vertex[0] as f64;
+    let v2 = vertex[1] as f64;
+    let mut sum = 0.0;
+    let mut divisor = 0.0;
+    for octave in 0..=octaves {
+      let o = 2.0_f64.powi(octave);
+      let mut n = noise_1.get([v1 * o * scale, v2 * o * scale]);
+      n = n / o;
+      sum = sum + n;
+      divisor = divisor + 1.0 / o;
+    }
+    sum = sum / divisor;
+    vertex[2] = sum.powi(config.exponent) as f32;
+  }
+}
+
 
 fn main() {
   App::new()
