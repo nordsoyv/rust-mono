@@ -1,3 +1,5 @@
+use std::f32::{INFINITY, NEG_INFINITY};
+
 use bevy::{
   color::{self, palettes::css::LIME},
   pbr::wireframe::{WireframeColor, WireframePlugin},
@@ -7,7 +9,6 @@ use bevy::{
     mesh::VertexAttributeValues,
     settings::{WgpuFeatures, WgpuSettings},
   },
-  ui,
 };
 use bevy_egui::{EguiContexts, EguiPlugin, egui};
 use noise::{NoiseFn, SuperSimplex};
@@ -22,8 +23,34 @@ struct PlaneMarker;
 struct UiResource {
   pub seed: u32,
   generate: bool,
+  water_level: f32,
   terrain_type: TerrainType,
   simple_noise_config: SimpleNoiseConfig,
+  height_map: HeightMap,
+}
+
+struct HeightMap {
+  width: usize,
+  height: usize,
+  values: Vec<Vertex>,
+}
+
+impl HeightMap {
+  fn new(size: usize) -> Self {
+    let side_length = size + 2;
+    let values = Vec::with_capacity(side_length * side_length);
+    Self {
+      width: side_length,
+      height: side_length,
+      values,
+    }
+  }
+}
+
+struct Vertex {
+  x: f32,
+  y: f32,
+  z: f32,
 }
 
 struct SimpleNoiseConfig {
@@ -38,21 +65,20 @@ enum TerrainType {
   Next,
 }
 
+const SUB_DIVISIONS: usize = 200;
+
 fn setup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+  let plane_mesh = Plane3d::default()
+    .mesh()
+    .size(10.0, 10.0)
+    .subdivisions(SUB_DIVISIONS as u32)
+    .normal(Dir3::Z);
   commands.spawn((
-    Mesh3d(
-      meshes.add(
-        Plane3d::default()
-          .mesh()
-          .size(10.0, 10.0)
-          .subdivisions(200)
-          .normal(Dir3::Z),
-      ),
-    ),
+    Mesh3d(meshes.add(plane_mesh)),
     MeshMaterial3d(materials.add(Color::from(color::palettes::css::ALICE_BLUE))),
     Transform::from_xyz(0.0, 0.0, 0.0)
       .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
@@ -98,7 +124,7 @@ fn ui_example_system(mut contexts: EguiContexts, mut ui_resource: ResMut<UiResou
         egui::Slider::new(&mut ui_resource.simple_noise_config.octaves, 1..=10).text("Ocataves"),
       );
     }
-
+    ui.add(egui::Slider::new(&mut ui_resource.water_level, 0.0..=2.0).text("Water level"));
     if ui.button("Generate").clicked() {
       ui_resource.generate = true;
     }
@@ -118,21 +144,20 @@ fn update_plane(
       panic!("Unexpected vertex format, expected Float32x3.");
     };
     if ui_resource.terrain_type == TerrainType::SimpleNoise {
-      generate_simplex_terrain(vertices, ui_resource.seed, &ui_resource.simple_noise_config);
+      generate_simplex_terrain(vertices, &ui_resource);
     }
     mesh.compute_normals();
     ui_resource.generate = false;
   }
 }
 
-fn generate_simplex_terrain(
-  vertices: &mut [[f32; 3]],
-  seed: u32,
-  config: &SimpleNoiseConfig,
-) {
-  let noise_1 = SuperSimplex::new(seed);
-  let scale = config.scale;
-  let octaves = config.octaves;
+fn generate_simplex_terrain(vertices: &mut [[f32; 3]], config: &UiResource) {
+  let mut largest = NEG_INFINITY;
+  let mut smallest = INFINITY;
+  let noise_1 = SuperSimplex::new(config.seed);
+  let scale = config.simple_noise_config.scale;
+  let octaves = config.simple_noise_config.octaves;
+
   for vertex in vertices.iter_mut() {
     let v1 = vertex[0] as f64;
     let v2 = vertex[1] as f64;
@@ -146,10 +171,23 @@ fn generate_simplex_terrain(
       divisor = divisor + 1.0 / o;
     }
     sum = sum / divisor;
-    vertex[2] = sum.powi(config.exponent) as f32;
-  }
-}
+    let mut vertex_z_value = sum.powi(config.simple_noise_config.exponent) as f32;
 
+    if vertex_z_value > largest {
+      largest = vertex_z_value;
+    }
+    if vertex_z_value < smallest {
+      smallest = vertex_z_value;
+    }
+    vertex_z_value += 1.0;
+    if vertex_z_value < config.water_level {
+      vertex_z_value = config.water_level;
+    }
+    vertex[2] = vertex_z_value;
+  }
+  dbg!(largest);
+  dbg!(smallest);
+}
 
 fn main() {
   App::new()
@@ -172,7 +210,9 @@ fn main() {
         octaves: 4,
       },
       generate: false,
+      water_level: 0.0,
       terrain_type: TerrainType::SimpleNoise,
+      height_map: HeightMap::new(SUB_DIVISIONS),
     })
     .add_systems(Startup, setup)
     .add_systems(Update, (ui_example_system, update_plane).chain())
