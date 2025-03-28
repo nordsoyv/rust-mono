@@ -27,20 +27,17 @@ struct UiResource {
   water_level: f32,
   terrain_type: TerrainType,
   simple_noise_config: SimpleNoiseConfig,
-  height_map: HeightMap,
+  height_map: VertexMap,
+  height: f32
 }
 
-struct HeightMap {
+struct VertexMap {
   width: usize,
   height: usize,
-  values: Vec<Vertex>,
+  values: Vec<Vec3>,
 }
 
-impl HeightMap {
-  fn set(&mut self, x: usize, y: usize, value: f32) {}
-}
-
-impl HeightMap {
+impl VertexMap {
   fn new(size: usize) -> Self {
     let side_length = size + 2;
     let values = Vec::with_capacity(side_length * side_length);
@@ -51,12 +48,6 @@ impl HeightMap {
       values,
     }
   }
-}
-
-struct Vertex {
-  x: f32,
-  y: f32,
-  z: f32,
 }
 
 struct SimpleNoiseConfig {
@@ -71,7 +62,7 @@ enum TerrainType {
   Next,
 }
 
-const SUB_DIVISIONS: usize = 200;
+const PLANE_SIZE: usize = 200;
 
 fn setup(
   mut commands: Commands,
@@ -80,8 +71,8 @@ fn setup(
 ) {
   let plane_mesh = Plane3d::default()
     .mesh()
-    .size(10.0, 10.0)
-    .subdivisions(SUB_DIVISIONS as u32)
+    .size(PLANE_SIZE as f32, PLANE_SIZE as f32)
+    .subdivisions(PLANE_SIZE as u32)
     .normal(Dir3::Z);
 
   commands.spawn((
@@ -93,18 +84,27 @@ fn setup(
     WireframeColor { color: LIME.into() },
     PlaneMarker,
   ));
+  
+  // commands.spawn((
+  //   PointLight {
+  //     shadows_enabled: true,
+  //     range: 200.0,
+  //     ..default()
+  //   },
+  //   Transform::from_xyz(40.0, 80.0, 40.0),
+  // ));
   commands.spawn((
-    PointLight {
+    DirectionalLight {
       shadows_enabled: true,
       ..default()
     },
-    Transform::from_xyz(4.0, 8.0, 4.0),
+    Transform::from_xyz(40.0, 80.0, 40.0),
   ));
   commands.spawn((
     Camera3d {
       ..Default::default()
     },
-    Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
+    Transform::from_xyz(-150.0, 159.0, 90.0).looking_at(Vec3::ZERO, Vec3::Y),
     MyCameraMarker,
   ));
 }
@@ -121,12 +121,7 @@ fn setup_heightmap(
     panic!("Unexpected vertex format, expected Float32x3.");
   };
   for vertex in vertices {
-    let value = Vertex {
-      x: vertex[0],
-      y: vertex[1],
-      z: vertex[2],
-    };
-    ui_resource.height_map.values.push(value);
+    ui_resource.height_map.values.push(Vec3::from_slice(vertex));
   }
 }
 
@@ -143,6 +138,7 @@ fn ui_example_system(mut contexts: EguiContexts, mut ui_resource: ResMut<UiResou
         ui.selectable_value(&mut ui_resource.terrain_type, TerrainType::Next, "Next");
       });
     ui.add(egui::Slider::new(&mut ui_resource.seed, 0..=100).text("Seed"));
+    ui.add (egui::Slider::new(&mut ui_resource.height, 10.0..=100.0).text("Height"));
     if ui_resource.terrain_type == TerrainType::SimpleNoise {
       ui.add(egui::Slider::new(&mut ui_resource.simple_noise_config.exponent, 1..=5).text("Exp"));
       ui.add(
@@ -172,7 +168,7 @@ fn update_plane(
       panic!("Unexpected vertex format, expected Float32x3.");
     };
     if ui_resource.terrain_type == TerrainType::SimpleNoise {
-      generate_simplex_terrain( &mut ui_resource);
+      generate_simplex_terrain(&mut ui_resource);
     }
     update_mesh(vertices, &ui_resource);
     mesh.compute_normals();
@@ -184,9 +180,9 @@ fn generate_simplex_terrain(config: &mut UiResource) {
   let mut largest = NEG_INFINITY;
   let mut smallest = INFINITY;
   let noise_1 = SuperSimplex::new(config.seed);
-  let scale = config.simple_noise_config.scale;
+  let scale = config.simple_noise_config.scale/50.0;
   let octaves = config.simple_noise_config.octaves;
-
+  let height = config.height;
   for vertex in &mut config.height_map.values {
     let v1 = vertex.x as f64;
     let v2 = vertex.y as f64;
@@ -213,17 +209,15 @@ fn generate_simplex_terrain(config: &mut UiResource) {
     if vertex_z_value < config.water_level {
       vertex_z_value = config.water_level;
     }
-    vertex.z = vertex_z_value;
+    vertex.z = vertex_z_value * height;
   }
   dbg!(largest);
   dbg!(smallest);
 }
 
-fn update_mesh(vertices: &mut [[f32; 3]], config: &UiResource){
+fn update_mesh(vertices: &mut [[f32; 3]], config: &UiResource) {
   for (vertex, value) in vertices.iter_mut().zip(&config.height_map.values) {
-    vertex[0]= value.x;
-    vertex[1]= value.y;
-    vertex[2]= value.z;
+    value.write_to_slice(vertex);
   }
 }
 
@@ -250,7 +244,12 @@ fn main() {
       generate: false,
       water_level: 0.0,
       terrain_type: TerrainType::SimpleNoise,
-      height_map: HeightMap::new(SUB_DIVISIONS),
+      height_map: VertexMap::new(PLANE_SIZE),
+      height: 10.0
+    })
+    .insert_resource(AmbientLight {
+      brightness: 200.0,
+      ..default()
     })
     .add_systems(Startup, (setup, setup_heightmap).chain())
     .add_systems(Update, (ui_example_system, update_plane).chain())
