@@ -3,7 +3,7 @@ mod entity;
 
 use macroquad::prelude::*;
 
-use crate::{context::Context, entity::MinerData};
+use crate::{context::Context, entity::miner::MinerData};
 
 #[macroquad::main("MyGame")]
 async fn main() {
