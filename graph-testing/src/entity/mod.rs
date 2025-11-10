@@ -2,11 +2,15 @@ use macroquad::prelude::*;
 use std::cell::RefCell;
 
 use crate::entity::{
+  crafter::{CrafterData, draw_crafter},
+  input::{InputData, draw_input},
   miner::{MinerData, draw_miner, update_miner},
-  output::{OutputData, draw_output},
+  output::{OutputData, draw_output, update_output},
 };
 pub type EntityId = usize;
 
+pub mod crafter;
+pub mod input;
 pub mod miner;
 pub mod output;
 
@@ -18,40 +22,6 @@ impl EntityManager {
   pub fn new() -> Self {
     Self { entities: vec![] }
   }
-  pub fn create_miner(&mut self, miner_data: MinerData) -> EntityId {
-    let miner = Entity {
-      id: 0,
-      kind: EntityType::Miner,
-      miner_data: Some(miner_data),
-      output_data: None,
-      parent_id: None,
-      ui_data: Some(UiData::new(100.0, 100.0, 100.0, 200.0)),
-    };
-    let id = self.add_entity(miner);
-
-    let output_data = OutputData::new(200.0, 50.0);
-    let out_id = self.create_output(id, output_data);
-    self
-      .get_entity(id)
-      .borrow_mut()
-      .miner_data
-      .as_mut()
-      .unwrap()
-      .output = out_id;
-    return id;
-  }
-  pub fn create_output(&mut self, parent: EntityId, output_data: OutputData) -> EntityId {
-    let out = Entity {
-      id: 0,
-      kind: EntityType::Output,
-      output_data: Some(output_data),
-      miner_data: None,
-      parent_id: Some(parent),
-      ui_data: None,
-    };
-    return self.add_entity(out);
-  }
-
   pub fn get_entity(&self, id: EntityId) -> &RefCell<Entity> {
     let ent = self.entities.get(id);
     let c = ent.expect("Tried to get entity with wrong id");
@@ -77,16 +47,28 @@ impl EntityManager {
 }
 
 pub enum EntityType {
+  Unknown,
   Miner,
   Output,
+  Input,
+  Crafter,
 }
 
+impl Default for EntityType {
+  fn default() -> Self {
+    EntityType::Unknown
+  }
+}
+
+#[derive(Default)]
 pub struct Entity {
   kind: EntityType,
   id: EntityId,
   parent_id: Option<EntityId>,
   miner_data: Option<MinerData>,
+  crafter_data: Option<CrafterData>,
   output_data: Option<OutputData>,
+  input_data: Option<InputData>,
   ui_data: Option<UiData>,
 }
 
@@ -112,15 +94,18 @@ impl Entity {
   fn update(&mut self, em: &EntityManager) {
     match self.kind {
       EntityType::Miner => update_miner(self, em),
-      EntityType::Output => self.update_output(em),
+      EntityType::Output => update_output(self, em),
+      _ => {}
     }
   }
 
-  fn update_output(&mut self, _: &EntityManager) {}
   fn draw(&self, em: &EntityManager) {
     match self.kind {
       EntityType::Miner => draw_miner(self),
       EntityType::Output => draw_output(self, em),
+      EntityType::Crafter => draw_crafter(self),
+      EntityType::Input => draw_input(self, em),
+      EntityType::Unknown => {}
     }
   }
 }
@@ -211,4 +196,65 @@ impl UiData {
       width,
     }
   }
+}
+
+pub fn create_crafter(em: &mut EntityManager, crafter_data: CrafterData) -> EntityId {
+  let crafter = Entity {
+    kind: EntityType::Crafter,
+    crafter_data: Some(crafter_data),
+    ui_data: Some(UiData::new(400.0, 100.0, 100.0, 200.0)),
+    ..Default::default()
+  };
+  let id = em.add_entity(crafter);
+  let input_data = InputData::new(0.0, 50.0);
+  let in_id = create_input(em, id, input_data);
+  em.get_entity(id)
+    .borrow_mut()
+    .crafter_data
+    .as_mut()
+    .unwrap()
+    .input = in_id;
+  return id;
+}
+
+pub fn create_miner(em: &mut EntityManager, miner_data: MinerData) -> EntityId {
+  let miner = Entity {
+    kind: EntityType::Miner,
+    miner_data: Some(miner_data),
+    ui_data: Some(UiData::new(100.0, 100.0, 100.0, 200.0)),
+    ..Default::default()
+  };
+  let id = em.add_entity(miner);
+
+  let output_data = OutputData::new(200.0, 50.0);
+  let out_id = create_output(em, id, output_data);
+  em.get_entity(id)
+    .borrow_mut()
+    .miner_data
+    .as_mut()
+    .unwrap()
+    .output = out_id;
+  return id;
+}
+pub fn create_output(
+  em: &mut EntityManager,
+  parent: EntityId,
+  output_data: OutputData,
+) -> EntityId {
+  let out = Entity {
+    kind: EntityType::Output,
+    output_data: Some(output_data),
+    parent_id: Some(parent),
+    ..Default::default()
+  };
+  return em.add_entity(out);
+}
+pub fn create_input(em: &mut EntityManager, parent: EntityId, input_data: InputData) -> EntityId {
+  let out = Entity {
+    kind: EntityType::Input,
+    input_data: Some(input_data),
+    parent_id: Some(parent),
+    ..Default::default()
+  };
+  return em.add_entity(out);
 }
