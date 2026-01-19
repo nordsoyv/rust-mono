@@ -11,6 +11,7 @@ pub type EntityId = usize;
 
 pub mod crafter;
 pub mod input;
+pub mod link;
 pub mod miner;
 pub mod output;
 
