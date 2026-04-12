@@ -27,14 +27,14 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
 
     let chunk_size = UVec2::splat(64);
-    let tile_display_size = UVec2::splat(8);
+    let tile_display_size = UVec2::splat(32);
     let tile_data: Vec<Option<TileData>> = (0..chunk_size.element_product())
-        .map(|_| rng.random_range(0..5))
+        .map(|_| rng.random_range(0..1024))
         .map(|i| {
             if i == 0 {
                 None
             } else {
-                Some(TileData::from_tileset_index(i - 1))
+                Some(TileData::from_tileset_index(1))
             }
         })
         .collect();
@@ -44,11 +44,11 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             chunk_size,
             tile_display_size,
             tileset: assets.load_with_settings(
-                "textures/array_texture.png",
+                "img.png",
                 |settings: &mut ImageLoaderSettings| {
                     // The tileset texture is expected to be an array of tile textures, so we tell the
                     // `ImageLoader` that our texture is composed of 4 stacked tile images.
-                    settings.array_layout = Some(ImageArrayLayout::RowCount { rows: 4 });
+                    settings.array_layout = Some(ImageArrayLayout::RowHeight { pixels: 32  });
                 },
             ),
             ..default()
@@ -122,7 +122,7 @@ fn update_tilemap(
         if timer.just_finished() {
             for _ in 0..50 {
                 let index = rng.random_range(0..tile_data.len());
-                tile_data[index] = Some(TileData::from_tileset_index(rng.random_range(0..5)));
+                tile_data[index] = Some(TileData::from_tileset_index(rng.random_range(0..1024)));
             }
         }
     }
